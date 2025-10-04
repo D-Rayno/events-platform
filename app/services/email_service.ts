@@ -1,7 +1,11 @@
 import mail from '@adonisjs/mail/services/main'
 import env from '#start/env'
 import User from '#models/user'
+import Registration from '#models/registration'
+import Event from '#models/event'
 import string from '@adonisjs/core/helpers/string'
+import { DateTime } from 'luxon'
+import QRService from '#services/qr_code_service'
 
 export default class EmailService {
   /**
@@ -9,7 +13,7 @@ export default class EmailService {
    */
   static async sendVerificationEmail(user: User): Promise<void> {
     const token = string.generateRandom(64)
-    
+
     // Sauvegarde du token dans la base de données
     user.emailVerificationToken = token
     await user.save()
@@ -32,7 +36,7 @@ export default class EmailService {
    */
   static async sendPasswordResetEmail(user: User): Promise<void> {
     const token = string.generateRandom(64)
-    
+
     // Sauvegarde du token avec expiration de 1 heure
     user.passwordResetToken = token
     user.passwordResetExpiresAt = DateTime.now().plus({ hours: 1 })
@@ -52,13 +56,16 @@ export default class EmailService {
   }
 
   /**
-   * Envoie l'email de confirmation d'inscription à un événement
+   * Envoie l'email de confirmation d'inscription à un événement avec QR code
    */
   static async sendEventRegistrationEmail(
     user: User,
-    event: any,
-    qrCodeBuffer: Buffer
+    event: Event,
+    registration: Registration
   ): Promise<void> {
+    // Générer le QR code
+    const qrCodeBuffer = await QRService.generateQRCodeBuffer(registration)
+
     await mail.send((message) => {
       message
         .to(user.email)
@@ -66,9 +73,12 @@ export default class EmailService {
         .htmlView('emails/event_registration', {
           firstName: user.firstName,
           eventName: event.name,
-          eventDate: event.startDate,
+          eventLocation: event.location,
+          eventDate: event.startDate.setLocale('fr').toFormat('dd MMMM yyyy à HH:mm'),
+          price: registration.price,
+          qrCode: registration.qrCode,
         })
-        .attach(qrCodeBuffer.toString(), {
+        .attachData(qrCodeBuffer, {
           filename: 'qr-code.png',
           contentType: 'image/png',
         })
@@ -88,7 +98,21 @@ export default class EmailService {
         })
     })
   }
-}
 
-// Import DateTime pour le reset password
-import { DateTime } from 'luxon'
+  /**
+   * Envoie un rappel pour un événement à venir
+   */
+  static async sendEventReminderEmail(user: User, event: Event): Promise<void> {
+    await mail.send((message) => {
+      message
+        .to(user.email)
+        .subject(`Rappel - ${event.name} commence bientôt !`)
+        .htmlView('emails/event_reminder', {
+          firstName: user.firstName,
+          eventName: event.name,
+          eventLocation: event.location,
+          eventDate: event.startDate.setLocale('fr').toFormat('dd MMMM yyyy à HH:mm'),
+        })
+    })
+  }
+}

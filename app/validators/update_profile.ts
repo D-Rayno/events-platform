@@ -2,25 +2,13 @@ import vine from '@vinejs/vine'
 import { FieldContext } from '@vinejs/vine/types'
 
 /**
- * Validateur pour l'inscription d'un utilisateur
+ * Validateur pour la mise à jour du profil
  */
-export const registerValidator = vine.compile(
+export const updateProfileValidator = vine.compile(
   vine.object({
     firstName: vine.string().trim().minLength(2).maxLength(100),
 
     lastName: vine.string().trim().minLength(2).maxLength(100),
-
-    email: vine
-      .string()
-      .trim()
-      .email()
-      .normalizeEmail()
-      .unique(async (db, value) => {
-        const user = await db.from('users').where('email', value).first()
-        return !user
-      }),
-
-    password: vine.string().minLength(8).maxLength(100).confirmed(),
 
     age: vine.number().min(13).max(120),
 
@@ -29,13 +17,20 @@ export const registerValidator = vine.compile(
     commune: vine.string().trim().minLength(2).maxLength(100),
 
     phoneNumber: vine.string().trim().mobile().optional(),
+
+    avatar: vine
+      .file({
+        size: '2mb',
+        extnames: ['jpg', 'jpeg', 'png', 'webp'],
+      })
+      .optional(),
   })
 )
 
 /**
- * Messages d'erreur personnalisés en français
+ * Messages d'erreur en français
  */
-registerValidator.messagesProvider = new (class {
+updateProfileValidator.messagesProvider = new (class {
   getMessage(
     defaultMessage: string,
     rule: string,
@@ -45,15 +40,14 @@ registerValidator.messagesProvider = new (class {
     const messages: Record<string, string> = {
       'required': 'Le champ est obligatoire',
       'string': 'Le champ doit être une chaîne de caractères',
-      'email': "L'adresse email n'est pas valide",
-      'email.unique': 'Cette adresse email est déjà utilisée',
-      'minLength': `Le champ doit contenir au moins ${args?.count ?? rule} caractères`,
-      'maxLength': `Le champ ne peut pas dépasser ${args?.count ?? rule} caractères`,
-      'confirmed': 'Les mots de passe ne correspondent pas',
+      'minLength': `Le champ doit contenir au moins ${args?.minLength ?? 2} caractères`,
+      'maxLength': `Le champ ne peut pas dépasser ${args?.maxLength ?? 100} caractères`,
       'number': 'Le champ doit être un nombre',
-      'min': `La valeur doit être au moins ${args?.value ?? rule}`,
-      'max': `La valeur ne peut pas dépasser ${args?.value ?? rule}`,
+      'min': `La valeur doit être au moins ${args?.min ?? 13}`,
+      'max': `La valeur ne peut pas dépasser ${args?.max ?? 120}`,
       'mobile': "Le numéro de téléphone n'est pas valide",
+      'file.size': 'La taille du fichier ne doit pas dépasser 2 Mo',
+      'file.extname': 'Le format du fichier doit être jpg, jpeg, png ou webp',
     }
 
     const fieldMessages: Record<string, Record<string, string>> = {
@@ -65,19 +59,9 @@ registerValidator.messagesProvider = new (class {
         required: 'Le nom est obligatoire',
         minLength: 'Le nom doit contenir au moins 2 caractères',
       },
-      email: {
-        required: "L'adresse email est obligatoire",
-        email: "L'adresse email n'est pas valide",
-        unique: 'Cette adresse email est déjà utilisée',
-      },
-      password: {
-        required: 'Le mot de passe est obligatoire',
-        minLength: 'Le mot de passe doit contenir au moins 8 caractères',
-        confirmed: 'Les mots de passe ne correspondent pas',
-      },
       age: {
         required: "L'âge est obligatoire",
-        min: 'Vous devez avoir au moins 13 ans pour vous inscrire',
+        min: 'Vous devez avoir au moins 13 ans',
       },
       province: {
         required: 'La province est obligatoire',
@@ -87,6 +71,10 @@ registerValidator.messagesProvider = new (class {
       },
       phoneNumber: {
         mobile: "Le numéro de téléphone n'est pas valide",
+      },
+      avatar: {
+        'file.size': 'La photo ne doit pas dépasser 2 Mo',
+        'file.extname': 'La photo doit être au format jpg, jpeg, png ou webp',
       },
     }
 

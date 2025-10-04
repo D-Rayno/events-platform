@@ -1,8 +1,10 @@
 import { DateTime } from 'luxon'
 import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
-import { BaseModel, column } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
+import type { HasMany } from '@adonisjs/lucid/types/relations'
+import Registration from '#models/registration'
 
 const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
   uids: ['email'],
@@ -61,11 +63,20 @@ export default class User extends compose(BaseModel, AuthFinder) {
   @column()
   declare isBlocked: boolean
 
+  @column()
+  declare isAdmin: boolean
+
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
+
+  /**
+   * Relations
+   */
+  @hasMany(() => Registration)
+  declare registrations: HasMany<typeof Registration>
 
   /**
    * Nom complet de l'utilisateur
@@ -80,10 +91,4 @@ export default class User extends compose(BaseModel, AuthFinder) {
   canLogin(): boolean {
     return this.isActive && !this.isBlocked && this.isEmailVerified
   }
-
-  /**
-   * Relations (à ajouter plus tard)
-   */
-  // @hasMany(() => Registration)
-  // declare registrations: HasMany<typeof Registration>
 }

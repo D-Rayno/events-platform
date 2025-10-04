@@ -34,6 +34,7 @@ export default class extends BaseSchema {
       // Statut du compte
       table.boolean('is_active').defaultTo(true)
       table.boolean('is_blocked').defaultTo(false)
+      table.boolean('is_admin').defaultTo(false).after('is_blocked')
 
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
