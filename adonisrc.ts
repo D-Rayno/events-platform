@@ -1,16 +1,6 @@
 import { defineConfig } from '@adonisjs/core/app'
 
 export default defineConfig({
-  /*
-  |--------------------------------------------------------------------------
-  | Experimental flags
-  |--------------------------------------------------------------------------
-  |
-  | The following features will be enabled by default in the next major release
-  | of AdonisJS. You can opt into them today to avoid any breaking changes
-  | during upgrade.
-  |
-  */
   experimental: {
     mergeMultipartFieldsAndFiles: true,
     shutdownInReverseOrder: true,
@@ -27,15 +17,6 @@ export default defineConfig({
   */
   commands: [() => import('@adonisjs/core/commands'), () => import('@adonisjs/lucid/commands'), () => import('@adonisjs/mail/commands')],
 
-  /*
-  |--------------------------------------------------------------------------
-  | Service providers
-  |--------------------------------------------------------------------------
-  |
-  | List of service providers to import and register when booting the
-  | application
-  |
-  */
   providers: [
     () => import('@adonisjs/core/providers/app_provider'),
     () => import('@adonisjs/core/providers/hash_provider'),
@@ -67,15 +48,6 @@ export default defineConfig({
   */
   preloads: [() => import('#start/routes'), () => import('#start/kernel')],
 
-  /*
-  |--------------------------------------------------------------------------
-  | Tests
-  |--------------------------------------------------------------------------
-  |
-  | List of test suites to organize tests by their type. Feel free to remove
-  | and add additional suites.
-  |
-  */
   tests: {
     suites: [
       {
@@ -92,15 +64,6 @@ export default defineConfig({
     forceExit: false,
   },
 
-  /*
-  |--------------------------------------------------------------------------
-  | Metafiles
-  |--------------------------------------------------------------------------
-  |
-  | A collection of files you want to copy to the build folder when creating
-  | the production build.
-  |
-  */
   metaFiles: [
     {
       pattern: 'resources/views/**/*.edge',
