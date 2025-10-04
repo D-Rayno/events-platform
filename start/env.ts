@@ -49,6 +49,7 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |----------------------------------------------------------
+<<<<<<< HEAD
   | Variables pour le stockage de fichiers
   |----------------------------------------------------------
   */
@@ -56,6 +57,8 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |----------------------------------------------------------
+=======
+>>>>>>> 62aba6d (fix: auth validation and more auth functionalities)
   | Token admin pour l'API mobile
   |----------------------------------------------------------
   */
