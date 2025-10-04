@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            Bienvenue !
+        </title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container {
+                max-width: 600px;
+                margin: 40px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .header {
+                background: linear-gradient(135deg, #5A45FF 0%, #7B68FF 100%);
+                padding: 40px 20px;
+                text-align: center;
+                color: white;
+            }
+            
+            .header h1 {
+                margin: 0;
+                font-size: 28px;
+            }
+            
+            .content {
+                padding: 40px 30px;
+            }
+            
+            .content p {
+                margin-bottom: 20px;
+                color: #555;
+            }
+            
+            .button {
+                display: inline-block;
+                padding: 14px 32px;
+                background-color: #5A45FF;
+                color: white;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 600;
+                margin: 20px 0;
+                transition: background-color 0.3s;
+            }
+            
+            .button:hover {
+                background-color: #4834CC;
+            }
+            
+            .features {
+                background-color: #f8f8f8;
+                padding: 20px;
+                border-radius: 6px;
+                margin: 20px 0;
+            }
+            
+            .features ul {
+                margin: 10px 0;
+                padding-left: 20px;
+            }
+            
+            .features li {
+                margin: 8px 0;
+                color: #555;
+            }
+            
+            .footer {
+                background-color: #f8f8f8;
+                padding: 20px 30px;
+                text-align: center;
+                font-size: 12px;
+                color: #888;
+                border-top: 1px solid #e0e0e0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>
+                    🎉 Bienvenue !
+                </h1>
+            </div>
+
+            <div class="content">
+                <p>
+                    Bonjour <strong>{{ firstName }}</strong>,
+                </p>
+
+                <p>
+                    Félicitations ! Votre compte a été vérifié avec succès. Vous êtes maintenant membre de notre communauté d'événements.
+                </p>
+
+                <div class="features">
+                    <p>
+                        <strong>Voici ce que vous pouvez faire maintenant :</strong>
+                    </p>
+                    <ul>
+                        <li>
+                            🎫 Découvrir tous les événements disponibles
+                        </li>
+                        <li>
+                            📝 S'inscrire aux événements qui vous intéressent
+                        </li>
+                        <li>
+                            🎨 Personnaliser votre profil et ajouter une photo
+                        </li>
+                        <li>
+                            📧 Recevoir vos QR codes d'accès par email
+                        </li>
+                        <li>
+                            ⭐ Suivre vos événements favoris
+                        </li>
+                    </ul>
+                </div>
+
+                <div style="text-align: center;">
+                    <a href="{{ env('APP_URL') }}" class="button">
+                        Découvrir les événements
+        </a>
+                </div>
+
+                <p>
+                    Si vous avez des questions, n'hésitez pas à nous contacter. Nous sommes là pour vous aider !
+                </p>
+
+                <p>
+                    À bientôt sur la plateforme ! 🚀
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>
+                    © 2025 Plateforme d'événements - Tous droits réservés
+                </p>
+                <p>
+                    Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+                </p>
+            </div>
+        </div>
+    </body>
+</html>
