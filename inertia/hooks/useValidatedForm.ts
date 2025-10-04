@@ -1,24 +1,14 @@
 // inertia/hooks/useValidatedForm.ts
 import { useCallback, useMemo, useState } from 'react'
-import { useForm as inertiaUseForm } from '@inertiajs/react'
-import type { InertiaForm } from '@inertiajs/react'
+import { useForm } from '@inertiajs/react'
 import type { AnyObjectSchema, ValidationError } from 'yup'
 
 /**
  * Merged & upgraded form hook for React + Inertia.
- * - Replaces the two Vue hooks with a single React hook that supports:
- *   - optional Yup schema validation (validate field / validate all)
- *   - client-side errors merged with server-side errors
- *   - touched tracking, blur handling
- *   - submit wrapper that validates before sending
- *
- * Usage:
- * const { form, validateField, submit, getError, shouldShowError, ... } = useValidatedForm({
- *   schema,
- *   initialData,
- *   onSuccess,
- *   onError
- * })
+ * - Supports optional Yup schema validation (validate field / validate all)
+ * - Client-side errors merged with server-side errors
+ * - Touched tracking, blur handling
+ * - Submit wrapper that validates before sending
  */
 interface UseValidatedFormConfig<T extends Record<string, any>> {
   schema?: AnyObjectSchema
@@ -30,7 +20,7 @@ interface UseValidatedFormConfig<T extends Record<string, any>> {
 export function useValidatedForm<T extends Record<string, any>>(config: UseValidatedFormConfig<T>) {
   const { schema, initialData, onSuccess, onError } = config
 
-  const form = inertiaUseForm(initialData) as InertiaForm<T>
+  const form = useForm(initialData)
 
   // client-side validation errors
   const [clientErrors, setClientErrors] = useState<Record<string, string>>({})
@@ -55,7 +45,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
 
       setIsValidating(true)
       try {
-        await schema.validateAt(field, form.data())
+        await schema.validateAt(field, form.data)
         setClientErrors((prev) => {
           if (prev[field]) {
             const copy = { ...prev }
@@ -74,7 +64,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
         setIsValidating(false)
       }
     },
-    [schema, form]
+    [schema, form.data]
   )
 
   const validateAll = useCallback(async (): Promise<boolean> => {
@@ -82,7 +72,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
 
     setIsValidating(true)
     try {
-      await schema.validate(form.data(), { abortEarly: false })
+      await schema.validate(form.data, { abortEarly: false })
       setClientErrors({})
       return true
     } catch (err) {
@@ -101,7 +91,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
     } finally {
       setIsValidating(false)
     }
-  }, [schema, form])
+  }, [schema, form.data])
 
   const getError = useCallback(
     (field: string): string | undefined => {
@@ -119,9 +109,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
         return copy
       })
       if ((form.errors as Record<string, string> | undefined)?.[field]) {
-        // form.clearErrors accepts a field name (some versions accept string | string[])
-        // use `any` to avoid TS mismatch with Inertia types
-        ;(form as any).clearErrors(field)
+        form.clearErrors(field)
       }
     },
     [form]
@@ -129,7 +117,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
 
   const clearAllErrors = useCallback(() => {
     setClientErrors({})
-    ;(form as any).clearErrors()
+    form.clearErrors()
   }, [form])
 
   const touch = useCallback((field: string) => {
@@ -160,7 +148,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
   )
 
   const reset = useCallback(() => {
-    ;(form as any).reset()
+    form.reset()
     clearAllErrors()
     setTouchedFields(new Set())
   }, [form, clearAllErrors])
@@ -177,9 +165,8 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
         return
       }
 
-      // call inertia method on the form (typed any to access dynamic methods)
-      ;(form as any)[method](url, {
-        // merge provided callbacks with our handlers
+      // call inertia method on the form
+      form[method](url, {
         preserveScroll: true,
         ...options,
         onSuccess: (resp: any) => {
@@ -187,7 +174,6 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
           options?.onSuccess?.(resp)
         },
         onError: (errors: Record<string, string>) => {
-          // merge server errors into clientErrors
           setClientErrors((prev) => ({ ...prev, ...(errors || {}) }))
           onError?.(errors)
           options?.onError?.(errors)
@@ -199,7 +185,7 @@ export function useValidatedForm<T extends Record<string, any>>(config: UseValid
 
   return {
     // inertia form
-    form: form as InertiaForm<T>,
+    form,
 
     // client state
     clientErrors,

@@ -1,5 +1,6 @@
 // inertia/components/ui/Alert.tsx
 import { motion } from 'motion/react'
+import React from 'react'
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,

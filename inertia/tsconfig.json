@@ -2,8 +2,9 @@
   "extends": "@adonisjs/tsconfig/tsconfig.client.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "module": "ESNext",
+    "moduleResolution": "bundler",
     "paths": {
       "~/*": ["./*"],
       "#ui": ["./components/ui"],
@@ -12,8 +13,8 @@
       "#shared/*": ["./components/shared/*"],
       "#layouts": ["./components/layouts"],
       "#layouts/*": ["./components/layouts/*"],
-      "#hooks": ["hooks"],
-      "#hooks/*": ["hooks/*"],
+      "#hooks": ["./hooks"],
+      "#hooks/*": ["./hooks/*"],
       "#services": ["./services"],
       "#services/*": ["./services/*"],
       "#stores": ["./stores"],
@@ -24,5 +25,6 @@
       "#types/*": ["./types/*"]
     }
   },
-  "include": ["./**/*.ts", "app/ssr.tsx", "app/app.tsx", "components/layouts/AppLayout.tsx", "components/layouts/AuthLayout.tsx", "components/shared/FlashMessage.tsx", "components/shared/Header.tsx", "components/ui/Alert.tsx", "components/ui/Avatar.tsx", "components/ui/Badge.tsx", "components/ui/Button.tsx", "components/ui/Card.tsx"]
+  "include": ["./**/*"],
+  "exclude": ["node_modules"]
 }

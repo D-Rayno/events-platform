@@ -1,53 +1,32 @@
-import { useState, useEffect } from 'react';
+// inertia/hooks/usePageSetup.ts
+import { useEffect } from 'react'
+import { usePage } from '@inertiajs/react'
+import { useAuthStore } from '~/stores/auth'
+import { useAppStore } from '~/stores/app'
 
 /**
- * Infinite scroll React hook
+ * Page setup hook for React
+ * Initializes auth and flash messages from page props
  */
-export function useInfiniteScroll(callback: () => void, threshold = 200) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
-
-  /**
-   * Handle scroll event
-   */
-  const handleScroll = () => {
-    if (isLoading || !hasMore) return;
-
-    const scrollPosition = window.innerHeight + window.scrollY;
-    const pageHeight = document.documentElement.scrollHeight;
-
-    if (pageHeight - scrollPosition < threshold) {
-      setIsLoading(true);
-      callback();
-    }
-  };
-
-  /**
-   * Reset loading state
-   */
-  const resetLoading = () => {
-    setIsLoading(false);
-  };
-
-  /**
-   * Set has more flag
-   * @param value - Has more items
-   */
-  const setHasMoreState = (value: boolean) => {
-    setHasMore(value);
-  };
+export function usePageSetup() {
+  const { props } = usePage()
+  const initializeAuth = useAuthStore((state) => state.initializeAuth)
+  const setFlashMessages = useAppStore((state) => state.setFlashMessages)
 
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [isLoading, hasMore]); // Dependencies to rebind event listener when state changes
+    // Initialize auth from page props
+    if (props.auth?.user) {
+      initializeAuth(props.auth.user)
+    }
+
+    // Initialize flash messages from page props
+    if (props.flash) {
+      setFlashMessages(props.flash)
+    }
+  }, [props.auth?.user, props.flash, initializeAuth, setFlashMessages])
 
   return {
-    isLoading,
-    hasMore,
-    resetLoading,
-    setHasMore: setHasMoreState,
-  };
+    auth: props.auth,
+    flash: props.flash,
+  }
 }

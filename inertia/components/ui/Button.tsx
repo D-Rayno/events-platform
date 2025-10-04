@@ -1,4 +1,5 @@
 // inertia/components/ui/Button.tsx
+import React from 'react'
 import { Link } from '@inertiajs/react'
 import { motion } from 'motion/react'
 import { useTheme } from '~/hooks/useTheme'
@@ -19,6 +20,7 @@ interface ButtonProps {
   onClick?: () => void
   className?: string
   children: React.ReactNode
+  as?: typeof Link
 }
 
 const baseClasses =
@@ -88,6 +90,7 @@ export default function Button({
   onClick,
   className = '',
   children,
+  as,
 }: ButtonProps) {
   const { getAnimation } = useTheme()
   const isDisabled = disabled || loading
@@ -156,12 +159,13 @@ export default function Button({
   }
 
   if (href) {
+    const LinkComponent = as || Link
     return (
-      <Link href={href} className={buttonClasses}>
+      <LinkComponent href={href} className={buttonClasses}>
         <motion.div {...motionProps} className="w-full">
           {content}
         </motion.div>
-      </Link>
+      </LinkComponent>
     )
   }
 
