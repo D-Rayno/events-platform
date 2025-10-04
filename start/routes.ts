@@ -15,25 +15,30 @@ router.on('/').renderInertia('home')
 | Routes d'authentification (accessibles uniquement aux invités)
 |--------------------------------------------------------------------------
 */
-router.group(() => {
-  // Inscription
-  router.get('/register', [AuthController, 'showRegister']).as('auth.register.show')
-  router.post('/register', [AuthController, 'register']).as('auth.register')
+router
+  .group(() => {
+    // Inscription
+    router.get('/register', [AuthController, 'showRegister']).as('auth.register.show')
+    router.post('/register', [AuthController, 'register']).as('auth.register')
 
-  // Connexion
-  router.get('/login', [AuthController, 'showLogin']).as('auth.login.show')
-  router.post('/login', [AuthController, 'login']).as('auth.login')
+    // Connexion
+    router.get('/login', [AuthController, 'showLogin']).as('auth.login.show')
+    router.post('/login', [AuthController, 'login']).as('auth.login')
 
-  // Mot de passe oublié
-  router.get('/forgot-password', [AuthController, 'showForgotPassword']).as('auth.forgot_password.show')
-  router.post('/forgot-password', [AuthController, 'forgotPassword']).as('auth.forgot_password')
+    // Mot de passe oublié
+    router
+      .get('/forgot-password', [AuthController, 'showForgotPassword'])
+      .as('auth.forgot_password.show')
+    router.post('/forgot-password', [AuthController, 'forgotPassword']).as('auth.forgot_password')
 
-  // Réinitialisation mot de passe
-  router.get('/reset-password', [AuthController, 'showResetPassword']).as('auth.reset_password.show')
-  router.post('/reset-password', [AuthController, 'resetPassword']).as('auth.reset_password')
-})
-.prefix('/auth')
-.middleware(middleware.guest())
+    // Réinitialisation mot de passe
+    router
+      .get('/reset-password', [AuthController, 'showResetPassword'])
+      .as('auth.reset_password.show')
+    router.post('/reset-password', [AuthController, 'resetPassword']).as('auth.reset_password')
+  })
+  .prefix('/auth')
+  .middleware(middleware.guest())
 
 /*
 |--------------------------------------------------------------------------
@@ -47,12 +52,18 @@ router.get('/auth/verify-email', [AuthController, 'verifyEmail']).as('auth.verif
 | Routes authentifiées
 |--------------------------------------------------------------------------
 */
-router.group(() => {
-  // Déconnexion
-  router.post('/logout', [AuthController, 'logout']).as('auth.logout')
+router
+  .group(() => {
+    // Déconnexion
+    router.post('/auth/logout', [AuthController, 'logout']).as('auth.logout')
 
-  // Profil utilisateur (à implémenter dans le prochain module)
-  // router.get('/profile', [ProfileController, 'show']).as('profile.show')
-  // router.put('/profile', [ProfileController, 'update']).as('profile.update')
-})
-.middleware(middleware.auth())
+    // Renvoyer email de vérification
+    router
+      .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
+      .as('auth.resend_verification')
+
+    // Profil utilisateur (à implémenter dans le prochain module)
+    // router.get('/profile', [ProfileController, 'show']).as('profile.show')
+    // router.put('/profile', [ProfileController, 'update']).as('profile.update')
+  })
+  .middleware(middleware.auth())

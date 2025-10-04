@@ -1,7 +1,9 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import { registerValidator } from '#validators/register'
-import { loginValidator } from '#validators/login_'
+import { loginValidator } from '#validators/login'
+import { forgotPasswordValidator } from '#validators/forgot_password'
+import { resetPasswordValidator } from '#validators/reset_password'
 import EmailService from '#services/email_service'
 import { DateTime } from 'luxon'
 
@@ -43,6 +45,7 @@ export default class AuthController {
       )
       return response.redirect('/auth/login')
     } catch (error) {
+      console.error('Erreur lors de l\'inscription:', error)
       session.flash('error', "Une erreur est survenue lors de l'inscription.")
       return response.redirect().back()
     }
@@ -60,26 +63,33 @@ export default class AuthController {
    */
   async login({ request, response, auth, session }: HttpContext) {
     try {
+      // Validation des données
       const { email, password } = await request.validateUsing(loginValidator)
 
+      // Vérification des credentials
       const user = await User.verifyCredentials(email, password)
 
       // Vérifier si l'utilisateur peut se connecter
       if (!user.canLogin()) {
         if (!user.isEmailVerified) {
-          session.flash('error', 'Veuillez vérifier votre email avant de vous connecter.')
+          session.flash(
+            'error',
+            'Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte de réception.'
+          )
         } else if (user.isBlocked) {
-          session.flash('error', 'Votre compte a été bloqué.')
+          session.flash('error', 'Votre compte a été bloqué. Contactez un administrateur.')
         } else if (!user.isActive) {
           session.flash('error', "Votre compte n'est pas actif.")
         }
         return response.redirect().back()
       }
 
+      // Connexion réussie
       await auth.use('web').login(user)
       session.flash('success', `Bienvenue ${user.firstName} !`)
       return response.redirect('/')
     } catch (error) {
+      console.error('Erreur lors de la connexion:', error)
       session.flash('error', 'Email ou mot de passe incorrect.')
       return response.redirect().back()
     }
@@ -112,13 +122,23 @@ export default class AuthController {
       return response.redirect('/auth/login')
     }
 
+    // Vérifier si l'email n'est pas déjà vérifié
+    if (user.isEmailVerified) {
+      session.flash('info', 'Votre email est déjà vérifié.')
+      return response.redirect('/auth/login')
+    }
+
     user.isEmailVerified = true
     user.emailVerifiedAt = DateTime.now()
     user.emailVerificationToken = null
     await user.save()
 
     // Envoyer l'email de bienvenue
-    await EmailService.sendWelcomeEmail(user)
+    try {
+      await EmailService.sendWelcomeEmail(user)
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email de bienvenue:", error)
+    }
 
     session.flash(
       'success',
@@ -138,20 +158,26 @@ export default class AuthController {
    * Envoie l'email de réinitialisation
    */
   async forgotPassword({ request, response, session }: HttpContext) {
-    const email = request.input('email')
+    try {
+      const { email } = await request.validateUsing(forgotPasswordValidator)
 
-    const user = await User.findBy('email', email)
+      const user = await User.findBy('email', email)
 
-    if (user) {
-      await EmailService.sendPasswordResetEmail(user)
+      if (user) {
+        await EmailService.sendPasswordResetEmail(user)
+      }
+
+      // Message générique pour éviter de divulguer si l'email existe
+      session.flash(
+        'success',
+        'Si un compte existe avec cet email, vous recevrez un lien de réinitialisation dans quelques instants.'
+      )
+      return response.redirect('/auth/login')
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email de réinitialisation:", error)
+      session.flash('error', "Une erreur est survenue. Veuillez réessayer.")
+      return response.redirect().back()
     }
-
-    // Message générique pour éviter de divulguer si l'email existe
-    session.flash(
-      'success',
-      'Si un compte existe avec cet email, vous recevrez un lien de réinitialisation.'
-    )
-    return response.redirect('/auth/login')
   }
 
   /**
@@ -172,25 +198,57 @@ export default class AuthController {
    * Traite la réinitialisation du mot de passe
    */
   async resetPassword({ request, response, session }: HttpContext) {
-    const token = request.input('token')
-    const password = request.input('password')
+    try {
+      const { token, password } = await request.validateUsing(resetPasswordValidator)
 
-    const user = await User.query()
-      .where('password_reset_token', token)
-      .where('password_reset_expires_at', '>', DateTime.now().toSQL())
-      .first()
+      const user = await User.query()
+        .where('password_reset_token', token)
+        .where('password_reset_expires_at', '>', DateTime.now().toSQL())
+        .first()
+
+      if (!user) {
+        session.flash('error', 'Token invalide ou expiré. Veuillez refaire une demande.')
+        return response.redirect('/auth/forgot-password')
+      }
+
+      user.password = password
+      user.passwordResetToken = null
+      user.passwordResetExpiresAt = null
+      await user.save()
+
+      session.flash('success', 'Votre mot de passe a été réinitialisé avec succès.')
+      return response.redirect('/auth/login')
+    } catch (error) {
+      console.error('Erreur lors de la réinitialisation du mot de passe:', error)
+      session.flash('error', "Une erreur est survenue. Veuillez réessayer.")
+      return response.redirect().back()
+    }
+  }
+
+  /**
+   * Renvoie l'email de vérification
+   */
+  async resendVerificationEmail({ auth, response, session }: HttpContext) {
+    const user = auth.user
 
     if (!user) {
-      session.flash('error', 'Token invalide ou expiré.')
-      return response.redirect('/auth/forgot-password')
+      session.flash('error', 'Vous devez être connecté.')
+      return response.redirect('/auth/login')
     }
 
-    user.password = password
-    user.passwordResetToken = null
-    user.passwordResetExpiresAt = null
-    await user.save()
+    if (user.isEmailVerified) {
+      session.flash('info', 'Votre email est déjà vérifié.')
+      return response.redirect('/')
+    }
 
-    session.flash('success', 'Votre mot de passe a été réinitialisé avec succès.')
-    return response.redirect('/auth/login')
+    try {
+      await EmailService.sendVerificationEmail(user)
+      session.flash('success', 'Un nouvel email de vérification a été envoyé.')
+    } catch (error) {
+      console.error("Erreur lors de l'envoi de l'email:", error)
+      session.flash('error', "Erreur lors de l'envoi de l'email.")
+    }
+
+    return response.redirect().back()
   }
 }
