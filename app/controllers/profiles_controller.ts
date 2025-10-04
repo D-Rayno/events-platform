@@ -9,7 +9,11 @@ export default class ProfileController {
    */
   async show({ inertia, auth }: HttpContext) {
     const user = auth.user!
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     return inertia.render('profile/show', {
       user: {
         id: user.id,
@@ -50,14 +54,22 @@ export default class ProfileController {
           try {
             await drive.use().delete(user.avatarUrl)
           } catch (error) {
+<<<<<<< HEAD
             console.error("Erreur lors de la suppression de l'ancien avatar:", error)
+=======
+            console.error('Erreur lors de la suppression de l\'ancien avatar:', error)
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
           }
         }
 
         // Sauvegarder le nouveau avatar
         const fileName = `${cuid()}.${data.avatar.extname}`
         const filePath = `avatars/${fileName}`
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         await data.avatar.move(filePath)
         user.avatarUrl = filePath
       }
@@ -84,15 +96,27 @@ export default class ProfileController {
         await drive.use().delete(user.avatarUrl)
         user.avatarUrl = null
         await user.save()
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         session.flash('success', 'Votre photo de profil a été supprimée.')
       }
 
       return response.redirect().back()
     } catch (error) {
+<<<<<<< HEAD
       console.error("Erreur lors de la suppression de l'avatar:", error)
+=======
+      console.error('Erreur lors de la suppression de l\'avatar:', error)
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       session.flash('error', 'Une erreur est survenue.')
       return response.redirect().back()
     }
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

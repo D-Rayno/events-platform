@@ -14,7 +14,14 @@ export default class RegistrationController {
     const eventId = request.input('event_id')
     const search = request.input('search')
 
+<<<<<<< HEAD
     let query = Registration.query().preload('user').preload('event').orderBy('created_at', 'desc')
+=======
+    let query = Registration.query()
+      .preload('user')
+      .preload('event')
+      .orderBy('created_at', 'desc')
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
     // Filtrer par statut
     if (status) {
@@ -180,8 +187,12 @@ export default class RegistrationController {
     if (!registration) {
       return response.badRequest({
         error: 'Confirmation impossible',
+<<<<<<< HEAD
         message:
           "Ce QR code est invalide, l'événement n'a pas encore commencé, ou l'inscription a été annulée.",
+=======
+        message: "Ce QR code est invalide, l'événement n'a pas encore commencé, ou l'inscription a été annulée.",
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       })
     }
 
@@ -211,7 +222,14 @@ export default class RegistrationController {
    * Annule une inscription (admin)
    */
   async cancel({ params, response }: HttpContext) {
+<<<<<<< HEAD
     const registration = await Registration.query().where('id', params.id).preload('event').first()
+=======
+    const registration = await Registration.query()
+      .where('id', params.id)
+      .preload('event')
+      .first()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
     if (!registration) {
       return response.notFound({
@@ -260,6 +278,7 @@ export default class RegistrationController {
    */
   async stats({ response }: HttpContext) {
     const totalResult = await Registration.query().count('* as total').first()
+<<<<<<< HEAD
     const confirmedResult = await Registration.query()
       .where('status', 'confirmed')
       .count('* as total')
@@ -272,6 +291,11 @@ export default class RegistrationController {
       .where('status', 'canceled')
       .count('* as total')
       .first()
+=======
+    const confirmedResult = await Registration.query().where('status', 'confirmed').count('* as total').first()
+    const attendedResult = await Registration.query().where('status', 'attended').count('* as total').first()
+    const canceledResult = await Registration.query().where('status', 'canceled').count('* as total').first()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
     // Inscriptions récentes (7 derniers jours)
     const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toSQL()
@@ -291,4 +315,8 @@ export default class RegistrationController {
       },
     })
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

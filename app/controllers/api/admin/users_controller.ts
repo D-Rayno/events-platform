@@ -143,9 +143,13 @@ export default class UserController {
 
       return response.ok({
         success: true,
+<<<<<<< HEAD
         message: user.isBlocked
           ? 'Utilisateur bloqué avec succès'
           : 'Utilisateur débloqué avec succès',
+=======
+        message: user.isBlocked ? 'Utilisateur bloqué avec succès' : 'Utilisateur débloqué avec succès',
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         data: {
           id: user.id,
           isBlocked: user.isBlocked,
@@ -179,9 +183,13 @@ export default class UserController {
 
       return response.ok({
         success: true,
+<<<<<<< HEAD
         message: user.isActive
           ? 'Utilisateur activé avec succès'
           : 'Utilisateur désactivé avec succès',
+=======
+        message: user.isActive ? 'Utilisateur activé avec succès' : 'Utilisateur désactivé avec succès',
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         data: {
           id: user.id,
           isActive: user.isActive,
@@ -246,10 +254,14 @@ export default class UserController {
    */
   async stats({ response }: HttpContext) {
     const totalResult = await User.query().count('* as total').first()
+<<<<<<< HEAD
     const verifiedResult = await User.query()
       .where('is_email_verified', true)
       .count('* as total')
       .first()
+=======
+    const verifiedResult = await User.query().where('is_email_verified', true).count('* as total').first()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     const blockedResult = await User.query().where('is_blocked', true).count('* as total').first()
     const activeResult = await User.query().where('is_active', true).count('* as total').first()
 
@@ -263,4 +275,8 @@ export default class UserController {
       },
     })
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

@@ -94,7 +94,14 @@ export default class RegistrationController {
 
     try {
       // Récupérer l'événement avec un verrou
+<<<<<<< HEAD
       const event = await Event.query({ client: trx }).where('id', eventId).forUpdate().first()
+=======
+      const event = await Event.query({ client: trx })
+        .where('id', eventId)
+        .forUpdate()
+        .first()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
       if (!event) {
         await trx.rollback()
@@ -106,6 +113,7 @@ export default class RegistrationController {
       if (!event.isAgeEligible(user.age)) {
         await trx.rollback()
         if (event.maxAge && user.age > event.maxAge) {
+<<<<<<< HEAD
           session.flash(
             'error',
             `Cet événement est réservé aux personnes de ${event.minAge} à ${event.maxAge} ans.`
@@ -115,6 +123,11 @@ export default class RegistrationController {
             'error',
             `Cet événement est réservé aux personnes de ${event.minAge} ans et plus.`
           )
+=======
+          session.flash('error', `Cet événement est réservé aux personnes de ${event.minAge} à ${event.maxAge} ans.`)
+        } else {
+          session.flash('error', `Cet événement est réservé aux personnes de ${event.minAge} ans et plus.`)
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         }
         return response.redirect(`/events/${eventId}`)
       }
@@ -122,7 +135,11 @@ export default class RegistrationController {
       // Vérifier si l'événement accepte les inscriptions
       if (!event.canRegister()) {
         await trx.rollback()
+<<<<<<< HEAD
 
+=======
+        
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         if (event.status !== 'published') {
           session.flash('error', "Cet événement n'est pas publié.")
         } else if (event.isFull) {
@@ -132,11 +149,19 @@ export default class RegistrationController {
         } else if (event.registrationStartDate && DateTime.now() < event.registrationStartDate) {
           session.flash('error', "Les inscriptions n'ont pas encore commencé.")
         } else if (event.registrationEndDate && DateTime.now() > event.registrationEndDate) {
+<<<<<<< HEAD
           session.flash('error', "La période d'inscription est terminée.")
         } else {
           session.flash('error', 'Les inscriptions ne sont pas ouvertes.')
         }
 
+=======
+          session.flash('error', 'La période d\'inscription est terminée.')
+        } else {
+          session.flash('error', "Les inscriptions ne sont pas ouvertes.")
+        }
+        
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         return response.redirect(`/events/${eventId}`)
       }
 
@@ -183,6 +208,7 @@ export default class RegistrationController {
       }
 
       if (event.requiresApproval) {
+<<<<<<< HEAD
         session.flash(
           'info',
           `Votre demande d'inscription a été envoyée. Elle sera validée prochainement.`
@@ -191,6 +217,13 @@ export default class RegistrationController {
         session.flash('success', `Inscription confirmée ! Vous avez reçu votre QR code par email.`)
       }
 
+=======
+        session.flash('info', `Votre demande d'inscription a été envoyée. Elle sera validée prochainement.`)
+      } else {
+        session.flash('success', `Inscription confirmée ! Vous avez reçu votre QR code par email.`)
+      }
+      
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       return response.redirect(`/registrations/${registration.id}`)
     } catch (error) {
       await trx.rollback()
@@ -228,10 +261,14 @@ export default class RegistrationController {
     }
 
     if (registration.event.isOngoing() || registration.event.isFinished()) {
+<<<<<<< HEAD
       session.flash(
         'error',
         "Vous ne pouvez pas annuler car l'événement a déjà commencé ou est terminé."
       )
+=======
+      session.flash('error', "Vous ne pouvez pas annuler car l'événement a déjà commencé ou est terminé.")
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       return response.redirect('/registrations')
     }
 
@@ -253,7 +290,11 @@ export default class RegistrationController {
     } catch (error) {
       await trx.rollback()
       console.error("Erreur lors de l'annulation:", error)
+<<<<<<< HEAD
       session.flash('error', 'Une erreur est survenue.')
+=======
+      session.flash('error', "Une erreur est survenue.")
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       return response.redirect('/registrations')
     }
   }
@@ -276,7 +317,11 @@ export default class RegistrationController {
     }
 
     if (!registration.isActive) {
+<<<<<<< HEAD
       session.flash('error', 'Vous ne pouvez pas renvoyer le QR code pour cette inscription.')
+=======
+      session.flash('error', "Vous ne pouvez pas renvoyer le QR code pour cette inscription.")
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
       return response.redirect('/registrations')
     }
 
@@ -287,8 +332,16 @@ export default class RegistrationController {
       return response.redirect().back()
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error)
+<<<<<<< HEAD
       session.flash('error', 'Une erreur est survenue.')
       return response.redirect().back()
     }
   }
 }
+=======
+      session.flash('error', "Une erreur est survenue.")
+      return response.redirect().back()
+    }
+  }
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

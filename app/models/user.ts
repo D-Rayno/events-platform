@@ -91,4 +91,8 @@ export default class User extends compose(BaseModel, AuthFinder) {
   canLogin(): boolean {
     return this.isActive && !this.isBlocked && this.isEmailVerified
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

@@ -3,6 +3,7 @@ import Event from '#models/event'
 import db from '@adonisjs/lucid/services/db'
 import { createEventValidator } from '#validators/create_event'
 import { DateTime } from 'luxon'
+<<<<<<< HEAD
 import Registration from '#models/registration'
 
 export default class EventController {
@@ -24,16 +25,38 @@ export default class EventController {
       .where('status', 'published')
       .orderBy('start_date', 'asc')
 
+=======
+
+export default class EventController {
+  /**
+   * Liste tous les événements avec statistiques
+   */
+  async index({ request, response }: HttpContext) {
+    const page = request.input('page', 1)
+    const limit = request.input('limit', 20)
+    const search = request.input('search')
+    const category = request.input('category')
+    const status = request.input('status') // 'upcoming', 'ongoing', 'finished', 'all'
+
+    let query = Event.query()
+
+    // Recherche
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     if (search) {
       query = query.where((q) => {
         q.whereLike('name', `%${search}%`).orWhereLike('description', `%${search}%`)
       })
     }
 
+<<<<<<< HEAD
+=======
+    // Filtrer par catégorie
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     if (category) {
       query = query.where('category', category)
     }
 
+<<<<<<< HEAD
     if (province) {
       query = query.where('province', province)
     }
@@ -147,10 +170,35 @@ export default class EventController {
 
     return inertia.render('events/show', {
       event: {
+=======
+    // Filtrer par statut
+    if (status && status !== 'all') {
+      const now = DateTime.now()
+      if (status === 'upcoming') {
+        query = query.where('start_date', '>', now.toSQL())
+      } else if (status === 'ongoing') {
+        query = query.where('start_date', '<=', now.toSQL()).where('end_date', '>=', now.toSQL())
+      } else if (status === 'finished') {
+        query = query.where('end_date', '<', now.toSQL())
+      }
+    }
+
+    const events = await query
+      .withCount('registrations', (q) => {
+        q.whereIn('status', ['confirmed', 'attended'])
+      })
+      .orderBy('start_date', 'desc')
+      .paginate(page, limit)
+
+    return response.ok({
+      success: true,
+      data: events.all().map((event) => ({
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         id: event.id,
         name: event.name,
         description: event.description,
         location: event.location,
+<<<<<<< HEAD
         province: event.province,
         commune: event.commune,
         startDate: event.startDate.toISO(),
@@ -222,6 +270,89 @@ export default class EventController {
       userPrice,
     })
   }
+=======
+        startDate: event.startDate.toISO(),
+        endDate: event.endDate.toISO(),
+        capacity: event.capacity,
+        availableSeats: event.availableSeats,
+        registrationsCount: event.$extras.registrations_count || 0,
+        imageUrl: event.imageUrl,
+        category: event.category,
+        isActive: event.isActive,
+        isFeatured: event.isFeatured,
+        isUpcoming: event.isUpcoming(),
+        isOngoing: event.isOngoing(),
+        isFinished: event.isFinished(),
+        createdAt: event.createdAt.toISO(),
+      })),
+      meta: events.getMeta(),
+    })
+  }
+
+  /**
+   * Affiche les détails d'un événement avec toutes les inscriptions
+   */
+  async show({ params, response }: HttpContext) {
+    const event = await Event.query()
+      .where('id', params.id)
+      .preload('registrations', (q) => {
+        q.preload('user').orderBy('created_at', 'desc')
+      })
+      .first()
+
+    if (!event) {
+      return response.notFound({
+        error: 'Événement non trouvé',
+        message: "Cet événement n'existe pas.",
+      })
+    }
+
+    // Statistiques des inscriptions
+    const stats = {
+      total: event.registrations.length,
+      confirmed: event.registrations.filter((r) => r.status === 'confirmed').length,
+      attended: event.registrations.filter((r) => r.status === 'attended').length,
+      canceled: event.registrations.filter((r) => r.status === 'canceled').length,
+    }
+
+    return response.ok({
+      success: true,
+      data: {
+        id: event.id,
+        name: event.name,
+        description: event.description,
+        location: event.location,
+        startDate: event.startDate.toISO(),
+        endDate: event.endDate.toISO(),
+        capacity: event.capacity,
+        availableSeats: event.availableSeats,
+        imageUrl: event.imageUrl,
+        category: event.category,
+        isActive: event.isActive,
+        isFeatured: event.isFeatured,
+        isUpcoming: event.isUpcoming(),
+        isOngoing: event.isOngoing(),
+        isFinished: event.isFinished(),
+        createdAt: event.createdAt.toISO(),
+        stats,
+        registrations: event.registrations.map((reg) => ({
+          id: reg.id,
+          status: reg.status,
+          qrCode: reg.qrCode,
+          attendedAt: reg.attendedAt?.toISO(),
+          createdAt: reg.createdAt.toISO(),
+          user: {
+            id: reg.user.id,
+            firstName: reg.user.firstName,
+            lastName: reg.user.lastName,
+            email: reg.user.email,
+          },
+        })),
+      },
+    })
+  }
+
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   /**
    * Créer un nouvel événement
    */
@@ -249,12 +380,17 @@ export default class EventController {
         status: 'draft',
         isPublic: data.isPublic !== undefined ? data.isPublic : true,
         requiresApproval: data.requiresApproval || false,
+<<<<<<< HEAD
         registrationStartDate: data.registrationStartDate
           ? DateTime.fromJSDate(data.registrationStartDate)
           : undefined,
         registrationEndDate: data.registrationEndDate
           ? DateTime.fromJSDate(data.registrationEndDate)
           : undefined,
+=======
+        registrationStartDate: data.registrationStartDate ? DateTime.fromJSDate(data.registrationStartDate) : undefined,
+        registrationEndDate: data.registrationEndDate ? DateTime.fromJSDate(data.registrationEndDate) : undefined,
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
         imageUrl: null,
       })
 
@@ -374,6 +510,7 @@ export default class EventController {
     const now = DateTime.now()
 
     const totalEvents = await Event.query().count('* as total').first()
+<<<<<<< HEAD
     const upcomingEvents = await Event.query()
       .where('start_date', '>', now.toSQL())
       .count('* as total')
@@ -387,6 +524,11 @@ export default class EventController {
       .where('end_date', '<', now.toSQL())
       .count('* as total')
       .first()
+=======
+    const upcomingEvents = await Event.query().where('start_date', '>', now.toSQL()).count('* as total').first()
+    const ongoingEvents = await Event.query().where('start_date', '<=', now.toSQL()).where('end_date', '>=', now.toSQL()).count('* as total').first()
+    const finishedEvents = await Event.query().where('end_date', '<', now.toSQL()).count('* as total').first()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
     return response.ok({
       success: true,
@@ -398,4 +540,8 @@ export default class EventController {
       },
     })
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

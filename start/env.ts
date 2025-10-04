@@ -50,6 +50,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   /*
   |----------------------------------------------------------
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   | Variables pour le stockage de fichiers
   |----------------------------------------------------------
   */
@@ -57,8 +60,11 @@ export default await Env.create(new URL('../', import.meta.url), {
 
   /*
   |----------------------------------------------------------
+<<<<<<< HEAD
 =======
 >>>>>>> 62aba6d (fix: auth validation and more auth functionalities)
+=======
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   | Token admin pour l'API mobile
   |----------------------------------------------------------
   */

@@ -49,6 +49,7 @@ export default class extends BaseSchema {
       table.timestamp('registration_start_date').nullable()
       table.timestamp('registration_end_date').nullable()
 
+<<<<<<< HEAD
       // Statut admin
       table.boolean('is_active').defaultTo(true)
       table.boolean('is_featured').defaultTo(false)
@@ -109,10 +110,23 @@ export default class extends BaseSchema {
       table.index('event_type')
       table.index('game_type')
       table.index('difficulty')
+=======
+      table.timestamp('created_at').notNullable()
+      table.timestamp('updated_at').nullable()
+
+      // Index pour recherche et filtrage
+      table.index(['status', 'start_date'])
+      table.index('category')
+      table.index(['province', 'commune'])
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     })
   }
 
   async down() {
     this.schema.dropTable(this.tableName)
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

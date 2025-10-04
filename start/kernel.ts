@@ -50,4 +50,8 @@ export const middleware = router.named({
   guest: () => import('#middleware/guest_middleware'),
   auth: () => import('#middleware/auth_middleware'),
   adminApi: () => import('#middleware/admin_api_middleware'),
+<<<<<<< HEAD
 })
+=======
+})
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

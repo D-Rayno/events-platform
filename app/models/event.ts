@@ -79,6 +79,7 @@ export default class Event extends BaseModel {
   @column()
   declare isFeatured: boolean
 
+<<<<<<< HEAD
   // ============================================
   // GAME-SPECIFIC FIELDS
   // ============================================
@@ -155,6 +156,8 @@ export default class Event extends BaseModel {
   @column()
   declare specialInstructions: string | null
 
+=======
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
 
@@ -168,6 +171,7 @@ export default class Event extends BaseModel {
   declare registrations: HasMany<typeof Registration>
 
   /**
+<<<<<<< HEAD
    * Vérifie si c'est un événement de jeu
    */
   get isGameEvent(): boolean {
@@ -182,6 +186,11 @@ export default class Event extends BaseModel {
       const teamsCount = Math.ceil(this.registeredCount / (this.maxTeamSize || 1))
       return teamsCount >= this.maxTeams
     }
+=======
+   * Vérifie si l'événement est complet
+   */
+  get isFull(): boolean {
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     return this.registeredCount >= this.capacity
   }
 
@@ -193,6 +202,7 @@ export default class Event extends BaseModel {
   }
 
   /**
+<<<<<<< HEAD
    * Teams disponibles (si applicable)
    */
   get availableTeamSlots(): number | null {
@@ -204,11 +214,17 @@ export default class Event extends BaseModel {
   }
 
   /**
+=======
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
    * Vérifie si les inscriptions sont ouvertes
    */
   get isRegistrationOpen(): boolean {
     const now = DateTime.now()
+<<<<<<< HEAD
 
+=======
+    
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
     if (this.status !== 'published') {
       return false
     }
@@ -265,12 +281,16 @@ export default class Event extends BaseModel {
    * Vérifie si les inscriptions sont ouvertes (méthode)
    */
   canRegister(): boolean {
+<<<<<<< HEAD
     return (
       this.isRegistrationOpen &&
       this.status === 'published' &&
       this.hasAvailableSeats() &&
       !this.isFinished()
     )
+=======
+    return this.isRegistrationOpen && this.status === 'published' && this.hasAvailableSeats() && !this.isFinished()
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   }
 
   /**
@@ -304,6 +324,7 @@ export default class Event extends BaseModel {
   }
 
   /**
+<<<<<<< HEAD
    * Vérifie si le participant est physiquement apte (basé sur l'intensité)
    */
   requiresPhysicalFitness(): boolean {
@@ -331,6 +352,8 @@ export default class Event extends BaseModel {
   }
 
   /**
+=======
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
    * Met à jour le statut automatiquement selon les dates
    */
   updateStatus(): void {
@@ -346,6 +369,7 @@ export default class Event extends BaseModel {
       this.status = 'ongoing'
     }
   }
+<<<<<<< HEAD
 
   /**
    * Obtient un résumé des informations du jeu
@@ -405,3 +429,6 @@ export default class Event extends BaseModel {
     return badges[this.physicalIntensity]
   }
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

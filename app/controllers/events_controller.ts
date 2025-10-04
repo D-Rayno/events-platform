@@ -148,4 +148,8 @@ export default class EventController {
       userAge: user?.age,
     })
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

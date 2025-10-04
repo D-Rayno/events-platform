@@ -61,4 +61,8 @@ export default class Registration extends BaseModel {
   isCanceled(): boolean {
     return this.status === 'canceled'
   }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
