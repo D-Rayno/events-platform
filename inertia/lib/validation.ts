@@ -1,161 +1,145 @@
-import { z } from 'zod'
+import * as yup from 'yup'
 
-// Messages d'erreur personnalisés en français
-const customErrorMap: z.ZodErrorMap = (issue, ctx) => {
-  if (issue.code === z.ZodIssueCode.invalid_type) {
-    if (issue.expected === 'string') {
-      return { message: 'Ce champ doit être une chaîne de caractères' }
-    }
-    if (issue.expected === 'number') {
-      return { message: 'Ce champ doit être un nombre' }
-    }
-  }
-
-  if (issue.code === z.ZodIssueCode.too_small) {
-    if (issue.type === 'string') {
-      return { message: `Ce champ doit contenir au moins ${issue.minimum} caractères` }
-    }
-    if (issue.type === 'number') {
-      return { message: `La valeur doit être supérieure ou égale à ${issue.minimum}` }
-    }
-  }
-
-  if (issue.code === z.ZodIssueCode.too_big) {
-    if (issue.type === 'string') {
-      return { message: `Ce champ ne doit pas dépasser ${issue.maximum} caractères` }
-    }
-    if (issue.type === 'number') {
-      return { message: `La valeur doit être inférieure ou égale à ${issue.maximum}` }
-    }
-  }
-
-  return { message: ctx.defaultError }
-}
-
-z.setErrorMap(customErrorMap)
+// Configuration des messages en français
+yup.setLocale({
+  mixed: {
+    default: 'Ce champ est invalide',
+    required: 'Ce champ est requis',
+    notType: 'Format invalide',
+  },
+  string: {
+    min: ({ min }) => `Ce champ doit contenir au moins ${min} caractères`,
+    max: ({ max }) => `Ce champ ne doit pas dépasser ${max} caractères`,
+    email: 'Adresse email invalide',
+    url: 'URL invalide',
+  },
+  number: {
+    min: ({ min }) => `La valeur doit être supérieure ou égale à ${min}`,
+    max: ({ max }) => `La valeur doit être inférieure ou égale à ${max}`,
+    integer: 'La valeur doit être un nombre entier',
+  },
+})
 
 // Schémas de validation
-export const registerSchema = z.object({
-  firstName: z
-    .string({ required_error: 'Le prénom est requis' })
+export const registerSchema = yup.object({
+  firstName: yup
+    .string()
+    .required('Le prénom est requis')
     .min(2, 'Le prénom doit contenir au moins 2 caractères')
     .max(100, 'Le prénom ne doit pas dépasser 100 caractères')
-    .regex(/^[a-zA-ZÀ-ÿ\s-]+$/, 'Le prénom ne doit contenir que des lettres'),
+    .matches(/^[a-zA-ZÀ-ÿ\s-]+$/, 'Le prénom ne doit contenir que des lettres'),
 
-  lastName: z
-    .string({ required_error: 'Le nom est requis' })
+  lastName: yup
+    .string()
+    .required('Le nom est requis')
     .min(2, 'Le nom doit contenir au moins 2 caractères')
     .max(100, 'Le nom ne doit pas dépasser 100 caractères')
-    .regex(/^[a-zA-ZÀ-ÿ\s-]+$/, 'Le nom ne doit contenir que des lettres'),
+    .matches(/^[a-zA-ZÀ-ÿ\s-]+$/, 'Le nom ne doit contenir que des lettres'),
 
-  email: z
-    .string({ required_error: "L'email est requis" })
+  email: yup
+    .string()
+    .required("L'email est requis")
     .email('Adresse email invalide')
     .max(254, "L'email ne doit pas dépasser 254 caractères"),
 
-  password: z
-    .string({ required_error: 'Le mot de passe est requis' })
+  password: yup
+    .string()
+    .required('Le mot de passe est requis')
     .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
     .max(100, 'Le mot de passe ne doit pas dépasser 100 caractères')
-    .regex(
+    .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
     ),
 
-  password_confirmation: z.string({ required_error: 'La confirmation est requise' }),
+  password_confirmation: yup
+    .string()
+    .required('La confirmation est requise')
+    .oneOf([yup.ref('password')], 'Les mots de passe ne correspondent pas'),
 
-  age: z
-    .number({ required_error: "L'âge est requis", invalid_type_error: "L'âge doit être un nombre" })
-    .int("L'âge doit être un nombre entier")
+  age: yup
+    .number()
+    .required("L'âge est requis")
+    .integer("L'âge doit être un nombre entier")
     .min(13, 'Vous devez avoir au moins 13 ans')
     .max(120, 'Âge invalide'),
 
-  province: z
-    .string({ required_error: 'La province est requise' })
-    .min(1, 'Veuillez sélectionner une province'),
+  province: yup.string().required('La province est requise'),
 
-  commune: z
-    .string({ required_error: 'La commune est requise' })
+  commune: yup
+    .string()
+    .required('La commune est requise')
     .min(2, 'La commune doit contenir au moins 2 caractères')
     .max(100, 'La commune ne doit pas dépasser 100 caractères'),
 
-  phoneNumber: z
+  phoneNumber: yup
     .string()
-    .regex(/^(\+213|0)[567]\d{8}$/, 'Numéro de téléphone algérien invalide')
-    .optional()
-    .or(z.literal('')),
-}).refine((data) => data.password === data.password_confirmation, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['password_confirmation'],
+    .matches(/^(\+213|0)[567]\d{8}$/, 'Numéro de téléphone algérien invalide')
+    .optional(),
 })
 
-export const loginSchema = z.object({
-  email: z
-    .string({ required_error: "L'email est requis" })
-    .email('Adresse email invalide'),
-
-  password: z
-    .string({ required_error: 'Le mot de passe est requis' })
-    .min(1, 'Le mot de passe est requis'),
+export const loginSchema = yup.object({
+  email: yup.string().required("L'email est requis").email('Adresse email invalide'),
+  password: yup.string().required('Le mot de passe est requis'),
 })
 
-export const forgotPasswordSchema = z.object({
-  email: z
-    .string({ required_error: "L'email est requis" })
-    .email('Adresse email invalide'),
+export const forgotPasswordSchema = yup.object({
+  email: yup.string().required("L'email est requis").email('Adresse email invalide'),
 })
 
-export const resetPasswordSchema = z.object({
-  token: z.string().min(1, 'Token invalide'),
-  
-  password: z
-    .string({ required_error: 'Le mot de passe est requis' })
+export const resetPasswordSchema = yup.object({
+  token: yup.string().required('Token invalide'),
+  password: yup
+    .string()
+    .required('Le mot de passe est requis')
     .min(8, 'Le mot de passe doit contenir au moins 8 caractères')
     .max(100, 'Le mot de passe ne doit pas dépasser 100 caractères')
-    .regex(
+    .matches(
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
       'Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre'
     ),
-
-  password_confirmation: z.string({ required_error: 'La confirmation est requise' }),
-}).refine((data) => data.password === data.password_confirmation, {
-  message: 'Les mots de passe ne correspondent pas',
-  path: ['password_confirmation'],
+  password_confirmation: yup
+    .string()
+    .required('La confirmation est requise')
+    .oneOf([yup.ref('password')], 'Les mots de passe ne correspondent pas'),
 })
 
-export const updateProfileSchema = z.object({
-  firstName: z
-    .string({ required_error: 'Le prénom est requis' })
+export const updateProfileSchema = yup.object({
+  firstName: yup
+    .string()
+    .required('Le prénom est requis')
     .min(2, 'Le prénom doit contenir au moins 2 caractères')
     .max(100, 'Le prénom ne doit pas dépasser 100 caractères'),
 
-  lastName: z
-    .string({ required_error: 'Le nom est requis' })
+  lastName: yup
+    .string()
+    .required('Le nom est requis')
     .min(2, 'Le nom doit contenir au moins 2 caractères')
     .max(100, 'Le nom ne doit pas dépasser 100 caractères'),
 
-  age: z
-    .number({ required_error: "L'âge est requis" })
-    .int("L'âge doit être un nombre entier")
+  age: yup
+    .number()
+    .required("L'âge est requis")
+    .integer("L'âge doit être un nombre entier")
     .min(13, 'Vous devez avoir au moins 13 ans')
     .max(120, 'Âge invalide'),
 
-  province: z.string({ required_error: 'La province est requise' }),
+  province: yup.string().required('La province est requise'),
 
-  commune: z
-    .string({ required_error: 'La commune est requise' })
+  commune: yup
+    .string()
+    .required('La commune est requise')
     .min(2, 'La commune doit contenir au moins 2 caractères'),
 
-  phoneNumber: z
+  phoneNumber: yup
     .string()
-    .regex(/^(\+213|0)[567]\d{8}$/, 'Numéro de téléphone algérien invalide')
-    .optional()
-    .or(z.literal('')),
+    .matches(/^(\+213|0)[567]\d{8}$/, 'Numéro de téléphone algérien invalide')
+    .optional(),
 })
 
-// Types TypeScript extraits des schémas
-export type RegisterFormData = z.infer<typeof registerSchema>
-export type LoginFormData = z.infer<typeof loginSchema>
-export type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>
-export type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>
-export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
+// Types TypeScript
+export type RegisterFormData = yup.InferType<typeof registerSchema>
+export type LoginFormData = yup.InferType<typeof loginSchema>
+export type ForgotPasswordFormData = yup.InferType<typeof forgotPasswordSchema>
+export type ResetPasswordFormData = yup.InferType<typeof resetPasswordSchema>
+export type UpdateProfileFormData = yup.InferType<typeof updateProfileSchema>

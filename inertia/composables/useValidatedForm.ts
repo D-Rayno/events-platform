@@ -1,67 +1,67 @@
 import { useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import { z } from 'zod'
+import type { AnyObjectSchema, ValidationError } from 'yup'
 
 export function useValidatedForm<T extends Record<string, any>>(
-  schema: z.ZodSchema<T>,
+  schema: AnyObjectSchema,
   initialData: T
 ) {
   const form = useForm(initialData)
   const clientErrors = ref<Partial<Record<keyof T, string>>>({})
 
-  // Validation côté client
-  const validateField = (field: keyof T) => {
+  const validateField = async (field: keyof T): Promise<boolean> => {
     try {
-      const fieldSchema = schema.shape[field as string]
-      if (fieldSchema) {
-        fieldSchema.parse(form[field])
-        delete clientErrors.value[field]
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        clientErrors.value[field] = error.errors[0]?.message || 'Erreur de validation'
-      }
-    }
-  }
-
-  const validateAll = (): boolean => {
-    try {
-      schema.parse(form.data())
-      clientErrors.value = {}
+      await schema.validateAt(field as string, form.data())
+      delete clientErrors.value[field]
       return true
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        const errors: Partial<Record<keyof T, string>> = {}
-        error.errors.forEach((err) => {
-          const field = err.path[0] as keyof T
-          if (field && !errors[field]) {
-            errors[field] = err.message
-          }
-        })
-        clientErrors.value = errors
+      if (error instanceof Error && 'message' in error) {
+        clientErrors.value[field] = error.message
       }
       return false
     }
   }
 
-  // Fusionner les erreurs client et serveur
-  const getErrors = () => {
-    return {
-      ...clientErrors.value,
-      ...form.errors
+  const validateAll = async (): Promise<boolean> => {
+    try {
+      await schema.validate(form.data(), { abortEarly: false })
+      clientErrors.value = {}
+      return true
+    } catch (error) {
+      const validationError = error as ValidationError
+      const errors: Partial<Record<keyof T, string>> = {}
+      
+      validationError.inner?.forEach((err) => {
+        const field = err.path as keyof T
+        if (field && !errors[field]) {
+          errors[field] = err.message
+        }
+      })
+      
+      clientErrors.value = errors
+      return false
     }
   }
+
+  const getErrors = () => ({
+    ...clientErrors.value,
+    ...form.errors,
+  })
 
   const getError = (field: keyof T): string | undefined => {
     return clientErrors.value[field] || form.errors[field as string]
   }
 
-  // Nettoyer l'erreur quand l'utilisateur commence à taper
   const clearError = (field: keyof T) => {
     delete clientErrors.value[field]
     if (form.errors[field as string]) {
       form.clearErrors(field as string)
     }
+  }
+
+  const clearAllErrors = () => {
+    clientErrors.value = {}
+    form.clearErrors()
   }
 
   return {
@@ -71,6 +71,7 @@ export function useValidatedForm<T extends Record<string, any>>(
     validateAll,
     getErrors,
     getError,
-    clearError
+    clearError,
+    clearAllErrors,
   }
 }
