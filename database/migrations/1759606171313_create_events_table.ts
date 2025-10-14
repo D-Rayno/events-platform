@@ -49,13 +49,63 @@ export default class extends BaseSchema {
       table.timestamp('registration_start_date').nullable()
       table.timestamp('registration_end_date').nullable()
 
+      // Statut admin
+      table.boolean('is_active').defaultTo(true)
+      table.boolean('is_featured').defaultTo(false)
+
+      // ============================================
+      // GAME-SPECIFIC FIELDS
+      // ============================================
+
+      // Type d'événement (null = événement normal)
+      table.string('event_type', 50).nullable().comment('null for normal events, game type for game events')
+      
+      // Informations de jeu
+      table.string('game_type', 100).nullable().comment('squid-game, werewolf, escape-room, etc.')
+      table.enum('difficulty', ['easy', 'medium', 'hard', 'extreme']).nullable()
+      table.integer('duration_minutes').unsigned().nullable()
+      table.enum('physical_intensity', ['low', 'medium', 'high']).defaultTo('medium')
+      
+      // Configuration des équipes
+      table.boolean('allows_teams').defaultTo(false)
+      table.enum('team_registration', ['individual', 'team', 'both']).defaultTo('individual')
+      table.integer('min_team_size').unsigned().nullable()
+      table.integer('max_team_size').unsigned().nullable()
+      table.integer('max_teams').unsigned().nullable()
+      table.boolean('auto_team_formation').defaultTo(false)
+      
+      // Exigences et sécurité
+      table.json('required_items').nullable().comment('["comfortable shoes", "water bottle"]')
+      table.json('prohibited_items').nullable().comment('["phones", "cameras"]')
+      table.json('safety_requirements').nullable()
+      table.boolean('waiver_required').defaultTo(false)
+      table.string('rules_document_url').nullable()
+      
+      // Timeline du jeu
+      table.timestamp('check_in_time').nullable()
+      table.integer('briefing_duration_minutes').unsigned().nullable()
+      
+      // Récompenses
+      table.text('prize_information').nullable()
+      table.decimal('prize_pool', 10, 2).unsigned().nullable()
+      table.timestamp('winner_announcement').nullable()
+      
+      // Paramètres supplémentaires
+      table.boolean('photography_allowed').defaultTo(true)
+      table.boolean('live_streaming').defaultTo(false)
+      table.text('special_instructions').nullable()
+
+      // Timestamps
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
 
-      // Index pour recherche et filtrage
+      // Index
       table.index(['status', 'start_date'])
       table.index('category')
       table.index(['province', 'commune'])
+      table.index('event_type')
+      table.index('game_type')
+      table.index('difficulty')
     })
   }
 
