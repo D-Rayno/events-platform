@@ -1,5 +1,5 @@
-import apiRoutes from './routes/api.js'
-import webRoutes from './routes/web.js'
+import apiRoutes from '#start/routes/api'
+import webRoutes from '#start/routes/web'
 
 apiRoutes()
 webRoutes()

@@ -31,10 +31,10 @@ export default class extends BaseSchema {
       table.string('password_reset_token').nullable()
       table.timestamp('password_reset_expires_at').nullable()
       
-      // Statut du compte
+      // Statut du compte (removed .after() modifier)
       table.boolean('is_active').defaultTo(true)
       table.boolean('is_blocked').defaultTo(false)
-      table.boolean('is_admin').defaultTo(false).after('is_blocked')
+      table.boolean('is_admin').defaultTo(false)
 
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()

@@ -28,7 +28,7 @@ export default defineConfig({
     () => import('@adonisjs/mail/mail_provider'),
   ],
 
-  preloads: [() => import('./routes/index.routes.js'), () => import('#start/kernel')],
+  preloads: [() => import('#start/routes'), () => import('#start/kernel')],
 
   tests: {
     suites: [
