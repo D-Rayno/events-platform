@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm, Link } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import { PROVINCES } from '../constants'
+import { PROVINCES } from '../../lib/constants'
 
 const form = useForm({
     firstName: '',

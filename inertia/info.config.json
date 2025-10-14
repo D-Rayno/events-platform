@@ -1,0 +1,71 @@
+{
+  "app": {
+    "name": "EventHub",
+    "tagline": "Votre plateforme d'événements en Algérie",
+    "description": "Découvrez et participez aux meilleurs événements près de chez vous"
+  },
+  "branding": {
+    "logo": {
+      "text": "EventHub",
+      "icon": "🎯",
+      "url": "/images/logo.svg"
+    },
+    "favicon": "/favicon.ico"
+  },
+  "images": {
+    "banner": {
+      "home": "/images/banners/home-hero.jpg",
+      "auth": "/images/banners/auth-bg.jpg",
+      "events": "/images/banners/events-hero.jpg",
+      "default": "/images/banners/default.jpg"
+    },
+    "placeholder": {
+      "event": "/images/placeholders/event.jpg",
+      "avatar": "/images/placeholders/avatar.jpg"
+    }
+  },
+  "colors": {
+    "primary": "#5B21B6",
+    "secondary": "#EC4899",
+    "accent": "#F59E0B",
+    "success": "#10B981",
+    "error": "#EF4444",
+    "warning": "#F59E0B",
+    "info": "#3B82F6"
+  },
+  "theme": {
+    "borderRadius": "lg",
+    "fontFamily": "Inter, system-ui, sans-serif",
+    "fontSize": {
+      "base": "16px",
+      "scale": 1.125
+    }
+  },
+  "features": {
+    "enableDarkMode": false,
+    "enableNotifications": true,
+    "enableSearch": true,
+    "enableFilters": true,
+    "maxUploadSize": 5242880,
+    "allowedFileTypes": ["image/jpeg", "image/png", "image/webp"],
+    "itemsPerPage": 12
+  },
+  "social": {
+    "facebook": "https://facebook.com/eventhub",
+    "instagram": "https://instagram.com/eventhub",
+    "twitter": "https://twitter.com/eventhub",
+    "youtube": "https://youtube.com/eventhub"
+  },
+  "contact": {
+    "email": "contact@eventhub.dz",
+    "phone": "+213 555 123 456",
+    "address": "Alger, Algérie"
+  },
+  "seo": {
+    "defaultTitle": "EventHub - Événements en Algérie",
+    "titleTemplate": "%s | EventHub",
+    "description": "Découvrez et participez aux meilleurs événements en Algérie",
+    "keywords": ["événements", "algérie", "sortir", "activités", "jeux"],
+    "ogImage": "/images/og-image.jpg"
+  }
+}

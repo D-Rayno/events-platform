@@ -26,13 +26,13 @@ export const PROVINCES = [
   'Constantine',
   'Médéa',
   'Mostaganem',
-  "M'Sila",
+  'M\'Sila',
   'Mascara',
   'Ouargla',
   'Oran',
   'El Bayadh',
   'Illizi',
-  'Bordj Bou Arréridj',
+  'Bordj Bou Arreridj',
   'Boumerdès',
   'El Tarf',
   'Tindouf',
@@ -55,6 +55,11 @@ export const PROVINCES = [
   'In Guezzam',
   'Touggourt',
   'Djanet',
-  "El M'Ghair",
-  'El Meniaa',
-] as const
+  'El M\'Ghair',
+  'El Meniaa'
+]
+
+export const PROVINCE_OPTIONS = PROVINCES.map(province => ({
+  value: province,
+  label: province
+}))

@@ -6,6 +6,7 @@ import { forgotPasswordValidator } from '#validators/forgot_password'
 import { resetPasswordValidator } from '#validators/reset_password'
 import EmailService from '#services/email_service'
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
 
 export default class AuthController {
   /**
@@ -19,9 +20,12 @@ export default class AuthController {
    * Traite l'inscription
    */
   async register({ request, response, session }: HttpContext) {
+    const trx = await db.transaction()
+    
     try {
       const data = await request.validateUsing(registerValidator)
 
+      // Create user within transaction
       const user = await User.create({
         firstName: data.firstName,
         lastName: data.lastName,
@@ -34,10 +38,26 @@ export default class AuthController {
         isEmailVerified: false,
         isActive: true,
         isBlocked: false,
+        isAdmin: false, // Explicitly set isAdmin
+      }, { client: trx })
+
+      // Commit the transaction before sending email
+      await trx.commit()
+
+      // Log for debugging
+      console.log('User created successfully:', {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName
       })
 
-      // Envoyer l'email de vérification
-      await EmailService.sendVerificationEmail(user)
+      // Send verification email (outside transaction)
+      try {
+        await EmailService.sendVerificationEmail(user)
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError)
+        // Don't fail registration if email fails
+      }
 
       session.flash(
         'success',
@@ -45,8 +65,16 @@ export default class AuthController {
       )
       return response.redirect('/auth/login')
     } catch (error) {
+      await trx.rollback()
       console.error('Erreur lors de l\'inscription:', error)
-      session.flash('error', "Une erreur est survenue lors de l'inscription.")
+      
+      // Provide more detailed error message
+      if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('unique')) {
+        session.flash('error', 'Cet email est déjà utilisé.')
+      } else {
+        session.flash('error', "Une erreur est survenue lors de l'inscription.")
+      }
+      
       return response.redirect().back()
     }
   }
