@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import Alert from '../ui/Alert.vue'
-import config from '../../info.config.json'
+import Alert from '#ui/Alert.vue'
+import config from '~/info.config.json'
 
 const page = usePage()
 
