@@ -4,21 +4,27 @@ import { usePage } from '@inertiajs/vue3'
 import AppHeader from '#shared/Header.vue'
 import AppFooter from '#shared/Footer.vue'
 import FlashMessages from '#shared/FlashMessage.vue'
+import { useAuthMiddleware } from '#composables/use_auth_middleware'
 
 interface Props {
   showHeader?: boolean
   showFooter?: boolean
   containerClass?: string
+  layout?: 'default' | 'auth' | 'full'
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   showHeader: true,
   showFooter: true,
-  containerClass: '',
+  containerClass: 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8',
+  layout: 'default',
 })
 
 const page = usePage()
 const auth = computed(() => page.props.auth as { user?: any } | undefined)
+
+// Check authentication on mount if needed
+const { requireAuth } = useAuthMiddleware()
 </script>
 
 <template>
@@ -26,13 +32,11 @@ const auth = computed(() => page.props.auth as { user?: any } | undefined)
     <AppHeader v-if="showHeader" :user="auth?.user" />
     <FlashMessages />
 
-    <main
-      class="flex-1"
-      v-motion
-      :initial="{ opacity: 0 }"
-      :enter="{ opacity: 1, transition: { duration: 300, delay: 100 } }"
-    >
-      <div :class="containerClass">
+    <main class="flex-1" v-motion :initial="{ opacity: 0 }" :enter="{ opacity: 1, transition: { duration: 300, delay: 100 } }">
+      <div v-if="layout === 'full'" class="w-full">
+        <slot />
+      </div>
+      <div v-else :class="containerClass">
         <slot />
       </div>
     </main>

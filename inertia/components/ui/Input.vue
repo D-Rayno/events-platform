@@ -12,11 +12,14 @@ interface Props {
   iconRight?: any
   type?: string
   size?: 'sm' | 'md' | 'lg'
+  disabled?: boolean
+  autoFocus?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   size: 'md',
+  disabled: false,
 })
 
 const emit = defineEmits<{
@@ -45,7 +48,7 @@ const sizeClasses = {
 const inputClasses = computed(() => [
   'w-full border-2 rounded-xl transition-all duration-300 placeholder:text-neutral-400',
   'focus:outline-none',
-  'disabled:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-500',
+  'disabled:bg-neutral-100 disabled:cursor-not-allowed disabled:text-neutral-500 disabled:opacity-50',
   props.error
     ? 'border-error-300 focus:border-error-500 focus:ring-4 focus:ring-error-500/20 bg-error-50/30'
     : isFocused.value
@@ -103,7 +106,7 @@ const togglePassword = () => {
       <div
         v-if="icon"
         :class="[
-          'absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300',
+          'absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 pointer-events-none',
           props.error ? 'text-error-500' : isFocused ? 'text-primary-600' : 'text-neutral-400',
         ]"
       >
@@ -114,7 +117,9 @@ const togglePassword = () => {
         :value="modelValue"
         :type="inputType"
         :class="inputClasses"
-        v-bind="attrs"
+        :disabled="disabled"
+        :autofocus="autoFocus"
+        v-bind="{ ...attrs }"
         @input="updateValue"
         @blur="handleBlur"
         @focus="handleFocus"
@@ -122,14 +127,14 @@ const togglePassword = () => {
 
       <div
         v-if="iconRight || type === 'password'"
-        class="absolute right-3.5 top-1/2 -translate-y-1/2"
+        class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-auto"
       >
         <button
-          v-if="type === 'password'"
+          v-if="type === 'password' && !disabled"
           type="button"
           @click="togglePassword"
           class="text-neutral-400 hover:text-neutral-600 transition-all duration-300 hover:scale-110 active:scale-95"
-          :aria-label="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'"
+          :aria-label="showPassword ? 'Hide password' : 'Show password'"
         >
           <EyeSlashIcon v-if="showPassword" :class="iconSize" />
           <EyeIcon v-else :class="iconSize" />

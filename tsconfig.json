@@ -4,10 +4,7 @@
     "rootDir": "./",
     "outDir": "./build",
     "paths": {
-      "~/*": ["./*"],
-      "#ui/*": ["./components/ui"],
-      "#shared": ["./components/shared"],
-      "@": ["./*"]
+      "~/*": ["./*"]
     }
   },
   "exclude": ["./inertia/**/*", "node_modules", "build"]

@@ -1,26 +1,35 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { MagnifyingGlassIcon, AdjustmentsHorizontalIcon, XMarkIcon, CalendarIcon, MapPinIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import AppLayout from '#layouts/AppLayout.vue'
+import Input from '#ui/Input.vue'
+import Select from '#ui/Select.vue'
+import Button from '#ui/Button.vue'
+import Card from '#ui/Card.vue'
+import Badge from '#ui/Badge.vue'
+import Image from '#ui/Image.vue'
+import { PROVINCES, EVENT_CATEGORIES } from '#lib/constants'
 
-const props = defineProps<{
+interface Event {
+  id: number
+  name: string
+  description: string
+  location: string
+  province: string
+  startDate: string
+  basePrice: number
+  imageUrl: string | null
+  category: string
+  registeredCount: number
+  capacity: number
+  isFull: boolean
+  canRegister: boolean
+}
+
+interface PageProps {
   events: {
-    data: Array<{
-      id: number
-      name: string
-      description: string
-      location: string
-      startDate: string
-      endDate: string
-      maxCapacity: number
-      registeredCount: number
-      availableSpots: number
-      imageUrl: string | null
-      category: string
-      categoryLabel: string
-      price: number
-      isFull: boolean
-      canRegister: boolean
-    }>
+    data: Event[]
     meta: {
       total: number
       per_page: number
@@ -31,289 +40,375 @@ const props = defineProps<{
   filters: {
     category?: string
     search?: string
+    province?: string
   }
-}>()
+}
 
-const categories = [
-  { value: 'conference', label: 'Conférence' },
-  { value: 'workshop', label: 'Atelier' },
-  { value: 'seminar', label: 'Séminaire' },
-  { value: 'concert', label: 'Concert' },
-  { value: 'sport', label: 'Sport' },
-  { value: 'exhibition', label: 'Exhibition' },
-  { value: 'networking', label: 'Networking' },
-  { value: 'other', label: 'Autre' },
-]
+const props = defineProps<PageProps>()
 
-const selectedCategory = ref(props.filters.category || '')
 const searchQuery = ref(props.filters.search || '')
+const selectedCategory = ref(props.filters.category || '')
+const selectedProvince = ref(props.filters.province || '')
+const showFilters = ref(false)
+
+const provinceOptions = PROVINCES.map((p) => ({ value: p, label: p }))
+const categoryOptions = EVENT_CATEGORIES.map((c) => ({ value: c, label: c }))
+
+const hasActiveFilters = computed(() => searchQuery.value || selectedCategory.value || selectedProvince.value)
 
 const applyFilters = () => {
   router.get(
     '/events',
     {
-      category: selectedCategory.value || undefined,
       search: searchQuery.value || undefined,
+      category: selectedCategory.value || undefined,
+      province: selectedProvince.value || undefined,
     },
-    {
-      preserveState: true,
-      preserveScroll: true,
-    }
+    { preserveScroll: true }
   )
+  showFilters.value = false
 }
 
 const clearFilters = () => {
-  selectedCategory.value = ''
   searchQuery.value = ''
-  router.get('/events')
+  selectedCategory.value = ''
+  selectedProvince.value = ''
+  router.get('/events', {}, { preserveScroll: true })
 }
+
+const goToPage = (page: number) => {
+  router.get(
+    '/events',
+    {
+      page,
+      search: searchQuery.value || undefined,
+      category: selectedCategory.value || undefined,
+      province: selectedProvince.value || undefined,
+    },
+    { preserveScroll: true }
+  )
+}
+
+const getAvailability = (event: Event) => {
+  if (event.isFull) return { text: 'Full', color: 'error' }
+  const available = event.capacity - event.registeredCount
+  if (available <= 5) return { text: `${available} left`, color: 'warning' }
+  return { text: `${available} available`, color: 'success' }
+}
+
+const pages = computed(() => {
+  const total = props.events.meta.last_page
+  const current = props.events.meta.current_page
+  const delta = 2
+  const result: (number | string)[] = []
+
+  if (current > 1 + delta) {
+    result.push(1)
+    if (current > 2 + delta) result.push('...')
+  }
+
+  for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+    result.push(i)
+  }
+
+  if (current < total - delta) {
+    if (current < total - 1 - delta) result.push('...')
+    result.push(total)
+  }
+
+  return result
+})
 </script>
 
 <template>
-  <Head title="Événements" />
+  <Head title="Events" />
 
-  <div class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10">
-    <!-- Header -->
-    <div class="bg-white shadow-sm border-b border-sand-7">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="flex justify-between items-center">
-          <div>
-            <h1 class="text-4xl font-bold text-sand-12">Événements</h1>
-            <p class="mt-2 text-sand-11">Découvrez tous nos événements à venir</p>
-          </div>
-          <Link href="/" class="text-primary hover:underline">← Accueil</Link>
-        </div>
+  <AppLayout layout="full">
+    <!-- Hero Section -->
+    <div
+      class="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-12 md:py-16"
+      v-motion
+      :initial="{ opacity: 0, y: -20 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 500 } }"
+    >
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">Discover Events</h1>
+        <p class="text-white/90 text-lg">Explore amazing events happening near you</p>
       </div>
     </div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <!-- Filtres -->
-      <div class="bg-white rounded-lg shadow-sm border border-sand-7 p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-sand-12 mb-2">Rechercher</label>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Nom, description..."
-              @keyup.enter="applyFilters"
-              class="w-full px-4 py-2 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-          </div>
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <!-- Filters Section -->
+      <div class="mb-8">
+        <!-- Mobile Filter Toggle -->
+        <div class="md:hidden mb-4">
+          <Button
+            variant="outline"
+            size="sm"
+            @click="showFilters = !showFilters"
+            :icon-right="showFilters ? XMarkIcon : AdjustmentsHorizontalIcon"
+            full-width
+          >
+            {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+          </Button>
+        </div>
 
-          <div>
-            <label class="block text-sm font-medium text-sand-12 mb-2">Catégorie</label>
-            <select
-              v-model="selectedCategory"
-              @change="applyFilters"
-              class="w-full px-4 py-2 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-            >
-              <option value="">Toutes les catégories</option>
-              <option v-for="cat in categories" :key="cat.value" :value="cat.value">
-                {{ cat.label }}
-              </option>
-            </select>
-          </div>
+        <!-- Filter Panel -->
+        <div
+          :class="[
+            'grid grid-cols-1 md:grid-cols-4 gap-4 p-6 bg-white rounded-xl border border-neutral-200',
+            !showFilters && 'hidden md:grid',
+          ]"
+          v-motion
+          :initial="{ opacity: 0, y: -10 }"
+          :enter="{ opacity: 1, y: 0, transition: { duration: 300, delay: 100 } }"
+        >
+          <Input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search events..."
+            :icon="MagnifyingGlassIcon"
+            @keyup.enter="applyFilters"
+          />
 
-          <div class="flex items-end gap-2">
-            <button
-              @click="applyFilters"
-              class="flex-1 bg-primary hover:bg-primary/90 text-white font-medium py-2 px-4 rounded-lg transition"
-            >
-              Filtrer
-            </button>
-            <button
+          <Select
+            v-model="selectedCategory"
+            placeholder="All Categories"
+            :options="categoryOptions"
+            searchable
+          />
+
+          <Select
+            v-model="selectedProvince"
+            placeholder="All Provinces"
+            :options="provinceOptions"
+            searchable
+          />
+
+          <div class="flex gap-2 col-span-1 md:col-span-1">
+            <Button variant="primary" @click="applyFilters" class="flex-1">
+              Filter
+            </Button>
+            <Button
+              v-if="hasActiveFilters"
+              variant="outline"
               @click="clearFilters"
-              class="px-4 py-2 border border-sand-7 hover:bg-sand-3 rounded-lg transition"
+              class="flex-1"
             >
-              Réinitialiser
-            </button>
+              Clear
+            </Button>
           </div>
+        </div>
+
+        <!-- Active Filters Badge -->
+        <div
+          v-if="hasActiveFilters"
+          class="mt-4 flex flex-wrap gap-2"
+          v-motion
+          :initial="{ opacity: 0 }"
+          :enter="{ opacity: 1, transition: { delay: 150 } }"
+        >
+          <Badge
+            v-if="searchQuery"
+            variant="primary"
+            rounded
+            dot
+          >
+            Search: {{ searchQuery }}
+          </Badge>
+          <Badge
+            v-if="selectedCategory"
+            variant="primary"
+            rounded
+            dot
+          >
+            {{ selectedCategory }}
+          </Badge>
+          <Badge
+            v-if="selectedProvince"
+            variant="primary"
+            rounded
+            dot
+          >
+            {{ selectedProvince }}
+          </Badge>
         </div>
       </div>
 
-      <!-- Compteur -->
-      <div class="mb-6 text-sand-11">
-        {{ events.meta.total }} événement{{ events.meta.total > 1 ? 's' : '' }} trouvé{{
-          events.meta.total > 1 ? 's' : ''
-        }}
+      <!-- Results Info -->
+      <div class="flex justify-between items-center mb-6">
+        <p class="text-neutral-600">
+          Showing <span class="font-semibold text-neutral-900">{{ props.events.data.length }}</span>
+          of
+          <span class="font-semibold text-neutral-900">{{ props.events.meta.total }}</span>
+          events
+        </p>
       </div>
 
-      <!-- Liste des événements -->
+      <!-- Events Grid -->
       <div
-        v-if="events.data.length > 0"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8"
+        v-if="props.events.data.length > 0"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12"
       >
         <Link
-          v-for="event in events.data"
+          v-for="(event, index) in props.events.data"
           :key="event.id"
           :href="`/events/${event.id}`"
-          class="bg-white rounded-lg shadow-sm hover:shadow-lg border border-sand-7 hover:border-primary/50 overflow-hidden transition group"
+          class="group"
+          v-motion
+          :initial="{ opacity: 0, y: 20 }"
+          :enter="{
+            opacity: 1,
+            y: 0,
+            transition: { duration: 400, delay: Math.min(index * 50, 300) },
+          }"
         >
-          <!-- Image -->
-          <div
-            class="h-48 bg-gradient-to-br from-primary/20 to-primary/40 relative overflow-hidden"
-          >
-            <img
-              v-if="event.imageUrl"
-              :src="`/uploads/${event.imageUrl}`"
-              :alt="event.name"
-              class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-            />
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center text-6xl text-primary/50"
-            >
-              🎪
-            </div>
-
-            <!-- Badge catégorie -->
-            <div class="absolute top-3 left-3">
-              <span
-                class="px-3 py-1 bg-white/90 backdrop-blur text-primary text-xs font-medium rounded-full"
+          <Card hoverable class="h-full flex flex-col overflow-hidden">
+            <!-- Image -->
+            <div class="relative h-48 overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200">
+              <Image
+                :src="event.imageUrl as string | undefined"
+                :alt="event.name"
+                aspect-ratio="16/9"
+                class="group-hover:scale-105 transition-transform duration-300"
+              />
+              <!-- Category Badge -->
+              <Badge
+                variant="secondary"
+                size="sm"
+                class="absolute top-3 left-3"
               >
-                {{ event.categoryLabel }}
-              </span>
+                {{ event.category }}
+              </Badge>
+              <!-- Price Badge -->
+              <Badge
+                :variant="event.basePrice === 0 ? 'success' : 'primary'"
+                size="sm"
+                class="absolute top-3 right-3"
+              >
+                {{ event.basePrice === 0 ? 'Free' : `$${event.basePrice}` }}
+              </Badge>
             </div>
 
-            <!-- Badge prix -->
-            <div class="absolute top-3 right-3">
-              <span class="px-3 py-1 bg-primary text-white text-xs font-bold rounded-full">
-                {{ event.price === 0 ? 'GRATUIT' : `${event.price} DA` }}
-              </span>
-            </div>
-          </div>
+            <!-- Content -->
+            <div class="flex-1 p-5 flex flex-col">
+              <h3 class="text-lg font-bold text-neutral-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
+                {{ event.name }}
+              </h3>
 
-          <!-- Contenu -->
-          <div class="p-6">
-            <h3 class="text-xl font-bold text-sand-12 mb-2 group-hover:text-primary transition">
-              {{ event.name }}
-            </h3>
+              <p class="text-sm text-neutral-600 mb-4 line-clamp-2">
+                {{ event.description }}
+              </p>
 
-            <p class="text-sand-11 text-sm mb-4 line-clamp-2">
-              {{ event.description }}
-            </p>
+              <!-- Info Grid -->
+              <div class="space-y-2 mb-4 text-sm">
+                <div class="flex items-center gap-2 text-neutral-600">
+                  <CalendarIcon class="w-4 h-4 flex-shrink-0 text-primary-500" />
+                  <span>{{ event.startDate }}</span>
+                </div>
 
-            <!-- Infos -->
-            <div class="space-y-2 text-sm text-sand-11">
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-                <span>{{ event.startDate }}</span>
+                <div class="flex items-center gap-2 text-neutral-600">
+                  <MapPinIcon class="w-4 h-4 flex-shrink-0 text-primary-500" />
+                  <span>{{ event.location }}</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <UsersIcon class="w-4 h-4 flex-shrink-0 text-primary-500" />
+                  <span
+                    :class="[
+                      'text-sm font-medium',
+                      event.isFull ? 'text-error-600' : getAvailability(event).color === 'warning' ? 'text-warning-600' : 'text-success-600',
+                    ]"
+                  >
+                    {{ getAvailability(event).text }}
+                  </span>
+                </div>
               </div>
 
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              <!-- Progress Bar -->
+              <div class="mb-4">
+                <div class="h-2 bg-neutral-200 rounded-full overflow-hidden">
+                  <div
+                    class="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-300"
+                    :style="{ width: `${Math.min((event.registeredCount / event.capacity) * 100, 100)}%` }"
                   />
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-                <span>{{ event.location }}</span>
+                </div>
+                <p class="text-xs text-neutral-500 mt-1">
+                  {{ event.registeredCount }} / {{ event.capacity }} registered
+                </p>
               </div>
 
-              <!-- Places disponibles -->
-              <div class="flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-                <span v-if="event.isFull" class="text-red-600 font-medium">Complet</span>
-                <span v-else>{{ event.availableSpots }} / {{ event.maxCapacity }} places</span>
+              <!-- Status -->
+              <div class="pt-4 border-t border-neutral-200">
+                <Badge
+                  :variant="event.canRegister ? 'success' : event.isFull ? 'error' : 'warning'"
+                  size="sm"
+                  class="w-full justify-center"
+                >
+                  {{ event.canRegister ? 'Registration Open' : event.isFull ? 'Full' : 'Closed' }}
+                </Badge>
               </div>
             </div>
-
-            <!-- Statut -->
-            <div class="mt-4 pt-4 border-t border-sand-6">
-              <span
-                v-if="event.canRegister"
-                class="inline-flex items-center text-green-700 text-sm font-medium"
-              >
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Inscriptions ouvertes
-              </span>
-              <span
-                v-else-if="event.isFull"
-                class="inline-flex items-center text-red-700 text-sm font-medium"
-              >
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Complet
-              </span>
-              <span v-else class="inline-flex items-center text-orange-700 text-sm font-medium">
-                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fill-rule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                    clip-rule="evenodd"
-                  />
-                </svg>
-                Inscriptions fermées
-              </span>
-            </div>
-          </div>
+          </Card>
         </Link>
       </div>
 
-      <!-- Message si aucun événement -->
-      <div v-else class="text-center py-12">
+      <!-- Empty State -->
+      <div v-else class="text-center py-16">
         <div class="text-6xl mb-4">🔍</div>
-        <h3 class="text-2xl font-bold text-sand-12 mb-2">Aucun événement trouvé</h3>
-        <p class="text-sand-11 mb-6">Essayez de modifier vos filtres de recherche</p>
-        <button
-          @click="clearFilters"
-          class="bg-primary hover:bg-primary/90 text-white font-medium py-2 px-6 rounded-lg transition"
-        >
-          Réinitialiser les filtres
-        </button>
+        <h3 class="text-2xl font-bold text-neutral-900 mb-2">No Events Found</h3>
+        <p class="text-neutral-600 mb-6">Try adjusting your filters to discover more events</p>
+        <Button variant="primary" @click="clearFilters">
+          Clear Filters
+        </Button>
       </div>
 
       <!-- Pagination -->
-      <div v-if="events.meta.last_page > 1" class="flex justify-center gap-2">
-        <Link
-          v-for="page in events.meta.last_page"
-          :key="page"
-          :href="`/events?page=${page}`"
-          :class="[
-            'px-4 py-2 rounded-lg font-medium transition',
-            page === events.meta.current_page
-              ? 'bg-primary text-white'
-              : 'bg-white border border-sand-7 hover:bg-sand-3 text-sand-12',
-          ]"
-          preserve-state
+      <div
+        v-if="props.events.meta.last_page > 1"
+        class="flex justify-center items-center gap-2 mt-12"
+        v-motion
+        :initial="{ opacity: 0, y: 10 }"
+        :enter="{ opacity: 1, y: 0, transition: { delay: 200 } }"
+      >
+        <Button
+          v-if="props.events.meta.current_page > 1"
+          variant="outline"
+          size="sm"
+          @click="goToPage(props.events.meta.current_page - 1)"
         >
-          {{ page }}
-        </Link>
+          Previous
+        </Button>
+
+        <div class="flex gap-1">
+          <button
+            v-for="page in pages"
+            :key="page"
+            @click="typeof page === 'number' && goToPage(page)"
+            :disabled="page === '...'"
+            :class="[
+              'px-3 py-2 rounded-lg font-medium transition-all',
+              page === props.events.meta.current_page
+                ? 'bg-primary-600 text-white shadow-md'
+                : page === '...'
+                  ? 'text-neutral-500 cursor-default'
+                  : 'border border-neutral-300 text-neutral-700 hover:border-primary-300 hover:bg-primary-50',
+            ]"
+          >
+            {{ page }}
+          </button>
+        </div>
+
+        <Button
+          v-if="props.events.meta.current_page < props.events.meta.last_page"
+          variant="outline"
+          size="sm"
+          @click="goToPage(props.events.meta.current_page + 1)"
+        >
+          Next
+        </Button>
       </div>
     </div>
-  </div>
+  </AppLayout>
 </template>

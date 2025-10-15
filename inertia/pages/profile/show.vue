@@ -1,23 +1,38 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3'
+import { Head, useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
-import { PROVINCES } from '../../lib/constants'
+import { UserIcon, EnvelopeIcon, PhoneIcon, MapPinIcon, CakeIcon, TrashIcon } from '@heroicons/vue/24/outline'
+import AppLayout from '#layouts/AppLayout.vue'
+import Input from '#ui/Input.vue'
+import Select from '#ui/Select.vue'
+import Button from '#ui/Button.vue'
+import Card from '#ui/Card.vue'
+import Avatar from '#ui/Avatar.vue'
+import { useProtectedLayout } from '#composables/use_protected_layout'
+import { PROVINCES } from '#lib/constants'
 
-const props = defineProps<{
-  user: {
-    id: number
-    firstName: string
-    lastName: string
-    email: string
-    age: number
-    province: string
-    commune: string
-    phoneNumber: string | null
-    avatarUrl: string | null
-    isEmailVerified: boolean
-    createdAt: string
-  }
-}>()
+interface User {
+  id: number
+  firstName: string
+  lastName: string
+  email: string
+  age: number
+  province: string
+  commune: string
+  phoneNumber: string | null
+  avatarUrl: string | null
+  isEmailVerified: boolean
+  createdAt: string
+}
+
+interface PageProps {
+  user: User
+}
+
+const props = defineProps<PageProps>()
+
+// Protect page - require authentication
+useProtectedLayout({ requiresAuth: true })
 
 const form = useForm({
   firstName: props.user.firstName,
@@ -29,8 +44,9 @@ const form = useForm({
   avatar: null as File | null,
 })
 
-const provinces = ref(PROVINCES)
+const provinces = PROVINCES.map((p) => ({ value: p, label: p }))
 const previewUrl = ref<string | null>(null)
+const showDeleteConfirm = ref(false)
 
 const handleFileChange = (event: Event) => {
   const target = event.target as HTMLInputElement
@@ -52,266 +68,266 @@ const submit = () => {
 }
 
 const deleteAvatar = () => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer votre photo de profil ?')) {
-    router.delete('/profile/avatar', {
-      preserveScroll: true,
-    })
-  }
+  showDeleteConfirm.value = true
+}
+
+const confirmDeleteAvatar = () => {
+  form.delete('/profile/avatar', {
+    preserveScroll: true,
+    onSuccess: () => {
+      showDeleteConfirm.value = false
+    },
+  })
 }
 </script>
 
 <template>
-  <Head title="Mon profil" />
+  <Head title="My Profile" />
 
-  <div
-    class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 py-12 px-4 sm:px-6 lg:px-8"
-  >
-    <div class="max-w-4xl mx-auto">
-      <!-- En-tête -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-sand-12 mb-2">Mon profil</h1>
-        <p class="text-sand-11">Gérez vos informations personnelles</p>
+  <AppLayout>
+    <!-- Header -->
+    <div
+      class="mb-8"
+      v-motion
+      :initial="{ opacity: 0, y: -20 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 400 } }"
+    >
+      <h1 class="text-4xl font-bold text-neutral-900 mb-2">My Profile</h1>
+      <p class="text-neutral-600">Manage your personal information and preferences</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Sidebar -->
+      <div class="lg:col-span-1">
+        <Card
+          class="sticky top-20"
+          v-motion
+          :initial="{ opacity: 0, x: -20 }"
+          :enter="{ opacity: 1, x: 0, transition: { duration: 400, delay: 100 } }"
+        >
+          <!-- Avatar Section -->
+          <div class="text-center pb-6 border-b border-neutral-200">
+            <div class="relative inline-block mb-4">
+              <Avatar
+                :src="previewUrl || user.avatarUrl as string | undefined"
+                :name="`${user.firstName} ${user.lastName}`"
+                size="xl"
+              />
+              <label
+                for="avatar-input"
+                class="absolute bottom-0 right-0 bg-primary-600 hover:bg-primary-700 text-white p-2 rounded-full cursor-pointer transition shadow-lg"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                </svg>
+              </label>
+              <input
+                id="avatar-input"
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                @change="handleFileChange"
+                class="hidden"
+              />
+            </div>
+
+            <h2 class="text-2xl font-bold text-neutral-900">
+              {{ user.firstName }} {{ user.lastName }}
+            </h2>
+            <p class="text-neutral-600 mt-1">{{ user.email }}</p>
+
+            <!-- Email Verification Status -->
+            <div class="mt-4 pt-4 border-t border-neutral-200">
+              <div class="flex items-center justify-center gap-2">
+                <div
+                  :class="[
+                    'w-3 h-3 rounded-full',
+                    user.isEmailVerified ? 'bg-success-500' : 'bg-warning-500',
+                  ]"
+                />
+                <span class="text-sm font-medium text-neutral-700">
+                  {{ user.isEmailVerified ? 'Email Verified' : 'Email Pending Verification' }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Member Since -->
+            <p class="text-xs text-neutral-500 mt-3">
+              Member since {{ new Date(user.createdAt).toLocaleDateString() }}
+            </p>
+          </div>
+
+          <!-- Delete Avatar Button -->
+          <div v-if="user.avatarUrl && !previewUrl" class="pt-4">
+            <Button
+              variant="danger"
+              size="sm"
+              full-width
+              :icon-left="TrashIcon"
+              @click="deleteAvatar"
+            >
+              Delete Photo
+            </Button>
+          </div>
+        </Card>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Sidebar avec avatar et infos -->
-        <div class="lg:col-span-1">
-          <div class="bg-white shadow-xl rounded-2xl p-6 border border-sand-7 space-y-6">
-            <!-- Avatar -->
-            <div class="text-center">
-              <div class="relative inline-block">
-                <div
-                  class="w-32 h-32 rounded-full bg-gradient-to-br from-primary/20 to-primary/40 flex items-center justify-center text-4xl font-bold text-primary overflow-hidden"
-                >
-                  <img
-                    v-if="previewUrl || user.avatarUrl"
-                    :src="previewUrl || `/uploads/${user.avatarUrl}`"
-                    alt="Avatar"
-                    class="w-full h-full object-cover"
-                  />
-                  <span v-else>{{ user.firstName[0] }}{{ user.lastName[0] }}</span>
-                </div>
-
-                <button
-                  v-if="user.avatarUrl && !previewUrl"
-                  @click="deleteAvatar"
-                  type="button"
-                  class="absolute bottom-0 right-0 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition"
-                  title="Supprimer la photo"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              <h2 class="mt-4 text-xl font-semibold text-sand-12">
-                {{ user.firstName }} {{ user.lastName }}
-              </h2>
-              <p class="text-sand-11">{{ user.email }}</p>
-            </div>
-
-            <!-- Statut de vérification -->
-            <div class="pt-4 border-t border-sand-6">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm text-sand-11">Email vérifié</span>
-                <span
-                  v-if="user.isEmailVerified"
-                  class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded"
-                >
-                  ✓ Vérifié
-                </span>
-                <span
-                  v-else
-                  class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded"
-                >
-                  En attente
-                </span>
-              </div>
-              <div class="text-sm text-sand-11">
-                Membre depuis : <span class="font-medium text-sand-12">{{ user.createdAt }}</span>
+      <!-- Main Form -->
+      <div class="lg:col-span-2">
+        <Card
+          v-motion
+          :initial="{ opacity: 0, x: 20 }"
+          :enter="{ opacity: 1, x: 0, transition: { duration: 400, delay: 150 } }"
+        >
+          <form @submit.prevent="submit" class="space-y-6">
+            <!-- Avatar Upload Preview -->
+            <div v-if="previewUrl" class="p-4 bg-primary-50 border border-primary-200 rounded-lg">
+              <p class="text-sm font-medium text-primary-900 mb-2">
+                New photo ready to upload
+              </p>
+              <div class="flex items-center justify-between">
+                <img :src="previewUrl" alt="Preview" class="h-16 w-16 object-cover rounded" />
+                <Button variant="primary" size="sm" type="submit" :loading="form.processing">
+                  Save Photo
+                </Button>
               </div>
             </div>
-          </div>
-        </div>
 
-        <!-- Formulaire de modification -->
-        <div class="lg:col-span-2">
-          <div class="bg-white shadow-xl rounded-2xl p-8 border border-sand-7">
-            <form @submit.prevent="submit" class="space-y-6">
-              <!-- Photo de profil -->
-              <div>
-                <label class="block text-sm font-medium text-sand-12 mb-2"> Photo de profil </label>
-                <input
-                  type="file"
-                  @change="handleFileChange"
-                  accept="image/jpeg,image/jpg,image/png,image/webp"
-                  class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                  :class="{ 'border-red-500': form.errors.avatar }"
-                />
-                <p v-if="form.errors.avatar" class="mt-1 text-sm text-red-600">
-                  {{ form.errors.avatar }}
-                </p>
-                <p class="mt-1 text-xs text-sand-10">
-                  Formats acceptés : JPG, PNG, WEBP (max 2 Mo)
-                </p>
-              </div>
-
-              <!-- Prénom & Nom -->
+            <!-- Personal Information Section -->
+            <div>
+              <h3 class="text-lg font-semibold text-neutral-900 mb-4">Personal Information</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="firstName" class="block text-sm font-medium text-sand-12 mb-2">
-                    Prénom <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="firstName"
-                    v-model="form.firstName"
-                    type="text"
-                    required
-                    class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    :class="{ 'border-red-500': form.errors.firstName }"
-                  />
-                  <p v-if="form.errors.firstName" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.firstName }}
-                  </p>
-                </div>
-
-                <div>
-                  <label for="lastName" class="block text-sm font-medium text-sand-12 mb-2">
-                    Nom <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="lastName"
-                    v-model="form.lastName"
-                    type="text"
-                    required
-                    class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    :class="{ 'border-red-500': form.errors.lastName }"
-                  />
-                  <p v-if="form.errors.lastName" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.lastName }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Âge -->
-              <div>
-                <label for="age" class="block text-sm font-medium text-sand-12 mb-2">
-                  Âge <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="age"
-                  v-model="form.age"
-                  type="number"
+                <Input
+                  v-model="form.firstName"
+                  type="text"
+                  label="First Name"
+                  :icon="UserIcon"
                   required
-                  min="13"
-                  max="120"
-                  class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                  :class="{ 'border-red-500': form.errors.age }"
+                  :error="form.errors.firstName"
                 />
-                <p v-if="form.errors.age" class="mt-1 text-sm text-red-600">
-                  {{ form.errors.age }}
-                </p>
+                <Input
+                  v-model="form.lastName"
+                  type="text"
+                  label="Last Name"
+                  :icon="UserIcon"
+                  required
+                  :error="form.errors.lastName"
+                />
               </div>
+            </div>
 
-              <!-- Province & Commune -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="province" class="block text-sm font-medium text-sand-12 mb-2">
-                    Province <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="province"
-                    v-model="form.province"
-                    required
-                    class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    :class="{ 'border-red-500': form.errors.province }"
-                  >
-                    <option v-for="prov in provinces" :key="prov" :value="prov">
-                      {{ prov }}
-                    </option>
-                  </select>
-                  <p v-if="form.errors.province" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.province }}
-                  </p>
-                </div>
-
-                <div>
-                  <label for="commune" class="block text-sm font-medium text-sand-12 mb-2">
-                    Commune <span class="text-red-500">*</span>
-                  </label>
-                  <input
-                    id="commune"
-                    v-model="form.commune"
-                    type="text"
-                    required
-                    class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                    :class="{ 'border-red-500': form.errors.commune }"
-                  />
-                  <p v-if="form.errors.commune" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.commune }}
-                  </p>
-                </div>
-              </div>
-
-              <!-- Numéro de téléphone -->
-              <div>
-                <label for="phoneNumber" class="block text-sm font-medium text-sand-12 mb-2">
-                  Numéro de téléphone <span class="text-sand-10">(optionnel)</span>
-                </label>
-                <input
-                  id="phoneNumber"
+            <!-- Contact Information Section -->
+            <div>
+              <h3 class="text-lg font-semibold text-neutral-900 mb-4">Contact Information</h3>
+              <div class="space-y-4">
+                <Input
+                  :value="user.email"
+                  type="email"
+                  label="Email Address"
+                  :icon="EnvelopeIcon"
+                  disabled
+                  hint="Email cannot be changed"
+                />
+                <Input
                   v-model="form.phoneNumber"
                   type="tel"
-                  class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                  :class="{ 'border-red-500': form.errors.phoneNumber }"
-                  placeholder="+213 555 123 456"
+                  label="Phone Number (Optional)"
+                  :icon="PhoneIcon"
+                  placeholder="+213 5XX XX XX XX"
+                  :error="form.errors.phoneNumber"
                 />
-                <p v-if="form.errors.phoneNumber" class="mt-1 text-sm text-red-600">
-                  {{ form.errors.phoneNumber }}
-                </p>
               </div>
+            </div>
 
-              <!-- Bouton de sauvegarde -->
-              <button
+            <!-- Location & Age Section -->
+            <div>
+              <h3 class="text-lg font-semibold text-neutral-900 mb-4">Location & Age</h3>
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Input
+                  v-model.number="form.age"
+                  type="number"
+                  label="Age"
+                  :icon="CakeIcon"
+                  min="13"
+                  max="120"
+                  required
+                  :error="form.errors.age"
+                />
+                <Select
+                  v-model="form.province"
+                  label="Province"
+                  :options="provinces"
+                  required
+                  :error="form.errors.province"
+                  searchable
+                />
+                <Input
+                  v-model="form.commune"
+                  type="text"
+                  label="Commune"
+                  :icon="MapPinIcon"
+                  required
+                  :error="form.errors.commune"
+                />
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 pt-4 border-t border-neutral-200">
+              <Button
                 type="submit"
+                variant="primary"
+                size="lg"
+                :loading="form.processing"
                 :disabled="form.processing"
-                class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                class="flex-1"
               >
-                <span v-if="!form.processing">Enregistrer les modifications</span>
-                <span v-else class="flex items-center">
-                  <svg
-                    class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      class="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      stroke-width="4"
-                    ></circle>
-                    <path
-                      class="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Enregistrement...
-                </span>
-              </button>
-            </form>
-          </div>
-        </div>
+                Save Changes
+              </Button>
+            </div>
+          </form>
+        </Card>
       </div>
     </div>
-  </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div
+      v-if="showDeleteConfirm"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+    >
+      <Card class="max-w-md w-full">
+        <h3 class="text-xl font-bold text-neutral-900 mb-2">Delete Photo?</h3>
+        <p class="text-neutral-600 mb-6">
+          Are you sure you want to delete your profile photo? This action cannot be undone.
+        </p>
+        <div class="flex gap-3">
+          <Button
+            variant="ghost"
+            class="flex-1"
+            @click="showDeleteConfirm = false"
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            class="flex-1"
+            :loading="form.processing"
+            @click="confirmDeleteAvatar"
+          >
+            Delete
+          </Button>
+        </div>
+      </Card>
+    </div>
+  </AppLayout>
 </template>

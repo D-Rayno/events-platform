@@ -7,9 +7,22 @@
     "jsxImportSource": "vue",
     "paths": {
       "~/*": ["./*"],
-      "#ui/*": ["./components/ui"],
+      "#ui": ["./components/ui"],
+      "#ui/*": ["./components/ui/*"],
       "#shared": ["./components/shared"],
-      "@": ["./*"]
+      "#shared/*": ["./components/shared/*"],
+      "#layouts": ["./components/layouts"],
+      "#layouts/*": ["./components/layouts/*"],
+      "#composables": ["./composables"],
+      "#composables/*": ["./composables/*"],
+      "#services": ["./services"],
+      "#services/*": ["./services/*"],
+      "#stores": ["./stores"],
+      "#stores/*": ["./stores/*"],
+      "#lib": ["./lib"],
+      "#lib/*": ["./lib/*"],
+      "#types": ["./types"],
+      "#types/*": ["./types/*"]
     }
   },
   "include": ["./**/*.ts", "./**/*.vue"]
