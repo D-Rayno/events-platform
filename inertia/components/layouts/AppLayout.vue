@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePage } from '@inertiajs/vue3'
-import AppHeader from '@/components/shared/Header.vue'
-import AppFooter from '@/components/shared/Footer.vue'
-import FlashMessages from '@/components/shared/FlashMessage.vue'
+import AppHeader from '#shared/Header.vue'
+import AppFooter from '#shared/Footer.vue'
+import FlashMessages from '#shared/FlashMessage.vue'
 
 interface Props {
   showHeader?: boolean

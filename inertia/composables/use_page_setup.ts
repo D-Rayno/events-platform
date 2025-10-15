@@ -3,46 +3,37 @@ import { onMounted, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import { useAuthStore } from '~/stores/auth'
 import { useAppStore } from '~/stores/app'
-import type { SharedProps } from '~/types/common'
 
 /**
  * Page setup composable
  * Initializes stores and handles shared data
  */
 export function usePageSetup() {
-  const page = usePage<SharedProps>()
+  const page = usePage()
   const authStore = useAuthStore()
   const appStore = useAppStore()
 
-  /**
-   * Initialize auth from page props
-   */
   const initializeAuth = () => {
-    if (page.props.auth?.user && !authStore.isInitialized) {
-      authStore.initializeAuth(page.props.auth.user)
+    const props = page.props as any
+    if (props.auth?.user && !authStore.isInitialized) {
+      authStore.initializeAuth(props.auth.user)
     }
   }
 
-  /**
-   * Handle flash messages
-   */
   const handleFlashMessages = () => {
-    if (page.props.flash) {
-      appStore.setFlashMessages(page.props.flash)
+    const props = page.props as any
+    if (props.flash) {
+      appStore.setFlashMessages(props.flash)
     }
   }
 
-  /**
-   * Initialize page
-   */
   const initializePage = () => {
     initializeAuth()
     handleFlashMessages()
   }
 
-  // Watch for page prop changes
   watch(
-    () => page.props.auth?.user,
+    () => (page.props as any).auth?.user,
     (newUser) => {
       if (newUser) {
         authStore.setUser(newUser)
@@ -54,7 +45,7 @@ export function usePageSetup() {
   )
 
   watch(
-    () => page.props.flash,
+    () => (page.props as any).flash,
     (newFlash) => {
       if (newFlash) {
         appStore.setFlashMessages(newFlash)

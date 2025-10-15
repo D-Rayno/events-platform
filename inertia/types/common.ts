@@ -1,5 +1,7 @@
 // inertia/types/common.ts
-import type { User } from "./user"
+import type { User } from './user'
+import type { PageProps as InertiaPageProps } from '@inertiajs/core'
+
 export interface PaginationMeta {
   total: number
   per_page: number
@@ -21,7 +23,8 @@ export interface FlashMessages {
   info?: string
 }
 
-export interface SharedProps {
+// Extend Inertia PageProps to include our shared props
+export interface SharedProps extends InertiaPageProps {
   auth?: {
     user?: User
   }

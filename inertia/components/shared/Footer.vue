@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3'
-import config from '~/info.config.json'
+import config from '~/theme.config.json'
 
 const currentYear = new Date().getFullYear()
 </script>

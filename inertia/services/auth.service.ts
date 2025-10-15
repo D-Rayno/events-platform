@@ -1,39 +1,12 @@
 // inertia/services/auth.service.ts
 import { router } from '@inertiajs/vue3'
 import { useAuthStore } from '~/stores/auth'
-import type { LoginCredentials, RegisterData } from '~/types/auth'
+import type { LoginCredentials, RegisterData, toFormData } from '~/types/auth'
 
-/**
- * Authentication service
- * Handles all authentication-related operations
- */
 class AuthService {
-  /**
-   * Login user with credentials
-   * @param credentials - Email and password
-   * @param remember - Remember user session
-   */
   async login(credentials: LoginCredentials, remember: boolean = false) {
     return new Promise((resolve, reject) => {
-      router.post(
-        '/auth/login',
-        { ...credentials, remember },
-        {
-          preserveScroll: true,
-          onSuccess: () => resolve(true),
-          onError: (errors) => reject(errors),
-        }
-      )
-    })
-  }
-
-  /**
-   * Register new user
-   * @param data - Registration data
-   */
-  async register(data: RegisterData) {
-    return new Promise((resolve, reject) => {
-      router.post('/auth/register', data, {
+      router.post('/auth/login', { ...credentials, remember } as Record<string, any>, {
         preserveScroll: true,
         onSuccess: () => resolve(true),
         onError: (errors) => reject(errors),
@@ -41,12 +14,31 @@ class AuthService {
     })
   }
 
-  /**
-   * Logout current user
-   */
+  async register(data: RegisterData) {
+    return new Promise((resolve, reject) => {
+      // Convert to plain object for Inertia
+      const formData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        password: data.password,
+        password_confirmation: data.password_confirmation,
+        age: typeof data.age === 'string' ? Number.parseInt(data.age) : data.age,
+        province: data.province,
+        commune: data.commune,
+        ...(data.phoneNumber && { phoneNumber: data.phoneNumber }),
+      }
+
+      router.post('/auth/register', formData as any, {
+        preserveScroll: true,
+        onSuccess: () => resolve(true),
+        onError: (errors) => reject(errors),
+      })
+    })
+  }
+
   async logout() {
     const authStore = useAuthStore()
-    
     return new Promise((resolve) => {
       router.post(
         '/auth/logout',
@@ -61,47 +53,26 @@ class AuthService {
     })
   }
 
-  /**
-   * Request password reset
-   * @param email - User email
-   */
   async forgotPassword(email: string) {
     return new Promise((resolve, reject) => {
-      router.post(
-        '/auth/forgot-password',
-        { email },
-        {
-          preserveScroll: true,
-          onSuccess: () => resolve(true),
-          onError: (errors) => reject(errors),
-        }
-      )
+      router.post('/auth/forgot-password', { email } as any, {
+        preserveScroll: true,
+        onSuccess: () => resolve(true),
+        onError: (errors) => reject(errors),
+      })
     })
   }
 
-  /**
-   * Reset password with token
-   * @param token - Reset token
-   * @param password - New password
-   * @param password_confirmation - Password confirmation
-   */
   async resetPassword(token: string, password: string, password_confirmation: string) {
     return new Promise((resolve, reject) => {
-      router.post(
-        '/auth/reset-password',
-        { token, password, password_confirmation },
-        {
-          preserveScroll: true,
-          onSuccess: () => resolve(true),
-          onError: (errors) => reject(errors),
-        }
-      )
+      router.post('/auth/reset-password', { token, password, password_confirmation } as any, {
+        preserveScroll: true,
+        onSuccess: () => resolve(true),
+        onError: (errors) => reject(errors),
+      })
     })
   }
 
-  /**
-   * Resend verification email
-   */
   async resendVerificationEmail() {
     return new Promise((resolve, reject) => {
       router.post(
@@ -116,20 +87,13 @@ class AuthService {
     })
   }
 
-  /**
-   * Check if user needs email verification
-   */
   needsEmailVerification(): boolean {
     const authStore = useAuthStore()
     return authStore.isAuthenticated && !authStore.isEmailVerified
   }
 
-  /**
-   * Redirect to appropriate page based on auth state
-   */
   redirectBasedOnAuthState() {
     const authStore = useAuthStore()
-
     if (!authStore.isAuthenticated) {
       router.visit('/auth/login')
     } else if (!authStore.isEmailVerified) {

@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import Alert from '#ui/Alert.vue'
-import config from '~/info.config.json'
+import config from '~/theme.config.json'
 
 const page = usePage()
 const dismissedFlash = ref<Set<string>>(new Set())

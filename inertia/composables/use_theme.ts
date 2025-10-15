@@ -1,5 +1,5 @@
 import { computed } from 'vue'
-import themeConfig from '../info.config.json'
+import themeConfig from '../theme.config.json'
 
 export interface ThemeConfig {
   app: {

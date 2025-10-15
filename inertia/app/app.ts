@@ -15,7 +15,7 @@ import { useAppStore } from '~/stores/app'
 const appName = import.meta.env.VITE_APP_NAME || 'Event Platform'
 
 createInertiaApp({
-  progress: { 
+  progress: {
     color: '#5468FF',
     showSpinner: true,
   },

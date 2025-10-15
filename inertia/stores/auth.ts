@@ -76,11 +76,11 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Update user avatar
-   * @param avatarUrl - New avatar URL
+   * @param url - New avatar URL
    */
-  function updateAvatar(avatarUrl: string | null) {
+  function updateAvatar(url: string | null) {
     if (user.value) {
-      user.value.avatarUrl = avatarUrl
+      user.value.avatarUrl = url
     }
   }
 

@@ -11,7 +11,7 @@ export function useConfirmation() {
   const confirmText = ref('Confirmer')
   const cancelText = ref('Annuler')
   const variant = ref<'danger' | 'warning' | 'info'>('warning')
-  
+
   let resolvePromise: ((value: boolean) => void) | null = null
 
   /**
