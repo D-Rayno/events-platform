@@ -5,14 +5,24 @@ import '../css/app.css'
 import { createSSRApp, h } from 'vue'
 import type { DefineComponent } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
-import { resolvePageComponent } from '@adonisjs/inertia/helpers'
+import { router } from '@inertiajs/vue3'
 import { createPinia } from 'pinia'
 import { MotionPlugin } from '@vueuse/motion'
-import { router } from '@inertiajs/vue3'
 import { useAuthStore } from '~/stores/auth'
 import { useAppStore } from '~/stores/app'
+import { clickAwayDirective } from '~/directives/click-away'
 
 const appName = import.meta.env.VITE_APP_NAME || 'EventHub'
+
+// Helper to resolve page components
+function resolvePageComponent(path: string, pages: Record<string, any>) {
+  for (const p in pages) {
+    if (p.endsWith(`${path.replace('../pages/', '')}.vue`)) {
+      return typeof pages[p] === 'function' ? pages[p]() : pages[p]
+    }
+  }
+  throw new Error(`Page not found: ${path}`)
+}
 
 createInertiaApp({
   progress: {
@@ -24,7 +34,7 @@ createInertiaApp({
 
   resolve: (name) => {
     return resolvePageComponent(
-      `../pages/${name}.vue`,
+      `../pages/${name}`,
       import.meta.glob<DefineComponent>('../pages/**/*.vue')
     )
   },
@@ -32,6 +42,9 @@ createInertiaApp({
   setup({ el, App, props, plugin }) {
     const pinia = createPinia()
     const app = createSSRApp({ render: () => h(App, props) })
+
+    // Register global directive
+    app.directive('click-away', clickAwayDirective)
 
     app.use(pinia)
     app.use(MotionPlugin)
@@ -65,7 +78,6 @@ createInertiaApp({
       if (page.props.auth?.user) {
         authStore.setUser(page.props.auth.user)
       } else if (authStore.isAuthenticated && !page.props.auth?.user) {
-        // User logged out
         authStore.clearUser()
       }
 
@@ -81,46 +93,23 @@ createInertiaApp({
       window.scrollTo({ top: 0, behavior: 'smooth' })
     })
 
-    router.on('error', (error) => {
-      console.error('Navigation error:', error)
-      if (error.detail.status === 401) {
-        // Unauthorized - redirect to login
+    router.on('error', (event) => {
+      console.error('Navigation error:', event)
+      
+      // Type-safe error handling
+      const errorDetail = event.detail as any
+      const status = errorDetail.status || errorDetail.response?.status
+      
+      if (status === 401) {
         authStore.clearUser()
         router.visit('/auth/login')
-      } else if (error.detail.status === 403) {
-        // Forbidden
+      } else if (status === 403) {
         appStore.addFlashMessage('error', 'You do not have permission to access this page.')
-      } else if (error.detail.status === 404) {
-        // Not found
+      } else if (status === 404) {
         router.visit('/404')
-      } else if (error.detail.status === 500) {
-        // Server error
+      } else if (status === 500 || status >= 500) {
         appStore.addFlashMessage('error', 'A server error occurred. Please try again.')
       }
-    })
-
-    // Redirect unauthenticated users if needed
-    const publicPages = [
-      'auth/login',
-      'auth/register',
-      'auth/forgot_password',
-      'auth/reset_password',
-      'home',
-      'events/index',
-      'events/show',
-    ]
-
-    router.on('before', (event) => {
-      const pageName = props.initialPage.component
-      const isPublicPage = publicPages.some((page) => pageName.includes(page))
-
-      if (!isPublicPage && !authStore.isAuthenticated) {
-        event.preventDefault()
-        router.visit('/auth/login')
-        return false
-      }
-
-      return true
     })
 
     app.mount(el)

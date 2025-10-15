@@ -78,28 +78,16 @@ const displaySrc = computed(() => {
 <template>
   <div :class="containerClasses">
     <!-- Skeleton loader -->
-    <div
-      v-if="!imageLoaded"
-      class="absolute inset-0 bg-gradient-to-r from-neutral-100 via-neutral-200 to-neutral-100 animate-pulse"
-    />
+    <div v-if="!imageLoaded"
+      class="absolute inset-0 bg-gradient-to-r from-neutral-100 via-neutral-200 to-neutral-100 animate-pulse" />
 
     <!-- Error placeholder -->
-    <div
-      v-if="imageError && !fallback"
-      class="absolute inset-0 flex items-center justify-center text-neutral-400"
-    >
+    <div v-if="imageError && !fallback" class="absolute inset-0 flex items-center justify-center text-neutral-400">
       <PhotoIcon class="w-12 h-12" />
     </div>
 
     <!-- Image -->
-    <img
-      v-if="displaySrc"
-      :src="displaySrc"
-      :alt="alt"
-      :class="imageClasses"
-      :loading="loading"
-      @load="handleLoad"
-      @error="handleError"
-    />
+    <img v-if="displaySrc" :src="displaySrc" :alt="alt" :class="imageClasses" :loading="loading" decoding="async"
+      @load="handleLoad" @error="handleError" />
   </div>
 </template>

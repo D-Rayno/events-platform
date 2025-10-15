@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import Alert from '#ui/Alert.vue'
 import type { FlashMessages } from '~/types/common'
@@ -12,6 +12,7 @@ interface FlashMessage {
 
 const page = usePage()
 const dismissedMessages = ref<Set<string>>(new Set())
+const mounted = ref(false)
 
 const flash = computed<FlashMessages>(() => {
   const props = page.props as any
@@ -24,6 +25,9 @@ const flash = computed<FlashMessages>(() => {
 })
 
 const visibleMessages = computed<FlashMessage[]>(() => {
+  // Prevent hydration mismatch by only showing after mount
+  if (!mounted.value) return []
+  
   const messages: FlashMessage[] = []
 
   if (flash.value.success && !dismissedMessages.value.has('success')) {
@@ -40,6 +44,10 @@ const visibleMessages = computed<FlashMessage[]>(() => {
   }
 
   return messages
+})
+
+onMounted(() => {
+  mounted.value = true
 })
 
 const dismiss = (type: string) => {

@@ -52,7 +52,7 @@ const inputClasses = computed(() => [
   props.error
     ? 'border-error-300 focus:border-error-500 focus:ring-4 focus:ring-error-500/20 bg-error-50/30'
     : isFocused.value
-      ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white'
+      ? 'border-primary-500 ring-4 ring-primary-500/20 bg-white shadow-sm'
       : 'border-neutral-200 hover:border-neutral-300 bg-white',
   sizeClasses[props.size],
   props.icon ? 'pl-11' : '',
@@ -86,56 +86,29 @@ const togglePassword = () => {
 
 <template>
   <div class="space-y-2">
-    <label
-      v-if="label"
-      class="block text-sm font-semibold text-neutral-800"
-      v-motion
-      :initial="{ opacity: 0, y: -5 }"
-      :enter="{ opacity: 1, y: 0, transition: { duration: 200 } }"
-    >
+    <label v-if="label" class="block text-sm font-semibold text-neutral-800" v-motion :initial="{ opacity: 0, y: -5 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 200 } }">
       {{ label }}
       <span v-if="required" class="text-error-500 ml-1">*</span>
     </label>
 
-    <div
-      class="relative"
-      v-motion
-      :initial="{ opacity: 0, y: -10 }"
-      :enter="{ opacity: 1, y: 0, transition: { duration: 250, delay: 50 } }"
-    >
-      <div
-        v-if="icon"
-        :class="[
-          'absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 pointer-events-none',
-          props.error ? 'text-error-500' : isFocused ? 'text-primary-600' : 'text-neutral-400',
-        ]"
-      >
+    <div class="relative" v-motion :initial="{ opacity: 0, y: -10 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 250, delay: 50 } }">
+      <div v-if="icon" :class="[
+        'absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors duration-300 pointer-events-none',
+        props.error ? 'text-error-500' : isFocused ? 'text-primary-600' : 'text-neutral-400',
+      ]">
         <component :is="icon" :class="iconSize" />
       </div>
 
-      <input
-        :value="modelValue"
-        :type="inputType"
-        :class="inputClasses"
-        :disabled="disabled"
-        :autofocus="autoFocus"
-        v-bind="{ ...attrs }"
-        @input="updateValue"
-        @blur="handleBlur"
-        @focus="handleFocus"
-      />
+      <input :value="modelValue" :type="inputType" :class="inputClasses" :disabled="disabled" :autofocus="autoFocus"
+        v-bind="{ ...attrs }" @input="updateValue" @blur="handleBlur" @focus="handleFocus" />
 
-      <div
-        v-if="iconRight || type === 'password'"
-        class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-auto"
-      >
-        <button
-          v-if="type === 'password' && !disabled"
-          type="button"
-          @click="togglePassword"
+      <div v-if="iconRight || type === 'password'"
+        class="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-auto">
+        <button v-if="type === 'password' && !disabled" type="button" @click="togglePassword"
           class="text-neutral-400 hover:text-neutral-600 transition-all duration-300 hover:scale-110 active:scale-95"
-          :aria-label="showPassword ? 'Hide password' : 'Show password'"
-        >
+          :aria-label="showPassword ? 'Hide password' : 'Show password'">
           <EyeSlashIcon v-if="showPassword" :class="iconSize" />
           <EyeIcon v-else :class="iconSize" />
         </button>
@@ -144,21 +117,14 @@ const togglePassword = () => {
       </div>
     </div>
 
-    <Transition
-      enter-active-class="transition duration-200 ease-out"
-      enter-from-class="opacity-0 -translate-y-1"
-      enter-to-class="opacity-100 translate-y-0"
-      leave-active-class="transition duration-150 ease-in"
-      leave-from-class="opacity-100 translate-y-0"
-      leave-to-class="opacity-0 -translate-y-1"
-    >
+    <Transition enter-active-class="transition duration-200 ease-out" enter-from-class="opacity-0 -translate-y-1"
+      enter-to-class="opacity-100 translate-y-0" leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-1">
       <p v-if="error" class="text-sm text-error-600 font-medium flex items-start gap-1.5">
         <svg class="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-          <path
-            fill-rule="evenodd"
+          <path fill-rule="evenodd"
             d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-            clip-rule="evenodd"
-          />
+            clip-rule="evenodd" />
         </svg>
         {{ error }}
       </p>

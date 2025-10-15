@@ -10,8 +10,8 @@ const __dirname = getDirname(import.meta.url)
 export default defineConfig({
   plugins: [
     inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.ts' } }),
-    tailwindcss(),
     vue(),
+    tailwindcss(),
     adonisjs({
       entrypoints: ['inertia/app/app.ts'],
       reload: ['resources/views/**/*.edge'],
@@ -22,13 +22,21 @@ export default defineConfig({
     alias: {
       '~/': `${__dirname}/inertia/`,
       '#ui': `${__dirname}/inertia/components/ui`,
+      '#ui/*': `${__dirname}/inertia/components/ui/*`,
       '#shared': `${__dirname}/inertia/components/shared`,
+      '#shared/*': `${__dirname}/inertia/components/shared/*`,
       '#layouts': `${__dirname}/inertia/components/layouts`,
+      '#layouts/*': `${__dirname}/inertia/components/layouts/*`,
       '#composables': `${__dirname}/inertia/composables`,
+      '#composables/*': `${__dirname}/inertia/composables/*`,
       '#services': `${__dirname}/inertia/services`,
+      '#services/*': `${__dirname}/inertia/services/*`,
       '#stores': `${__dirname}/inertia/stores`,
+      '#stores/*': `${__dirname}/inertia/stores/*`,
       '#lib': `${__dirname}/inertia/lib`,
+      '#lib/*': `${__dirname}/inertia/lib/*`,
       '#types': `${__dirname}/inertia/types`,
+      '#types/*': `${__dirname}/inertia/types/*`,
     },
   },
 })
