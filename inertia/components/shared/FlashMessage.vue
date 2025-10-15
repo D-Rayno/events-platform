@@ -2,19 +2,29 @@
 import { computed, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import Alert from '#ui/Alert.vue'
+import type { FlashMessages } from '~/types/common'
+import type { AlertType } from '~/types'
+
+interface FlashMessage {
+  type: AlertType
+  message: string
+}
 
 const page = usePage()
 const dismissedMessages = ref<Set<string>>(new Set())
 
-const flash = computed(() => ({
-  success: page.props.flash?.success,
-  error: page.props.flash?.error,
-  warning: page.props.flash?.warning,
-  info: page.props.flash?.info,
-}))
+const flash = computed<FlashMessages>(() => {
+  const props = page.props as any
+  return {
+    success: props.flash?.success,
+    error: props.flash?.error,
+    warning: props.flash?.warning,
+    info: props.flash?.info,
+  }
+})
 
-const visibleMessages = computed(() => {
-  const messages = []
+const visibleMessages = computed<FlashMessage[]>(() => {
+  const messages: FlashMessage[] = []
 
   if (flash.value.success && !dismissedMessages.value.has('success')) {
     messages.push({ type: 'success', message: flash.value.success })
@@ -40,9 +50,9 @@ const dismiss = (type: string) => {
 <template>
   <div
     v-if="visibleMessages.length"
-    class="fixed top-20 left-4 right-4 md:left-auto md:right-8 z-40 space-y-2 max-w-md"
+    class="fixed top-20 left-4 right-4 md:left-auto md:right-8 z-50 space-y-2 max-w-md"
   >
-    <transition-group name="slide-fade">
+    <TransitionGroup name="slide-fade">
       <Alert
         v-for="msg in visibleMessages"
         :key="msg.type"
@@ -52,7 +62,7 @@ const dismiss = (type: string) => {
       >
         {{ msg.message }}
       </Alert>
-    </transition-group>
+    </TransitionGroup>
   </div>
 </template>
 

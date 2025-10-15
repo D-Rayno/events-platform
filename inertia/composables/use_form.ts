@@ -1,5 +1,6 @@
 import { ref, computed, reactive } from 'vue'
 import { useForm as inertiaUseForm } from '@inertiajs/vue3'
+import type { InertiaForm } from '@inertiajs/vue3'
 import type { AnyObjectSchema, ValidationError } from 'yup'
 
 interface FormConfig<T extends Record<string, any>> {
@@ -12,24 +13,24 @@ interface FormConfig<T extends Record<string, any>> {
 export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
   const { schema, initialData, onSuccess, onError } = config
 
-  const form = inertiaUseForm(initialData)
-  const clientErrors = reactive<Partial<Record<keyof T, string>>>({})
-  const touchedFields = ref<Set<keyof T>>(new Set())
+  const form = inertiaUseForm(initialData) as InertiaForm<T>
+  const clientErrors = reactive<Record<string, string>>({})
+  const touchedFields = ref<Set<string>>(new Set())
   const isValidating = ref(false)
 
   const allErrors = computed(() => ({
     ...clientErrors,
-    ...form.errors,
+    ...(form.errors),
   }))
 
   const hasErrors = computed(() => Object.keys(allErrors.value).length > 0)
 
-  const validateField = async (field: keyof T): Promise<boolean> => {
+  const validateField = async (field: string): Promise<boolean> => {
     if (!schema) return true
 
     isValidating.value = true
     try {
-      await schema.validateAt(field as string, form.data())
+      await schema.validateAt(field, form.data())
       delete clientErrors[field]
       return true
     } catch (error) {
@@ -49,17 +50,17 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
     try {
       await schema.validate(form.data(), { abortEarly: false })
       Object.keys(clientErrors).forEach((key) => {
-        delete clientErrors[key as keyof T]
+        delete clientErrors[key]
       })
       return true
     } catch (error) {
       const validationError = error as ValidationError
       Object.keys(clientErrors).forEach((key) => {
-        delete clientErrors[key as keyof T]
+        delete clientErrors[key]
       })
 
       validationError.inner?.forEach((err) => {
-        const field = err.path as keyof T
+        const field = err.path
         if (field && !clientErrors[field]) {
           clientErrors[field] = err.message
         }
@@ -71,37 +72,37 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
     }
   }
 
-  const getError = (field: keyof T): string | undefined => {
-    return clientErrors[field] || form.errors[field as string]
+  const getError = (field: string): string | undefined => {
+    return clientErrors[field] || (form.errors as any)[field]
   }
 
-  const clearError = (field: keyof T) => {
+  const clearError = (field: string) => {
     delete clientErrors[field]
-    if (form.errors[field as string]) {
-      form.clearErrors(field as string)
+    if ((form.errors as any)[field]) {
+      form.clearErrors(field as any)
     }
   }
 
   const clearAllErrors = () => {
     Object.keys(clientErrors).forEach((key) => {
-      delete clientErrors[key as keyof T]
+      delete clientErrors[key]
     })
     form.clearErrors()
   }
 
-  const touch = (field: keyof T) => {
+  const touch = (field: string) => {
     touchedFields.value.add(field)
   }
 
-  const isTouched = (field: keyof T): boolean => {
+  const isTouched = (field: string): boolean => {
     return touchedFields.value.has(field)
   }
 
-  const shouldShowError = (field: keyof T): boolean => {
+  const shouldShowError = (field: string): boolean => {
     return isTouched(field) && !!getError(field)
   }
 
-  const handleBlur = async (field: keyof T) => {
+  const handleBlur = async (field: string) => {
     touch(field)
     await validateField(field)
   }
@@ -115,7 +116,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
   const submit = async (method: 'post' | 'put' | 'patch' | 'delete' = 'post', url: string) => {
     const isValid = await validateAll()
     if (!isValid) {
-      onError?.(allErrors.value as Record<string, string>)
+      onError?.(allErrors.value)
       return
     }
 
@@ -124,7 +125,7 @@ export function useForm<T extends Record<string, any>>(config: FormConfig<T>) {
         onSuccess?.(response)
       },
       onError: (errors) => {
-        Object.assign(clientErrors, errors)
+        Object.assign(clientErrors, errors as Record<string, string>)
         onError?.(errors as Record<string, string>)
       },
     })

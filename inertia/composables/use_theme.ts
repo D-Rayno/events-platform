@@ -1,6 +1,21 @@
 import { computed } from 'vue'
 import themeConfig from '../theme.config.json'
 
+interface ColorScale {
+  50: string
+  100: string
+  200: string
+  300: string
+  400: string
+  500: string
+  600: string
+  700: string
+  800: string
+  900: string
+  950?: string
+  DEFAULT: string
+}
+
 export interface ThemeConfig {
   app: {
     name: string
@@ -19,14 +34,20 @@ export interface ThemeConfig {
     banner: Record<string, string>
     placeholder: Record<string, string>
   }
-  colors: Record<string, string>
+  colors: {
+    primary: ColorScale
+    secondary: ColorScale
+    success: ColorScale
+    error: ColorScale
+    warning: ColorScale
+    info: ColorScale
+    neutral: ColorScale
+  }
   theme: {
-    borderRadius: string
-    fontFamily: string
-    fontSize: {
-      base: string
-      scale: number
-    }
+    borderRadius: Record<string, string>
+    fontFamily: Record<string, string | string[]>
+    fontSize: Record<string, string>
+    shadows: Record<string, string>
   }
   features: {
     enableDarkMode: boolean
@@ -36,6 +57,8 @@ export interface ThemeConfig {
     maxUploadSize: number
     allowedFileTypes: string[]
     itemsPerPage: number
+    enableAnimations: boolean
+    enableSocialSharing: boolean
   }
   social: Record<string, string>
   contact: {
@@ -49,6 +72,14 @@ export interface ThemeConfig {
     description: string
     keywords: string[]
     ogImage: string
+  }
+  animations: {
+    duration: {
+      fast: number
+      normal: number
+      slow: number
+    }
+    easing: string
   }
 }
 

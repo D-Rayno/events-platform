@@ -4,19 +4,31 @@ import { usePage } from '@inertiajs/vue3'
 import Alert from '#ui/Alert.vue'
 import config from '~/theme.config.json'
 
+interface FlashMessages {
+  success?: string
+  error?: string
+  info?: string
+  warning?: string
+}
+
 const page = usePage()
 const dismissedFlash = ref<Set<string>>(new Set())
 
-const flash = computed(() => ({
-  success: page.props.flash?.success,
-  error: page.props.flash?.error,
-  info: page.props.flash?.info,
-  warning: page.props.flash?.warning,
-}))
+const flash = computed<FlashMessages>(() => {
+  const props = page.props as any
+  return {
+    success: props.flash?.success,
+    error: props.flash?.error,
+    info: props.flash?.info,
+    warning: props.flash?.warning,
+  }
+})
 
 const visibleFlash = computed(() => {
   const visible: Record<string, string> = {}
-  Object.entries(flash.value).forEach(([key, value]) => {
+  const entries = Object.entries(flash.value) as [keyof FlashMessages, string | undefined][]
+  
+  entries.forEach(([key, value]) => {
     if (value && !dismissedFlash.value.has(key)) {
       visible[key] = value
     }
@@ -31,18 +43,18 @@ const dismissFlash = (type: string) => {
 
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex flex-col relative overflow-hidden"
+    class="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex flex-col relative overflow-hidden"
   >
     <!-- Animated Background Elements -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
       <div
-        class="absolute -top-40 -right-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl"
+        class="absolute -top-40 -right-40 w-80 h-80 bg-primary-200/30 rounded-full blur-3xl"
         v-motion
         :initial="{ scale: 0, opacity: 0 }"
         :enter="{ scale: 1, opacity: 1, transition: { duration: 1000, ease: 'easeOut' } }"
       />
       <div
-        class="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary/5 rounded-full blur-3xl"
+        class="absolute -bottom-40 -left-40 w-96 h-96 bg-secondary-200/30 rounded-full blur-3xl"
         v-motion
         :initial="{ scale: 0, opacity: 0 }"
         :enter="{
@@ -75,7 +87,7 @@ const dismissFlash = (type: string) => {
             <span class="text-xl font-bold text-white">{{ config.branding.logo.icon }}</span>
           </div>
           <span
-            class="text-xl font-bold text-sand-12 group-hover:text-primary-600 transition-colors duration-300"
+            class="text-xl font-bold text-neutral-900 group-hover:text-primary-600 transition-colors duration-300"
           >
             {{ config.branding.logo.text }}
           </span>
@@ -105,7 +117,7 @@ const dismissFlash = (type: string) => {
 
     <!-- Footer -->
     <footer
-      class="relative py-6 text-center text-sm text-sand-10"
+      class="relative py-6 text-center text-sm text-neutral-600"
       v-motion
       :initial="{ y: 20, opacity: 0 }"
       :enter="{ y: 0, opacity: 1, transition: { duration: 400, delay: 200 } }"
