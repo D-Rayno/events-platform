@@ -208,7 +208,7 @@ export default class Event extends BaseModel {
    */
   get isRegistrationOpen(): boolean {
     const now = DateTime.now()
-    
+
     if (this.status !== 'published') {
       return false
     }
@@ -265,7 +265,12 @@ export default class Event extends BaseModel {
    * Vérifie si les inscriptions sont ouvertes (méthode)
    */
   canRegister(): boolean {
-    return this.isRegistrationOpen && this.status === 'published' && this.hasAvailableSeats() && !this.isFinished()
+    return (
+      this.isRegistrationOpen &&
+      this.status === 'published' &&
+      this.hasAvailableSeats() &&
+      !this.isFinished()
+    )
   }
 
   /**
@@ -351,23 +356,23 @@ export default class Event extends BaseModel {
     }
 
     const parts: string[] = []
-    
+
     if (this.gameType) {
       parts.push(`Type: ${this.gameType}`)
     }
-    
+
     if (this.difficulty) {
       parts.push(`Difficulté: ${this.difficulty}`)
     }
-    
+
     if (this.durationMinutes) {
       parts.push(`Durée: ${this.durationMinutes} min`)
     }
-    
+
     if (this.allowsTeams && this.minTeamSize && this.maxTeamSize) {
       parts.push(`Équipes: ${this.minTeamSize}-${this.maxTeamSize} joueurs`)
     }
-    
+
     return parts.join(' | ')
   }
 

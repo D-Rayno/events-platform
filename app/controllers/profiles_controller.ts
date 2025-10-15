@@ -9,7 +9,7 @@ export default class ProfileController {
    */
   async show({ inertia, auth }: HttpContext) {
     const user = auth.user!
-    
+
     return inertia.render('profile/show', {
       user: {
         id: user.id,
@@ -50,14 +50,14 @@ export default class ProfileController {
           try {
             await drive.use().delete(user.avatarUrl)
           } catch (error) {
-            console.error('Erreur lors de la suppression de l\'ancien avatar:', error)
+            console.error("Erreur lors de la suppression de l'ancien avatar:", error)
           }
         }
 
         // Sauvegarder le nouveau avatar
         const fileName = `${cuid()}.${data.avatar.extname}`
         const filePath = `avatars/${fileName}`
-        
+
         await data.avatar.move(filePath)
         user.avatarUrl = filePath
       }
@@ -84,13 +84,13 @@ export default class ProfileController {
         await drive.use().delete(user.avatarUrl)
         user.avatarUrl = null
         await user.save()
-        
+
         session.flash('success', 'Votre photo de profil a été supprimée.')
       }
 
       return response.redirect().back()
     } catch (error) {
-      console.error('Erreur lors de la suppression de l\'avatar:', error)
+      console.error("Erreur lors de la suppression de l'avatar:", error)
       session.flash('error', 'Une erreur est survenue.')
       return response.redirect().back()
     }

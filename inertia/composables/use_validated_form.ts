@@ -2,7 +2,7 @@ import { useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import type { AnyObjectSchema, ValidationError } from 'yup'
 
-export function useValidatedForm<T extends Record<string, any>>(
+export function use_vlidated_form<T extends Record<string, any>>(
   schema: AnyObjectSchema,
   initialData: T
 ) {
@@ -30,14 +30,14 @@ export function useValidatedForm<T extends Record<string, any>>(
     } catch (error) {
       const validationError = error as ValidationError
       const errors: Partial<Record<keyof T, string>> = {}
-      
+
       validationError.inner?.forEach((err) => {
         const field = err.path as keyof T
         if (field && !errors[field]) {
           errors[field] = err.message
         }
       })
-      
+
       clientErrors.value = errors
       return false
     }

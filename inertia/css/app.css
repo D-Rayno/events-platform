@@ -1,5 +1,7 @@
-@import "tailwindcss";
-@source "../views";
+@import 'tailwindcss';
+
+@source '../pages/*.vue';
+@source '../components/*.vue';
 
 * {
   margin: 0;

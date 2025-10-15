@@ -14,10 +14,7 @@ export default class RegistrationController {
     const eventId = request.input('event_id')
     const search = request.input('search')
 
-    let query = Registration.query()
-      .preload('user')
-      .preload('event')
-      .orderBy('created_at', 'desc')
+    let query = Registration.query().preload('user').preload('event').orderBy('created_at', 'desc')
 
     // Filtrer par statut
     if (status) {
@@ -183,7 +180,8 @@ export default class RegistrationController {
     if (!registration) {
       return response.badRequest({
         error: 'Confirmation impossible',
-        message: "Ce QR code est invalide, l'événement n'a pas encore commencé, ou l'inscription a été annulée.",
+        message:
+          "Ce QR code est invalide, l'événement n'a pas encore commencé, ou l'inscription a été annulée.",
       })
     }
 
@@ -213,10 +211,7 @@ export default class RegistrationController {
    * Annule une inscription (admin)
    */
   async cancel({ params, response }: HttpContext) {
-    const registration = await Registration.query()
-      .where('id', params.id)
-      .preload('event')
-      .first()
+    const registration = await Registration.query().where('id', params.id).preload('event').first()
 
     if (!registration) {
       return response.notFound({
@@ -265,9 +260,18 @@ export default class RegistrationController {
    */
   async stats({ response }: HttpContext) {
     const totalResult = await Registration.query().count('* as total').first()
-    const confirmedResult = await Registration.query().where('status', 'confirmed').count('* as total').first()
-    const attendedResult = await Registration.query().where('status', 'attended').count('* as total').first()
-    const canceledResult = await Registration.query().where('status', 'canceled').count('* as total').first()
+    const confirmedResult = await Registration.query()
+      .where('status', 'confirmed')
+      .count('* as total')
+      .first()
+    const attendedResult = await Registration.query()
+      .where('status', 'attended')
+      .count('* as total')
+      .first()
+    const canceledResult = await Registration.query()
+      .where('status', 'canceled')
+      .count('* as total')
+      .first()
 
     // Inscriptions récentes (7 derniers jours)
     const sevenDaysAgo = DateTime.now().minus({ days: 7 }).toSQL()

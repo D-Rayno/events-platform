@@ -26,13 +26,13 @@ export const PROVINCES = [
   'Constantine',
   'Médéa',
   'Mostaganem',
-  'M\'Sila',
+  "M'Sila",
   'Mascara',
   'Ouargla',
   'Oran',
   'El Bayadh',
   'Illizi',
-  'Bordj Bou Arreridj',
+  'Bordj Bou Arréridj',
   'Boumerdès',
   'El Tarf',
   'Tindouf',
@@ -47,19 +47,29 @@ export const PROVINCES = [
   'Aïn Témouchent',
   'Ghardaïa',
   'Relizane',
-  'Timimoun',
-  'Bordj Badji Mokhtar',
-  'Ouled Djellal',
-  'Béni Abbès',
-  'In Salah',
-  'In Guezzam',
-  'Touggourt',
-  'Djanet',
-  'El M\'Ghair',
-  'El Meniaa'
 ]
 
-export const PROVINCE_OPTIONS = PROVINCES.map(province => ({
-  value: province,
-  label: province
-}))
+export const EVENT_CATEGORIES = [
+  'Conférence',
+  'Atelier',
+  'Formation',
+  'Séminaire',
+  'Networking',
+  'Culturel',
+  'Sport',
+  'Autre',
+]
+
+export const EVENT_STATUS = {
+  UPCOMING: 'upcoming',
+  ONGOING: 'ongoing',
+  COMPLETED: 'completed',
+  CANCELLED: 'cancelled',
+} as const
+
+export const REGISTRATION_STATUS = {
+  PENDING: 'pending',
+  CONFIRMED: 'confirmed',
+  CANCELLED: 'cancelled',
+  ATTENDED: 'attended',
+} as const

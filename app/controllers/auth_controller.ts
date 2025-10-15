@@ -21,25 +21,28 @@ export default class AuthController {
    */
   async register({ request, response, session }: HttpContext) {
     const trx = await db.transaction()
-    
+
     try {
       const data = await request.validateUsing(registerValidator)
 
       // Create user within transaction
-      const user = await User.create({
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-        age: data.age,
-        province: data.province,
-        commune: data.commune,
-        phoneNumber: data.phoneNumber || null,
-        isEmailVerified: false,
-        isActive: true,
-        isBlocked: false,
-        isAdmin: false, // Explicitly set isAdmin
-      }, { client: trx })
+      const user = await User.create(
+        {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          password: data.password,
+          age: data.age,
+          province: data.province,
+          commune: data.commune,
+          phoneNumber: data.phoneNumber || null,
+          isEmailVerified: false,
+          isActive: true,
+          isBlocked: false,
+          isAdmin: false, // Explicitly set isAdmin
+        },
+        { client: trx }
+      )
 
       // Commit the transaction before sending email
       await trx.commit()
@@ -48,7 +51,7 @@ export default class AuthController {
       console.log('User created successfully:', {
         id: user.id,
         email: user.email,
-        firstName: user.firstName
+        firstName: user.firstName,
       })
 
       // Send verification email (outside transaction)
@@ -66,15 +69,15 @@ export default class AuthController {
       return response.redirect('/auth/login')
     } catch (error) {
       await trx.rollback()
-      console.error('Erreur lors de l\'inscription:', error)
-      
+      console.error("Erreur lors de l'inscription:", error)
+
       // Provide more detailed error message
       if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('unique')) {
         session.flash('error', 'Cet email est déjà utilisé.')
       } else {
         session.flash('error', "Une erreur est survenue lors de l'inscription.")
       }
-      
+
       return response.redirect().back()
     }
   }
@@ -203,7 +206,7 @@ export default class AuthController {
       return response.redirect('/auth/login')
     } catch (error) {
       console.error("Erreur lors de l'envoi de l'email de réinitialisation:", error)
-      session.flash('error', "Une erreur est survenue. Veuillez réessayer.")
+      session.flash('error', 'Une erreur est survenue. Veuillez réessayer.')
       return response.redirect().back()
     }
   }
@@ -248,7 +251,7 @@ export default class AuthController {
       return response.redirect('/auth/login')
     } catch (error) {
       console.error('Erreur lors de la réinitialisation du mot de passe:', error)
-      session.flash('error', "Une erreur est survenue. Veuillez réessayer.")
+      session.flash('error', 'Une erreur est survenue. Veuillez réessayer.')
       return response.redirect().back()
     }
   }

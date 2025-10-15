@@ -52,7 +52,7 @@ export interface ThemeConfig {
   }
 }
 
-export function useTheme() {
+export function use_theme() {
   const config = computed<ThemeConfig>(() => themeConfig as ThemeConfig)
 
   const appName = computed(() => config.value.app.name)

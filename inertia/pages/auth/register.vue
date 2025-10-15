@@ -1,9 +1,17 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3'
-import { ref } from 'vue'
-import { PROVINCES } from '../../lib/constants'
+import { Head, Link } from '@inertiajs/vue3'
+import { UserIcon, EnvelopeIcon, LockClosedIcon, PhoneIcon } from '@heroicons/vue/24/outline'
+import AuthLayout from '~/components/layouts/AuthLayout.vue'
+import Input from '#ui/Input.vue'
+import Select from '#ui/Select.vue'
+import Button from '#ui/Button.vue'
+import { use_vlidated_form } from '~/composables/use_validated_form'
+import { registerSchema } from '~/lib/validation'
+import { PROVINCES } from '~/lib/constants'
 
-const form = useForm({
+const { form, getError, validateField, validateAll, clearError } = use_vlidated_form(
+  registerSchema,
+  {
     firstName: '',
     lastName: '',
     email: '',
@@ -13,182 +21,209 @@ const form = useForm({
     province: '',
     commune: '',
     phoneNumber: '',
-})
+  }
+)
 
-const provinces = ref(PROVINCES)
+const provinceOptions = PROVINCES.map((p) => ({ value: p, label: p }))
 
-const submit = () => {
-    form.post('/auth/register', {
-        preserveScroll: true,
-    })
+const handleSubmit = async () => {
+  const isValid = await validateAll()
+  if (!isValid) return
+
+  form.post('/auth/register', {
+    preserveScroll: true,
+  })
+}
+
+const handleBlur = (field: keyof typeof form.data) => {
+  validateField(field)
 }
 </script>
 
 <template>
+  <Head>
+    <title>Inscription - Créez votre compte</title>
+    <meta
+      name="description"
+      content="Créez votre compte gratuitement pour découvrir et vous inscrire aux meilleurs événements près de chez vous."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+  </Head>
 
-    <Head title="Inscription" />
-
+  <AuthLayout>
     <div
-        class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-2xl w-full">
-            <!-- En-tête -->
-            <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold text-sand-12 mb-2">Créer un compte</h1>
-                <p class="text-sand-11">Rejoignez notre plateforme d'événements</p>
-            </div>
+      class="w-full max-w-2xl"
+      v-motion
+      :initial="{ opacity: 0, y: 20 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 400 } }"
+    >
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-sand-12 mb-2">Créez votre compte</h1>
+        <p class="text-sand-11">Rejoignez notre communauté d'événements</p>
+      </header>
 
-            <!-- Formulaire -->
-            <div class="bg-white shadow-xl rounded-2xl p-8 border border-sand-7">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Prénom & Nom -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="firstName" class="block text-sm font-medium text-sand-12 mb-2">
-                                Prénom <span class="text-red-500">*</span>
-                            </label>
-                            <input id="firstName" v-model="form.firstName" type="text" required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                :class="{ 'border-red-500': form.errors.firstName }" placeholder="Jean" />
-                            <p v-if="form.errors.firstName" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.firstName }}
-                            </p>
-                        </div>
+      <!-- Form Card -->
+      <section
+        class="bg-white shadow-xl rounded-2xl p-8 border border-sand-6"
+        aria-label="Formulaire d'inscription"
+      >
+        <form @submit.prevent="handleSubmit" class="space-y-6" novalidate>
+          <!-- Name Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              v-model="form.firstName"
+              type="text"
+              label="Prénom"
+              placeholder="Jean"
+              :icon="UserIcon"
+              :error="getError('firstName')"
+              required
+              autocomplete="given-name"
+              @blur="handleBlur('firstName')"
+              @input="clearError('firstName')"
+            />
 
-                        <div>
-                            <label for="lastName" class="block text-sm font-medium text-sand-12 mb-2">
-                                Nom <span class="text-red-500">*</span>
-                            </label>
-                            <input id="lastName" v-model="form.lastName" type="text" required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                :class="{ 'border-red-500': form.errors.lastName }" placeholder="Dupont" />
-                            <p v-if="form.errors.lastName" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.lastName }}
-                            </p>
-                        </div>
-                    </div>
+            <Input
+              v-model="form.lastName"
+              type="text"
+              label="Nom"
+              placeholder="Dupont"
+              :icon="UserIcon"
+              :error="getError('lastName')"
+              required
+              autocomplete="family-name"
+              @blur="handleBlur('lastName')"
+              @input="clearError('lastName')"
+            />
+          </div>
 
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-sand-12 mb-2">
-                            Adresse email <span class="text-red-500">*</span>
-                        </label>
-                        <input id="email" v-model="form.email" type="email" required
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.email }" placeholder="jean.dupont@example.com" />
-                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.email }}
-                        </p>
-                    </div>
+          <!-- Email -->
+          <Input
+            v-model="form.email"
+            type="email"
+            label="Adresse email"
+            placeholder="jean.dupont@example.com"
+            :icon="EnvelopeIcon"
+            :error="getError('email')"
+            required
+            autocomplete="email"
+            @blur="handleBlur('email')"
+            @input="clearError('email')"
+          />
 
-                    <!-- Mot de passe -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-sand-12 mb-2">
-                                Mot de passe <span class="text-red-500">*</span>
-                            </label>
-                            <input id="password" v-model="form.password" type="password" required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                :class="{ 'border-red-500': form.errors.password }" placeholder="••••••••" />
-                            <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.password }}
-                            </p>
-                        </div>
+          <!-- Password Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              v-model="form.password"
+              type="password"
+              label="Mot de passe"
+              placeholder="••••••••"
+              :icon="LockClosedIcon"
+              :error="getError('password')"
+              hint="Min. 8 caractères, 1 majuscule, 1 chiffre"
+              required
+              autocomplete="new-password"
+              @blur="handleBlur('password')"
+              @input="clearError('password')"
+            />
 
-                        <div>
-                            <label for="password_confirmation" class="block text-sm font-medium text-sand-12 mb-2">
-                                Confirmer le mot de passe <span class="text-red-500">*</span>
-                            </label>
-                            <input id="password_confirmation" v-model="form.password_confirmation" type="password"
-                                required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                placeholder="••••••••" />
-                        </div>
-                    </div>
+            <Input
+              v-model="form.password_confirmation"
+              type="password"
+              label="Confirmer le mot de passe"
+              placeholder="••••••••"
+              :icon="LockClosedIcon"
+              :error="getError('password_confirmation')"
+              required
+              autocomplete="new-password"
+              @blur="handleBlur('password_confirmation')"
+              @input="clearError('password_confirmation')"
+            />
+          </div>
 
-                    <!-- Âge -->
-                    <div>
-                        <label for="age" class="block text-sm font-medium text-sand-12 mb-2">
-                            Âge <span class="text-red-500">*</span>
-                        </label>
-                        <input id="age" v-model="form.age" type="number" required min="13" max="120"
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.age }" placeholder="25" />
-                        <p v-if="form.errors.age" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.age }}
-                        </p>
-                    </div>
+          <!-- Age -->
+          <Input
+            v-model="form.age"
+            type="number"
+            label="Âge"
+            placeholder="25"
+            :error="getError('age')"
+            required
+            min="13"
+            max="120"
+            @blur="handleBlur('age')"
+            @input="clearError('age')"
+          />
 
-                    <!-- Province & Commune -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="province" class="block text-sm font-medium text-sand-12 mb-2">
-                                Province <span class="text-red-500">*</span>
-                            </label>
-                            <select id="province" v-model="form.province" required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                :class="{ 'border-red-500': form.errors.province }">
-                                <option value="" disabled>Sélectionnez une province</option>
-                                <option v-for="prov in provinces" :key="prov" :value="prov">
-                                    {{ prov }}
-                                </option>
-                            </select>
-                            <p v-if="form.errors.province" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.province }}
-                            </p>
-                        </div>
+          <!-- Location Fields -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Select
+              v-model="form.province"
+              label="Province"
+              placeholder="Sélectionnez une province"
+              :options="provinceOptions"
+              :error="getError('province')"
+              required
+              @blur="handleBlur('province')"
+              @change="clearError('province')"
+            />
 
-                        <div>
-                            <label for="commune" class="block text-sm font-medium text-sand-12 mb-2">
-                                Commune <span class="text-red-500">*</span>
-                            </label>
-                            <input id="commune" v-model="form.commune" type="text" required
-                                class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                                :class="{ 'border-red-500': form.errors.commune }" placeholder="Ex: Bab Ezzouar" />
-                            <p v-if="form.errors.commune" class="mt-1 text-sm text-red-600">
-                                {{ form.errors.commune }}
-                            </p>
-                        </div>
-                    </div>
+            <Input
+              v-model="form.commune"
+              type="text"
+              label="Commune"
+              placeholder="Ex: Bab Ezzouar"
+              :error="getError('commune')"
+              required
+              @blur="handleBlur('commune')"
+              @input="clearError('commune')"
+            />
+          </div>
 
-                    <!-- Numéro de téléphone -->
-                    <div>
-                        <label for="phoneNumber" class="block text-sm font-medium text-sand-12 mb-2">
-                            Numéro de téléphone <span class="text-sand-10">(optionnel)</span>
-                        </label>
-                        <input id="phoneNumber" v-model="form.phoneNumber" type="tel"
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.phoneNumber }" placeholder="+213 555 123 456" />
-                        <p v-if="form.errors.phoneNumber" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.phoneNumber }}
-                        </p>
-                    </div>
+          <!-- Phone Number -->
+          <Input
+            v-model="form.phoneNumber"
+            type="tel"
+            label="Numéro de téléphone"
+            placeholder="+213 555 123 456"
+            :icon="PhoneIcon"
+            :error="getError('phoneNumber')"
+            hint="Optionnel - Format: +213 5XX XX XX XX"
+            autocomplete="tel"
+            @blur="handleBlur('phoneNumber')"
+            @input="clearError('phoneNumber')"
+          />
 
-                    <!-- Bouton d'inscription -->
-                    <button type="submit" :disabled="form.processing"
-                        class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
-                        <span v-if="!form.processing">S'inscrire</span>
-                        <span v-else class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            Inscription en cours...
-                        </span>
-                    </button>
+          <!-- Submit Button -->
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            :loading="form.processing"
+            :disabled="form.processing"
+            full-width
+          >
+            Créer mon compte
+          </Button>
 
-                    <!-- Lien vers la connexion -->
-                    <div class="text-center text-sm text-sand-11">
-                        Vous avez déjà un compte ?
-                        <Link href="/auth/login" class="text-primary font-semibold hover:underline">
-                        Se connecter
-                        </Link>
-                    </div>
-                </form>
-            </div>
-        </div>
+          <!-- Login Link -->
+          <p
+            class="text-center text-sm text-sand-11"
+            v-motion
+            :initial="{ opacity: 0 }"
+            :enter="{ opacity: 1, transition: { delay: 150 } }"
+          >
+            Vous avez déjà un compte ?
+            <Link
+              href="/auth/login"
+              class="text-primary-600 hover:text-primary-700 font-semibold transition-colors"
+            >
+              Se connecter
+            </Link>
+          </p>
+        </form>
+      </section>
     </div>
+  </AuthLayout>
 </template>

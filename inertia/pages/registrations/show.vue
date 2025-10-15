@@ -41,13 +41,20 @@ const printTicket = () => {
 <template>
   <Head :title="`Billet - ${registration.event.name}`" />
 
-  <div class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 py-12 px-4 sm:px-6 lg:px-8">
+  <div
+    class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 py-12 px-4 sm:px-6 lg:px-8"
+  >
     <div class="max-w-4xl mx-auto">
       <!-- Boutons de navigation -->
       <div class="mb-6 flex justify-between items-center print:hidden">
         <Link href="/registrations" class="text-primary hover:underline flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Retour à mes inscriptions
         </Link>
@@ -71,10 +78,16 @@ const printTicket = () => {
       <!-- Billet / Ticket -->
       <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-sand-7">
         <!-- Header du billet -->
-        <div class="bg-gradient-to-r from-primary to-primary/80 p-8 text-white relative overflow-hidden">
-          <div class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"></div>
-          <div class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"></div>
-          
+        <div
+          class="bg-gradient-to-r from-primary to-primary/80 p-8 text-white relative overflow-hidden"
+        >
+          <div
+            class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32"
+          ></div>
+          <div
+            class="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24"
+          ></div>
+
           <div class="relative z-10">
             <div class="flex items-center justify-between mb-4">
               <span class="px-4 py-1.5 bg-white/20 backdrop-blur rounded-full text-sm font-medium">
@@ -83,15 +96,19 @@ const printTicket = () => {
               <span
                 :class="[
                   'px-4 py-1.5 rounded-full text-sm font-bold',
-                  registration.status === 'confirmed' ? 'bg-green-500' : 
-                  registration.status === 'pending' ? 'bg-yellow-500' :
-                  registration.status === 'attended' ? 'bg-blue-500' : 'bg-gray-500'
+                  registration.status === 'confirmed'
+                    ? 'bg-green-500'
+                    : registration.status === 'pending'
+                      ? 'bg-yellow-500'
+                      : registration.status === 'attended'
+                        ? 'bg-blue-500'
+                        : 'bg-gray-500',
                 ]"
               >
                 {{ registration.statusLabel }}
               </span>
             </div>
-            
+
             <h1 class="text-3xl font-bold mb-2">{{ registration.event.name }}</h1>
             <p class="text-white/90">Billet d'accès personnel</p>
           </div>
@@ -109,7 +126,7 @@ const printTicket = () => {
                   class="w-64 h-64"
                 />
               </div>
-              
+
               <div class="mt-4 text-center">
                 <p class="text-xs text-sand-10 mb-1">Code de référence</p>
                 <p class="font-mono text-sm font-medium text-sand-12 bg-sand-3 px-3 py-1 rounded">
@@ -118,10 +135,21 @@ const printTicket = () => {
               </div>
 
               <!-- Badge présence -->
-              <div v-if="registration.hasAttended" class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 w-full">
+              <div
+                v-if="registration.hasAttended"
+                class="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4 w-full"
+              >
                 <div class="text-center">
-                  <svg class="w-12 h-12 text-blue-600 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                  <svg
+                    class="w-12 h-12 text-blue-600 mx-auto mb-2"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clip-rule="evenodd"
+                    />
                   </svg>
                   <p class="font-semibold text-blue-900">Présence validée</p>
                   <p class="text-sm text-blue-700">Le {{ registration.attendedAt }}</p>
@@ -133,11 +161,21 @@ const printTicket = () => {
             <div class="space-y-6">
               <div>
                 <h2 class="text-xl font-bold text-sand-12 mb-4">Informations de l'événement</h2>
-                
+
                 <div class="space-y-4">
                   <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <svg
+                      class="w-5 h-5 text-primary mt-1 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                     <div>
                       <p class="font-medium text-sand-12">Date et heure</p>
@@ -147,9 +185,24 @@ const printTicket = () => {
                   </div>
 
                   <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <svg
+                      class="w-5 h-5 text-primary mt-1 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
                     </svg>
                     <div>
                       <p class="font-medium text-sand-12">Lieu</p>
@@ -158,8 +211,18 @@ const printTicket = () => {
                   </div>
 
                   <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg
+                      class="w-5 h-5 text-primary mt-1 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
                     </svg>
                     <div>
                       <p class="font-medium text-sand-12">Organisateur</p>
@@ -172,8 +235,18 @@ const printTicket = () => {
                   </div>
 
                   <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-primary mt-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      class="w-5 h-5 text-primary mt-1 flex-shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     <div>
                       <p class="font-medium text-sand-12">Inscrit le</p>
@@ -226,7 +299,7 @@ const printTicket = () => {
   body {
     background: white !important;
   }
-  
+
   .print\:hidden {
     display: none !important;
   }

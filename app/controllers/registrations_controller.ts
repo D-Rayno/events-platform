@@ -94,10 +94,7 @@ export default class RegistrationController {
 
     try {
       // Récupérer l'événement avec un verrou
-      const event = await Event.query({ client: trx })
-        .where('id', eventId)
-        .forUpdate()
-        .first()
+      const event = await Event.query({ client: trx }).where('id', eventId).forUpdate().first()
 
       if (!event) {
         await trx.rollback()
@@ -109,9 +106,15 @@ export default class RegistrationController {
       if (!event.isAgeEligible(user.age)) {
         await trx.rollback()
         if (event.maxAge && user.age > event.maxAge) {
-          session.flash('error', `Cet événement est réservé aux personnes de ${event.minAge} à ${event.maxAge} ans.`)
+          session.flash(
+            'error',
+            `Cet événement est réservé aux personnes de ${event.minAge} à ${event.maxAge} ans.`
+          )
         } else {
-          session.flash('error', `Cet événement est réservé aux personnes de ${event.minAge} ans et plus.`)
+          session.flash(
+            'error',
+            `Cet événement est réservé aux personnes de ${event.minAge} ans et plus.`
+          )
         }
         return response.redirect(`/events/${eventId}`)
       }
@@ -119,7 +122,7 @@ export default class RegistrationController {
       // Vérifier si l'événement accepte les inscriptions
       if (!event.canRegister()) {
         await trx.rollback()
-        
+
         if (event.status !== 'published') {
           session.flash('error', "Cet événement n'est pas publié.")
         } else if (event.isFull) {
@@ -129,11 +132,11 @@ export default class RegistrationController {
         } else if (event.registrationStartDate && DateTime.now() < event.registrationStartDate) {
           session.flash('error', "Les inscriptions n'ont pas encore commencé.")
         } else if (event.registrationEndDate && DateTime.now() > event.registrationEndDate) {
-          session.flash('error', 'La période d\'inscription est terminée.')
+          session.flash('error', "La période d'inscription est terminée.")
         } else {
-          session.flash('error', "Les inscriptions ne sont pas ouvertes.")
+          session.flash('error', 'Les inscriptions ne sont pas ouvertes.')
         }
-        
+
         return response.redirect(`/events/${eventId}`)
       }
 
@@ -180,11 +183,14 @@ export default class RegistrationController {
       }
 
       if (event.requiresApproval) {
-        session.flash('info', `Votre demande d'inscription a été envoyée. Elle sera validée prochainement.`)
+        session.flash(
+          'info',
+          `Votre demande d'inscription a été envoyée. Elle sera validée prochainement.`
+        )
       } else {
         session.flash('success', `Inscription confirmée ! Vous avez reçu votre QR code par email.`)
       }
-      
+
       return response.redirect(`/registrations/${registration.id}`)
     } catch (error) {
       await trx.rollback()
@@ -222,7 +228,10 @@ export default class RegistrationController {
     }
 
     if (registration.event.isOngoing() || registration.event.isFinished()) {
-      session.flash('error', "Vous ne pouvez pas annuler car l'événement a déjà commencé ou est terminé.")
+      session.flash(
+        'error',
+        "Vous ne pouvez pas annuler car l'événement a déjà commencé ou est terminé."
+      )
       return response.redirect('/registrations')
     }
 
@@ -244,7 +253,7 @@ export default class RegistrationController {
     } catch (error) {
       await trx.rollback()
       console.error("Erreur lors de l'annulation:", error)
-      session.flash('error', "Une erreur est survenue.")
+      session.flash('error', 'Une erreur est survenue.')
       return response.redirect('/registrations')
     }
   }
@@ -267,7 +276,7 @@ export default class RegistrationController {
     }
 
     if (!registration.isActive) {
-      session.flash('error', "Vous ne pouvez pas renvoyer le QR code pour cette inscription.")
+      session.flash('error', 'Vous ne pouvez pas renvoyer le QR code pour cette inscription.')
       return response.redirect('/registrations')
     }
 
@@ -278,7 +287,7 @@ export default class RegistrationController {
       return response.redirect().back()
     } catch (error) {
       console.error("Erreur lors de l'envoi:", error)
-      session.flash('error', "Une erreur est survenue.")
+      session.flash('error', 'Une erreur est survenue.')
       return response.redirect().back()
     }
   }

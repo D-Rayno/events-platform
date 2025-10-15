@@ -1,93 +1,133 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
+import { EnvelopeIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
+import AuthLayout from '~/components/layouts/AuthLayout.vue'
+import Input from '#ui/Input.vue'
+import Button from '#ui/Button.vue'
+import { use_vlidated_form } from '~/composables/use_validated_form'
+import { loginSchema } from '~/lib/validation'
 
-const form = useForm({
-    email: '',
-    password: '',
+const { form, getError, validateField, validateAll, clearError } = use_vlidated_form(loginSchema, {
+  email: '',
+  password: '',
 })
 
-const submit = () => {
-    form.post('/auth/login', {
-        preserveScroll: true,
-    })
+const handleSubmit = async () => {
+  const isValid = await validateAll()
+  if (!isValid) return
+
+  form.post('/auth/login', {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Auth store will be updated via shared data
+    },
+  })
+}
+
+const handleBlur = (field: 'email' | 'password') => {
+  validateField(field)
 }
 </script>
 
 <template>
+  <Head>
+    <title>Connexion - Accédez à votre compte</title>
+    <meta
+      name="description"
+      content="Connectez-vous à votre compte pour gérer vos inscriptions aux événements et accéder à votre profil."
+    />
+    <meta name="robots" content="noindex, nofollow" />
+  </Head>
 
-    <Head title="Connexion" />
-
+  <AuthLayout>
     <div
-        class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
-            <!-- En-tête -->
-            <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold text-sand-12 mb-2">Connexion</h1>
-                <p class="text-sand-11">Accédez à votre compte</p>
-            </div>
+      class="w-full max-w-md"
+      v-motion
+      :initial="{ opacity: 0, y: 20 }"
+      :enter="{ opacity: 1, y: 0, transition: { duration: 400 } }"
+    >
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-sand-12 mb-2">Bon retour parmi nous</h1>
+        <p class="text-sand-11">Connectez-vous pour continuer votre expérience</p>
+      </header>
 
-            <!-- Formulaire -->
-            <div class="bg-white shadow-xl rounded-2xl p-8 border border-sand-7">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-sand-12 mb-2">
-                            Adresse email
-                        </label>
-                        <input id="email" v-model="form.email" type="email" required autofocus
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.email }" placeholder="jean.dupont@example.com" />
-                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.email }}
-                        </p>
-                    </div>
+      <!-- Form Card -->
+      <section
+        class="bg-white shadow-xl rounded-2xl p-8 border border-sand-6"
+        aria-label="Formulaire de connexion"
+      >
+        <form @submit.prevent="handleSubmit" class="space-y-6" novalidate>
+          <!-- Email -->
+          <Input
+            v-model="form.email"
+            type="email"
+            label="Adresse email"
+            placeholder="jean.dupont@example.com"
+            :icon="EnvelopeIcon"
+            :error="getError('email')"
+            required
+            autocomplete="email"
+            @blur="handleBlur('email')"
+            @input="clearError('email')"
+          />
 
-                    <!-- Mot de passe -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-sand-12 mb-2">
-                            Mot de passe
-                        </label>
-                        <input id="password" v-model="form.password" type="password" required
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.password }" placeholder="••••••••" />
-                        <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.password }}
-                        </p>
-                    </div>
+          <!-- Password -->
+          <Input
+            v-model="form.password"
+            type="password"
+            label="Mot de passe"
+            placeholder="••••••••"
+            :icon="LockClosedIcon"
+            :error="getError('password')"
+            required
+            autocomplete="current-password"
+            @blur="handleBlur('password')"
+            @input="clearError('password')"
+          />
 
-                    <!-- Mot de passe oublié -->
-                    <div class="text-right">
-                        <Link href="/auth/forgot-password" class="text-sm text-primary hover:underline">
-                        Mot de passe oublié ?
-                        </Link>
-                    </div>
+          <!-- Forgot Password Link -->
+          <div class="flex justify-end">
+            <Link
+              href="/auth/forgot-password"
+              class="text-sm text-primary-600 hover:text-primary-700 font-medium transition-colors"
+              v-motion
+              :initial="{ opacity: 0 }"
+              :enter="{ opacity: 1, transition: { delay: 100 } }"
+            >
+              Mot de passe oublié ?
+            </Link>
+          </div>
 
-                    <!-- Bouton de connexion -->
-                    <button type="submit" :disabled="form.processing"
-                        class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
-                        <span v-if="!form.processing">Se connecter</span>
-                        <span v-else class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            Connexion en cours...
-                        </span>
-                    </button>
+          <!-- Submit Button -->
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            :loading="form.processing"
+            :disabled="form.processing"
+            full-width
+          >
+            Se connecter
+          </Button>
 
-                    <!-- Lien vers l'inscription -->
-                    <div class="text-center text-sm text-sand-11">
-                        Vous n'avez pas de compte ?
-                        <Link href="/auth/register" class="text-primary font-semibold hover:underline">
-                        S'inscrire
-                        </Link>
-                    </div>
-                </form>
-            </div>
-        </div>
+          <!-- Register Link -->
+          <p
+            class="text-center text-sm text-sand-11"
+            v-motion
+            :initial="{ opacity: 0 }"
+            :enter="{ opacity: 1, transition: { delay: 150 } }"
+          >
+            Vous n'avez pas de compte ?
+            <Link
+              href="/auth/register"
+              class="text-primary-600 hover:text-primary-700 font-semibold transition-colors"
+            >
+              Créer un compte
+            </Link>
+          </p>
+        </form>
+      </section>
     </div>
+  </AuthLayout>
 </template>

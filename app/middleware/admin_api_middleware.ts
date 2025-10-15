@@ -13,7 +13,7 @@ export default class AdminApiMiddleware {
     if (!token || token !== env.get('ADMIN_API_TOKEN')) {
       return ctx.response.unauthorized({
         error: 'Non autorisé',
-        message: 'Token d\'authentification invalide ou manquant.',
+        message: "Token d'authentification invalide ou manquant.",
       })
     }
 

@@ -7,7 +7,7 @@ interface AnimationOptions {
   repeat?: number
 }
 
-export function useAnimation() {
+export function use_animation() {
   const isReduced = ref(false)
 
   const checkReducedMotion = () => {

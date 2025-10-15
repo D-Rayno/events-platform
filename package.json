@@ -28,8 +28,7 @@
     "#abilities/*": "./app/abilities/*.js",
     "#database/*": "./database/*.js",
     "#tests/*": "./tests/*.js",
-    "#start/*": "./start/*.js",
-    "#config/*": "./config/*.js"
+    "#start/*": "./start/*.js"
   },
   "devDependencies": {
     "@adonisjs/assembler": "^7.8.2",
@@ -47,15 +46,16 @@
     "@types/nodemailer": "^7.0.2",
     "@types/qrcode": "^1.5.5",
     "@vitejs/plugin-vue": "^6.0.1",
+    "@vueuse/motion": "^2.2.6",
     "eslint": "^9.26.0",
     "hot-hook": "^0.4.0",
     "pino-pretty": "^13.0.0",
     "prettier": "^3.5.3",
+    "tailwindcss": "^4.1.14",
     "ts-node-maintained": "^10.9.5",
     "typescript": "~5.8.3",
     "vite": "^6.3.5",
-    "yup": "^1.4.0",
-    "@vueuse/motion": "^2.2.6"
+    "yup": "^1.4.0"
   },
   "dependencies": {
     "@adonisjs/auth": "^9.4.0",
@@ -77,11 +77,12 @@
     "@vueuse/core": "^13.9.0",
     "edge.js": "^6.2.1",
     "luxon": "^3.7.2",
+    "motion-v": "^1.7.2",
     "mysql2": "^3.15.1",
     "nodemailer": "^7.0.6",
+    "pinia": "^3.0.3",
     "qrcode": "^1.5.4",
     "reflect-metadata": "^0.2.2",
-    "tailwindcss": "^4.1.14",
     "vue": "^3.5.22"
   },
   "hotHook": {

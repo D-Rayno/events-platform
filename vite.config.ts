@@ -4,6 +4,7 @@ import inertia from '@adonisjs/inertia/client'
 import vue from '@vitejs/plugin-vue'
 import adonisjs from '@adonisjs/vite/client'
 import tailwindcss from '@tailwindcss/vite'
+import path from 'node:path'
 
 export default defineConfig({
   plugins: [
@@ -20,9 +21,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '~/': `${getDirname(import.meta.url)}/inertia/`,
-      '#ui': `${getDirname(import.meta.url)}/inertia/components/ui`,
-      '#shared': `${getDirname(import.meta.url)}/inertia/components/shared`,
-      '@': `${getDirname(import.meta.url)}/inertia/components`,
+      '#ui': path.resolve(__dirname, './inertia/components/ui'),
+      '#shared': path.resolve(__dirname, './inertia/components/shared'),
+      '@': path.resolve(__dirname, './inertia/components'),
     },
   },
 })

@@ -1,78 +1,105 @@
 <script setup lang="ts">
-import { Head, useForm, Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
+import { EnvelopeIcon, ArrowLeftIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
+import AuthLayout from '~/components/layouts/AuthLayout.vue'
+import Input from '#ui/Input.vue'
+import Button from '#ui/Button.vue'
+import Alert from '#ui/Alert.vue'
+import { use_vlidated_form } from '~/composables/use_validated_form'
+import { forgotPasswordSchema } from '~/lib/validation'
 
-const form = useForm({
-    email: '',
+const { form, getError, validateField, validateAll, clearError } = use_vlidated_form(forgotPasswordSchema, {
+  email: '',
 })
 
-const submit = () => {
-    form.post('/auth/forgot-password', {
-        preserveScroll: true,
-    })
+const handleSubmit = async () => {
+  const isValid = await validateAll()
+  if (!isValid) return
+
+  form.post('/auth/forgot-password', {
+    preserveScroll: true,
+  })
+}
+
+const handleBlur = (field: 'email') => {
+  validateField(field)
 }
 </script>
 
 <template>
+  <Head>
+    <title>Mot de passe oublié - Réinitialisez votre accès</title>
+    <meta name="description" content="Réinitialisez votre mot de passe en quelques étapes simples. Recevez un lien de réinitialisation par email." />
+    <meta name="robots" content="noindex, nofollow" />
+  </Head>
 
-    <Head title="Mot de passe oublié" />
-
-    <div
-        class="min-h-screen bg-gradient-to-br from-primary/5 via-white to-primary/10 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
-            <!-- En-tête -->
-            <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold text-sand-12 mb-2">Mot de passe oublié</h1>
-                <p class="text-sand-11">Entrez votre email pour réinitialiser votre mot de passe</p>
-            </div>
-
-            <!-- Formulaire -->
-            <div class="bg-white shadow-xl rounded-2xl p-8 border border-sand-7">
-                <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Email -->
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-sand-12 mb-2">
-                            Adresse email
-                        </label>
-                        <input id="email" v-model="form.email" type="email" required autofocus
-                            class="w-full px-4 py-2.5 border border-sand-7 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition"
-                            :class="{ 'border-red-500': form.errors.email }" placeholder="jean.dupont@example.com" />
-                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
-                            {{ form.errors.email }}
-                        </p>
-                    </div>
-
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <p class="text-sm text-blue-800">
-                            💡 Vous recevrez un email avec un lien pour réinitialiser votre mot de passe s'il existe un
-                            compte associé à cet email.
-                        </p>
-                    </div>
-
-                    <!-- Bouton d'envoi -->
-                    <button type="submit" :disabled="form.processing"
-                        class="w-full bg-primary hover:bg-primary/90 text-white font-semibold py-3 px-6 rounded-lg transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center">
-                        <span v-if="!form.processing">Envoyer le lien</span>
-                        <span v-else class="flex items-center">
-                            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
-                                fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                    stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                                </path>
-                            </svg>
-                            Envoi en cours...
-                        </span>
-                    </button>
-
-                    <!-- Retour à la connexion -->
-                    <div class="text-center text-sm text-sand-11">
-                        <Link href="/auth/login" class="text-primary font-semibold hover:underline">
-                        ← Retour à la connexion
-                        </Link>
-                    </div>
-                </form>
-            </div>
+  <AuthLayout>
+    <div class="w-full max-w-md" v-motion :initial="{ opacity: 0, y: 20 }" :enter="{ opacity: 1, y: 0, transition: { duration: 400 } }">
+      <!-- Header -->
+      <header class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-100 mb-4" v-motion :initial="{ scale: 0 }" :enter="{ scale: 1, transition: { delay: 100, type: 'spring' } }">
+          <EnvelopeIcon class="w-8 h-8 text-primary-600" />
         </div>
+        <h1 class="text-3xl font-bold text-sand-12 mb-2">
+          Mot de passe oublié ?
+        </h1>
+        <p class="text-sand-11">
+          Pas de souci, nous allons vous aider à le récupérer
+        </p>
+      </header>
+
+      <!-- Form Card -->
+      <section class="bg-white shadow-xl rounded-2xl p-8 border border-sand-6" aria-label="Formulaire de réinitialisation">
+        <form @submit.prevent="handleSubmit" class="space-y-6" novalidate>
+          <!-- Email -->
+          <Input
+            v-model="form.email"
+            type="email"
+            label="Adresse email"
+            placeholder="jean.dupont@example.com"
+            :icon="EnvelopeIcon"
+            :error="getError('email')"
+            required
+            autofocus
+            autocomplete="email"
+            @blur="handleBlur('email')"
+            @input="clearError('email')"
+          />
+
+          <!-- Info Alert -->
+          <Alert type="info" v-motion :initial="{ opacity: 0, y: -10 }" :enter="{ opacity: 1, y: 0, transition: { delay: 150 } }">
+            <div class="flex items-start gap-2">
+              <InformationCircleIcon class="w-5 h-5 shrink-0 mt-0.5" />
+              <p class="text-sm">
+                Vous recevrez un email avec un lien pour réinitialiser votre mot de passe si un compte existe avec cette adresse.
+              </p>
+            </div>
+          </Alert>
+
+          <!-- Submit Button -->
+          <Button
+            type="submit"
+            variant="primary"
+            size="lg"
+            :loading="form.processing"
+            :disabled="form.processing"
+            full-width
+          >
+            Envoyer le lien de réinitialisation
+          </Button>
+
+          <!-- Back to Login -->
+          <div class="text-center" v-motion :initial="{ opacity: 0 }" :enter="{ opacity: 1, transition: { delay: 200 } }">
+            <Link
+              href="/auth/login"
+              class="inline-flex items-center gap-2 text-sm text-sand-11 hover:text-sand-12 font-medium transition-colors group"
+            >
+              <ArrowLeftIcon class="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              Retour à la connexion
+            </Link>
+          </div>
+        </form>
+      </section>
     </div>
+  </AuthLayout>
 </template>
