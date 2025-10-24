@@ -123,7 +123,6 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               <Button
-                as={Link}
                 href="/events"
                 variant="gradient"
                 size="xl"
@@ -226,7 +225,6 @@ export default function Home() {
                   ))}
                 </ul>
                 <Button
-                  as={Link}
                   href="/register"
                   variant="primary"
                   size="lg"
@@ -294,7 +292,7 @@ export default function Home() {
             </motion.h2>
 
             <div className="grid md:grid-cols-3 gap-8">
-              {testimonials.map((testimonial, index) => (
+              {testimonials.map((testimonial) => (
                 <Card key={testimonial.name} variant="elevated" hoverable className="flex flex-col">
                   <div className="flex items-center gap-4 mb-6">
                     <img
@@ -307,7 +305,7 @@ export default function Home() {
                       <p className="text-sm text-neutral-600">{testimonial.role}</p>
                     </div>
                   </div>
-                  <p className="text-neutral-700 flex-grow">"{testimonial.content}"</p>
+                  <p className="text-neutral-700 grow">"{testimonial.content}"</p>
                 </Card>
               ))}
             </div>
