@@ -1,4 +1,4 @@
-// start/routes/web.ts - IMPROVED VERSION
+// start/routes/web.ts - FIXED VERSION
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
@@ -14,14 +14,9 @@ export default () => {
   |--------------------------------------------------------------------------
   */
 
-  // Home page - redirect authenticated users to events
+  // Home page - NO REDIRECT, just render home page
   router
-    .get('/', async ({ inertia, auth, response }) => {
-      // If user is authenticated, redirect to events
-      if (auth.user) {
-        return response.redirect('/events')
-      }
-
+    .get('/', async ({ inertia }) => {
       return inertia.render('home')
     })
     .as('home')
@@ -80,7 +75,7 @@ export default () => {
         .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
         .as('resend_verification')
 
-      // Profile
+      // Profile - MUST BE ACCESSIBLE
       router.get('/profile', [ProfileController, 'show']).as('profile.show')
       router.post('/profile', [ProfileController, 'update']).as('profile.update')
       router

@@ -7,12 +7,13 @@ import Avatar from '~/components/ui/Avatar'
 import { useAuthStore } from '~/stores/auth'
 import { useTheme } from '~/hooks/useTheme'
 
-interface HeaderProps {
-  user?: any
-}
+export default function Header() {
+  // Use auth store instead of prop
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const user = useAuthStore((s) => s.user)
+  const fullName = useAuthStore((s) => s.fullName)
+  const avatarUrl = useAuthStore((s) => s.avatarUrl)
 
-export default function Header({ user }: HeaderProps) {
-  const authStore = useAuthStore()
   const { props } = usePage()
   const { config } = useTheme()
 
@@ -35,7 +36,7 @@ export default function Header({ user }: HeaderProps) {
     { label: 'Profil', href: '/profile', name: 'profile', auth: true },
   ]
 
-  const activeLinks = navLinks.filter((link) => !link.auth || authStore.isAuthenticated)
+  const activeLinks = navLinks.filter((link) => !link.auth || isAuthenticated)
 
   const handleLogout = () => {
     router.post(
@@ -43,7 +44,6 @@ export default function Header({ user }: HeaderProps) {
       {},
       {
         onSuccess: () => {
-          authStore.clearUser()
           setUserMenuOpen(false)
         },
       }
@@ -112,7 +112,7 @@ export default function Header({ user }: HeaderProps) {
           {/* Right Section */}
           <div className="flex items-center gap-4">
             {/* Authenticated User */}
-            {authStore.isAuthenticated && authStore.user ? (
+            {isAuthenticated && user ? (
               <div className="hidden md:flex items-center gap-4" ref={userMenuRef}>
                 <div className="relative">
                   <button
@@ -121,14 +121,10 @@ export default function Header({ user }: HeaderProps) {
                     aria-label="Menu utilisateur"
                     aria-expanded={userMenuOpen}
                   >
-                    <Avatar
-                      name={authStore.fullName}
-                      src={authStore.avatarUrl || undefined}
-                      size="sm"
-                    />
+                    <Avatar name={fullName} src={avatarUrl || undefined} size="sm" />
                     <div className="hidden lg:block text-left">
                       <div className="text-sm font-medium text-neutral-900 group-hover:text-primary-600 transition-colors">
-                        {authStore.user.firstName}
+                        {user.firstName}
                       </div>
                       <div className="text-xs text-neutral-500">Mon compte</div>
                     </div>
@@ -151,18 +147,12 @@ export default function Header({ user }: HeaderProps) {
                       >
                         <div className="px-4 py-4 border-b border-neutral-100 bg-linear-to-r from-primary-50 to-secondary-50">
                           <div className="flex items-center gap-3">
-                            <Avatar
-                              name={authStore.fullName}
-                              src={authStore.avatarUrl || undefined}
-                              size="md"
-                            />
+                            <Avatar name={fullName} src={avatarUrl || undefined} size="md" />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm font-semibold text-neutral-900 truncate">
-                                {authStore.fullName}
+                                {fullName}
                               </p>
-                              <p className="text-xs text-neutral-600 truncate">
-                                {authStore.user.email}
-                              </p>
+                              <p className="text-xs text-neutral-600 truncate">{user.email}</p>
                             </div>
                           </div>
                         </div>
@@ -281,7 +271,7 @@ export default function Header({ user }: HeaderProps) {
                 </Link>
               ))}
 
-              {!authStore.isAuthenticated && (
+              {!isAuthenticated && (
                 <div className="pt-2 border-t border-neutral-200 space-y-2 mt-4">
                   <Link
                     href="/auth/login"
@@ -297,6 +287,20 @@ export default function Header({ user }: HeaderProps) {
                   >
                     S'inscrire
                   </Link>
+                </div>
+              )}
+
+              {isAuthenticated && (
+                <div className="pt-2 border-t border-neutral-200 mt-4">
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      handleLogout()
+                    }}
+                    className="block w-full px-4 py-3 text-center rounded-xl text-sm font-medium text-error-600 hover:bg-error-50 transition-all"
+                  >
+                    Déconnexion
+                  </button>
                 </div>
               )}
             </motion.div>

@@ -124,7 +124,8 @@ export default class AuthController {
 
       session.flash('success', `Bienvenue ${user.firstName} !`)
 
-      // Redirect authenticated users to events page
+      // Check for intended URL in session storage (will be read by frontend)
+      // Don't redirect here, let the frontend handle it
       return response.redirect('/events')
     } catch (error) {
       console.error('Erreur lors de la connexion:', error)
@@ -132,7 +133,6 @@ export default class AuthController {
       return response.redirect().back()
     }
   }
-
   /**
    * Déconnexion
    */

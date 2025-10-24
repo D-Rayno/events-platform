@@ -1,4 +1,3 @@
-import { usePage } from '@inertiajs/react'
 import { motion } from 'motion/react'
 import Header from '~/components/shared/Header'
 import Footer from '~/components/shared/Footer'
@@ -19,12 +18,9 @@ export default function AppLayout({
   containerClass = 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8',
   layout = 'default',
 }: AppLayoutProps) {
-  const { props } = usePage()
-  const auth = props.auth as { user?: any } | undefined
-
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col antialiased">
-      {showHeader && <Header user={auth?.user} />}
+      {showHeader && <Header />}
       <FlashMessage />
 
       <motion.main
