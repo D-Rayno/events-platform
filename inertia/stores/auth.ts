@@ -6,12 +6,12 @@ interface AuthState {
   isInitialized: boolean
   
   // Computed getters
-  isAuthenticated: () => boolean
-  isEmailVerified: () => boolean
-  fullName: () => string
-  initials: () => string
-  avatarUrl: () => string | null
-  needsVerification: () => boolean
+  isAuthenticated: boolean
+  isEmailVerified: boolean
+  fullName: string
+  initials: string
+  avatarUrl: string | null
+  needsVerification: boolean
   
   // Actions
   initializeAuth: (userData: User | null) => void
@@ -28,24 +28,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isInitialized: false,
 
-  // Computed getters
-  isAuthenticated: () => !!get().user,
+  // Computed getters as properties
+  get isAuthenticated() {
+    return !!get().user
+  },
   
-  isEmailVerified: () => get().user?.isEmailVerified || false,
+  get isEmailVerified() {
+    return get().user?.isEmailVerified || false
+  },
   
-  fullName: () => {
+  get fullName() {
     const user = get().user
     if (!user) return ''
     return `${user.firstName} ${user.lastName}`
   },
   
-  initials: () => {
+  get initials() {
     const user = get().user
     if (!user) return ''
     return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
   },
   
-  avatarUrl: () => {
+  get avatarUrl() {
     const user = get().user
     if (!user?.avatarUrl) return null
     return user.avatarUrl.startsWith('http')
@@ -53,8 +57,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       : `/uploads/${user.avatarUrl}`
   },
   
-  needsVerification: () => {
-    return get().isAuthenticated() && !get().isEmailVerified()
+  get needsVerification() {
+    return get().isAuthenticated && !get().isEmailVerified
   },
 
   // Actions

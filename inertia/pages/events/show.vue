@@ -9,7 +9,7 @@ import {
   ShareIcon,
   ArrowLeftIcon,
 } from '@heroicons/vue/24/outline'
-import AppLayout from '#layouts/AppLayout.vue'
+import AppLayout from '~/components/layouts/AppLayout'
 import Button from '#ui/Button.vue'
 import Card from '#ui/Card.vue'
 import Badge from '#ui/Badge.vue'

@@ -2,7 +2,7 @@
 import { Head, useForm } from '@inertiajs/vue3'
 import { ref } from 'vue'
 import { UserIcon, EnvelopeIcon, PhoneIcon, MapPinIcon, CakeIcon, TrashIcon } from '@heroicons/vue/24/outline'
-import AppLayout from '#layouts/AppLayout.vue'
+import AppLayout from '~/components/layouts/AppLayout'
 import Input from '#ui/Input.vue'
 import Select from '#ui/Select.vue'
 import Button from '#ui/Button.vue'

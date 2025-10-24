@@ -8,7 +8,7 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from '@heroicons/vue/24/outline'
-import AppLayout from '~/components/layouts/AppLayout.vue'
+import AppLayout from '~/components/layouts/AppLayout'
 import Button from '#ui/Button.vue'
 import Card from '#ui/Card.vue'
 import { use_theme } from '~/composables/use_theme'

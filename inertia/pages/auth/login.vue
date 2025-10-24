@@ -2,7 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3'
 import { ref, onMounted } from 'vue'
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/vue/24/outline'
-import AuthLayout from '~/components/layouts/AuthLayout.vue'
+import AuthLayout from '~/components/layouts/AuthLayout'
 import Input from '#ui/Input.vue'
 import Button from '#ui/Button.vue'
 import { use_vlidated_form } from '~/composables/use_validated_form'

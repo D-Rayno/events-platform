@@ -25,5 +25,5 @@
       "#types/*": ["./types/*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.vue", "app/ssr.tsx", "app/app.tsx"]
+  "include": ["./**/*.ts", "./**/*.vue", "app/ssr.tsx", "app/app.tsx", "components/layouts/AppLayout.tsx", "components/layouts/AuthLayout.tsx", "components/shared/FlashMessage.tsx", "components/shared/Header.tsx"]
 }
