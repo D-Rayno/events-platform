@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, router, usePage } from '@inertiajs/react'
 import { Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon } from '@heroicons/react/24/outline'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import Button from '~/components/ui/Button'
 import Avatar from '~/components/ui/Avatar'
 import { useAuthStore } from '~/stores/auth'
-import { use_theme } from '~/composables/use_theme'
+import { useTheme } from '~/hooks/useTheme'
 
 interface HeaderProps {
   user?: any
@@ -14,7 +14,7 @@ interface HeaderProps {
 export default function Header({ user }: HeaderProps) {
   const authStore = useAuthStore()
   const { props } = usePage()
-  const { config } = use_theme()
+  const { config } = useTheme()
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -75,10 +75,10 @@ export default function Header({ user }: HeaderProps) {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+            <div className="w-10 h-10 bg-linear-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <span className="text-2xl">{config.branding.logo.icon}</span>
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent hidden sm:inline group-hover:from-primary-700 group-hover:to-secondary-700 transition-all">
+            <span className="text-xl font-bold bg-linear-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent hidden sm:inline group-hover:from-primary-700 group-hover:to-secondary-700 transition-all">
               {config.branding.logo.text}
             </span>
           </Link>
@@ -102,7 +102,7 @@ export default function Header({ user }: HeaderProps) {
                 >
                   <span className="relative z-10">{link.label}</span>
                   {isActive(link.name) && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary-500/10 to-secondary-500/10 rounded-xl" />
+                    <div className="absolute inset-0 bg-linear-to-r from-primary-500/10 to-secondary-500/10 rounded-xl" />
                   )}
                 </Link>
               </motion.div>
@@ -149,7 +149,7 @@ export default function Header({ user }: HeaderProps) {
                         transition={{ duration: 0.2 }}
                         className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
                       >
-                        <div className="px-4 py-4 border-b border-neutral-100 bg-gradient-to-r from-primary-50 to-secondary-50">
+                        <div className="px-4 py-4 border-b border-neutral-100 bg-linear-to-r from-primary-50 to-secondary-50">
                           <div className="flex items-center gap-3">
                             <Avatar
                               name={authStore.fullName}

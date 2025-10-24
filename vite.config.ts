@@ -9,20 +9,16 @@ const __dirname = getDirname(import.meta.url)
 
 export default defineConfig({
   plugins: [
-    inertia({ 
-      ssr: { 
-        enabled: true, 
-        entrypoint: 'inertia/app/ssr.tsx' 
-      } 
-    }),
+    inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.tsx' } }),
     react(),
+    adonisjs({ entrypoints: ['inertia/app/app.tsx'], reload: ['resources/views/**/*.edge'] }),
     tailwindcss(),
-    adonisjs({
-      entrypoints: ['inertia/app/app.tsx'],
-      reload: ['resources/views/**/*.edge'],
-    }),
   ],
 
+  /**
+   * Define aliases for importing modules from
+   * your frontend code
+   */
   resolve: {
     alias: {
       '~/': `${__dirname}/inertia/`,

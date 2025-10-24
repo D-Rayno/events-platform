@@ -1,45 +1,36 @@
 // inertia/services/auth.service.ts
-import { router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/react'
 import { useAuthStore } from '~/stores/auth'
-import type { LoginCredentials, RegisterData, toFormData } from '~/types/auth'
+import type { LoginCredentials, RegisterData } from '~/types/auth'
+import { toFormData } from '~/types/auth'
 
 class AuthService {
-  async login(credentials: LoginCredentials, remember: boolean = false) {
-    return new Promise((resolve, reject) => {
+  async login(credentials: LoginCredentials, remember = false) {
+    return new Promise<boolean>((resolve, reject) => {
       router.post('/auth/login', { ...credentials, remember } as Record<string, any>, {
         preserveScroll: true,
         onSuccess: () => resolve(true),
-        onError: (errors) => reject(errors),
+        onError: (errors: any) => reject(errors),
       })
     })
   }
 
   async register(data: RegisterData) {
-    return new Promise((resolve, reject) => {
-      // Convert to plain object for Inertia
-      const formData = {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        email: data.email,
-        password: data.password,
-        password_confirmation: data.password_confirmation,
-        age: typeof data.age === 'string' ? Number.parseInt(data.age) : data.age,
-        province: data.province,
-        commune: data.commune,
-        ...(data.phoneNumber && { phoneNumber: data.phoneNumber }),
-      }
+    return new Promise<boolean>((resolve, reject) => {
+      // Convert to plain object (or form-like object) for Inertia
+      const formData = toFormData(data) as Record<string, any>
 
-      router.post('/auth/register', formData as any, {
+      router.post('/auth/register', formData, {
         preserveScroll: true,
         onSuccess: () => resolve(true),
-        onError: (errors) => reject(errors),
+        onError: (errors: any) => reject(errors),
       })
     })
   }
 
   async logout() {
     const authStore = useAuthStore()
-    return new Promise((resolve) => {
+    return new Promise<boolean>((resolve, reject) => {
       router.post(
         '/auth/logout',
         {},
@@ -48,40 +39,44 @@ class AuthService {
             authStore.clearUser()
             resolve(true)
           },
+          onError: (err: any) => {
+            // optional: still clear user on certain errors?
+            reject(err)
+          },
         }
       )
     })
   }
 
   async forgotPassword(email: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       router.post('/auth/forgot-password', { email } as any, {
         preserveScroll: true,
         onSuccess: () => resolve(true),
-        onError: (errors) => reject(errors),
+        onError: (errors: any) => reject(errors),
       })
     })
   }
 
   async resetPassword(token: string, password: string, password_confirmation: string) {
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       router.post('/auth/reset-password', { token, password, password_confirmation } as any, {
         preserveScroll: true,
         onSuccess: () => resolve(true),
-        onError: (errors) => reject(errors),
+        onError: (errors: any) => reject(errors),
       })
     })
   }
 
   async resendVerificationEmail() {
-    return new Promise((resolve, reject) => {
+    return new Promise<boolean>((resolve, reject) => {
       router.post(
         '/auth/resend-verification',
         {},
         {
           preserveScroll: true,
           onSuccess: () => resolve(true),
-          onError: (errors) => reject(errors),
+          onError: (errors: any) => reject(errors),
         }
       )
     })

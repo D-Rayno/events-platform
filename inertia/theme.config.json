@@ -15,14 +15,14 @@
   "images": {
     "banner": {
       "default": "/images/banner-default.jpg",
-      "home": "/images/banner-home.jpg",
-      "events": "/images/banner-events.jpg",
-      "auth": "/images/banner-auth.jpg"
+      "home": "/images/banner-default.jpg",
+      "events": "/images/banner-default.jpg",
+      "auth": "/images/banner-default.jpg"
     },
     "placeholder": {
-      "event": "/images/placeholder-event.jpg",
-      "user": "/images/placeholder-user.jpg",
-      "category": "/images/placeholder-category.jpg"
+      "event": "/images/banner-default.jpg",
+      "user": "/images/banner-default.jpg",
+      "category": "/images/banner-default.jpg"
     }
   },
   "colors": {

@@ -1,5 +1,5 @@
 // inertia/services/registration.service.ts
-import { router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/react'
 
 /**
  * Registration service
@@ -9,7 +9,7 @@ class RegistrationService {
   /**
    * Fetch user registrations
    */
-  async fetchRegistrations() {
+  async fetchRegistrations(): Promise<boolean> {
     return new Promise((resolve) => {
       router.visit('/registrations', {
         onSuccess: () => resolve(true),
@@ -21,7 +21,7 @@ class RegistrationService {
    * Get registration details
    * @param id - Registration ID
    */
-  async getRegistration(id: number) {
+  async getRegistration(id: number): Promise<boolean> {
     return new Promise((resolve) => {
       router.visit(`/registrations/${id}`, {
         onSuccess: () => resolve(true),
@@ -33,25 +33,30 @@ class RegistrationService {
    * Cancel registration
    * @param id - Registration ID
    */
-  async cancel(id: number) {
+  async cancel(id: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      router.delete(`/registrations/${id}`, {
-        preserveScroll: true,
-        onSuccess: () => resolve(true),
-        onError: (errors) => reject(errors),
-      })
+      // router.delete(url, data?, options?)
+      router.delete(
+        `/registrations/${id}`,
+        {
+          preserveScroll: true,
+          onSuccess: () => resolve(true),
+          onError: (errors: any) => reject(errors),
+        }
+      )
     })
   }
 
   /**
    * Download QR code
-   * @param qrCodeImage - Base64 QR code image
+   * @param qrCodeImage - Base64 QR code image or URL
    * @param eventName - Event name for filename
    */
-  downloadQRCode(qrCodeImage: string, eventName: string) {
+  downloadQRCode(qrCodeImage: string, eventName: string): void {
+    const sanitized = eventName.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-_]/g, '').toLowerCase()
     const link = document.createElement('a')
     link.href = qrCodeImage
-    link.download = `qr-code-${eventName.replace(/\s+/g, '-').toLowerCase()}.png`
+    link.download = `qr-code-${sanitized}.png`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
@@ -60,7 +65,7 @@ class RegistrationService {
   /**
    * Print ticket
    */
-  printTicket() {
+  printTicket(): void {
     window.print()
   }
 
@@ -86,7 +91,7 @@ class RegistrationService {
   canCancel(registration: any): boolean {
     return (
       (registration.status === 'confirmed' || registration.status === 'pending') &&
-      registration.event.isUpcoming
+      registration.event?.isUpcoming
     )
   }
 
@@ -95,17 +100,14 @@ class RegistrationService {
    * @param registrations - Array of registrations
    */
   groupByStatus(registrations: any[]): Record<string, any[]> {
-    return registrations.reduce(
-      (acc, reg) => {
-        const status = reg.status
-        if (!acc[status]) {
-          acc[status] = []
-        }
-        acc[status].push(reg)
-        return acc
-      },
-      {} as Record<string, any[]>
-    )
+    return registrations.reduce((acc, reg) => {
+      const status = reg.status || 'unknown'
+      if (!acc[status]) {
+        acc[status] = []
+      }
+      acc[status].push(reg)
+      return acc
+    }, {} as Record<string, any[]>)
   }
 }
 

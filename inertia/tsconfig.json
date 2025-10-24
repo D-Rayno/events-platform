@@ -4,7 +4,6 @@
     "baseUrl": ".",
     "jsx": "preserve",
     "module": "ESNext",
-    "jsxImportSource": "vue",
     "paths": {
       "~/*": ["./*"],
       "#ui": ["./components/ui"],
@@ -13,8 +12,8 @@
       "#shared/*": ["./components/shared/*"],
       "#layouts": ["./components/layouts"],
       "#layouts/*": ["./components/layouts/*"],
-      "#composables": ["./composables"],
-      "#composables/*": ["./composables/*"],
+      "#hooks": ["hooks"],
+      "#hooks/*": ["hooks/*"],
       "#services": ["./services"],
       "#services/*": ["./services/*"],
       "#stores": ["./stores"],
@@ -25,5 +24,5 @@
       "#types/*": ["./types/*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.vue", "app/ssr.tsx", "app/app.tsx", "components/layouts/AppLayout.tsx", "components/layouts/AuthLayout.tsx", "components/shared/FlashMessage.tsx", "components/shared/Header.tsx"]
+  "include": ["./**/*.ts", "app/ssr.tsx", "app/app.tsx", "components/layouts/AppLayout.tsx", "components/layouts/AuthLayout.tsx", "components/shared/FlashMessage.tsx", "components/shared/Header.tsx", "components/ui/Alert.tsx", "components/ui/Avatar.tsx", "components/ui/Badge.tsx", "components/ui/Button.tsx", "components/ui/Card.tsx"]
 }

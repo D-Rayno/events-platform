@@ -1,8 +1,8 @@
 import { usePage } from '@inertiajs/react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import Header from '~/components/shared/Header'
 import Footer from '~/components/shared/Footer'
-import FlashMessages from '~/components/shared/FlashMessages'
+import FlashMessage from '~/components/shared/FlashMessage'
 
 interface AppLayoutProps {
   children: React.ReactNode
@@ -25,7 +25,7 @@ export default function AppLayout({
   return (
     <div className="min-h-screen bg-neutral-50 flex flex-col antialiased">
       {showHeader && <Header user={auth?.user} />}
-      <FlashMessages />
+      <FlashMessage />
 
       <motion.main
         className="flex-1"

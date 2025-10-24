@@ -1,43 +1,104 @@
 // inertia/services/user.service.ts
-import { router } from '@inertiajs/vue3'
+import { router } from '@inertiajs/react'
 import { useAuthStore } from '~/stores/auth'
 import type { UpdateProfileData, User } from '~/types/user'
 
 class UserService {
-  async updateProfile(data: UpdateProfileData) {
+  async updateProfile(data: UpdateProfileData): Promise<boolean> {
     return new Promise((resolve, reject) => {
-      router.post('/profile', data as any, {
-        preserveScroll: true,
-        onSuccess: () => {
-          const authStore = useAuthStore()
-          authStore.updateUser(data as Partial<User>)
-          resolve(true)
-        },
-        onError: (errors) => reject(errors),
-      })
+      // If avatar is a File, send as FormData
+      const hasFile = data.avatar instanceof File
+
+      if (hasFile) {
+        const form = new FormData()
+        if (typeof data.firstName !== 'undefined') form.append('firstName', String(data.firstName))
+        if (typeof data.lastName !== 'undefined') form.append('lastName', String(data.lastName))
+        if (typeof data.age !== 'undefined') form.append('age', String(data.age))
+        if (typeof data.province !== 'undefined') form.append('province', String(data.province))
+        if (typeof data.commune !== 'undefined') form.append('commune', String(data.commune))
+        if (typeof data.phoneNumber !== 'undefined')
+          form.append('phoneNumber', String(data.phoneNumber))
+        // append file (server should expect "avatar")
+        if (data.avatar) form.append('avatar', data.avatar)
+
+        router.post('/profile', form as any, {
+          preserveScroll: true,
+          preserveState: true,
+          onSuccess: (page: any) => {
+            const authStore = useAuthStore()
+            // server response should include updated user — fallback to partial updates
+            const updatedUser = page.props?.auth?.user ?? null
+            if (updatedUser) {
+              authStore.updateUser(updatedUser as Partial<User>)
+            } else {
+              // Use provided partial data as best-effort update
+              authStore.updateUser(data as Partial<User>)
+            }
+            resolve(true)
+          },
+          onError: (errors: any) => reject(errors),
+        })
+      } else {
+        // plain object payload
+        const payload: Record<string, any> = {}
+        if (typeof data.firstName !== 'undefined') payload.firstName = data.firstName
+        if (typeof data.lastName !== 'undefined') payload.lastName = data.lastName
+        if (typeof data.age !== 'undefined') payload.age = data.age
+        if (typeof data.province !== 'undefined') payload.province = data.province
+        if (typeof data.commune !== 'undefined') payload.commune = data.commune
+        if (typeof data.phoneNumber !== 'undefined') payload.phoneNumber = data.phoneNumber
+        if (typeof data.avatarUrl !== 'undefined') payload.avatarUrl = data.avatarUrl
+
+        router.post('/profile', payload as any, {
+          preserveScroll: true,
+          onSuccess: (page: any) => {
+            const authStore = useAuthStore()
+            const updatedUser = page.props?.auth?.user ?? null
+            if (updatedUser) {
+              authStore.updateUser(updatedUser as Partial<User>)
+            } else {
+              authStore.updateUser(data as Partial<User>)
+            }
+            resolve(true)
+          },
+          onError: (errors: any) => reject(errors),
+        })
+      }
     })
   }
 
-  async deleteAvatar() {
+  async deleteAvatar(): Promise<boolean> {
     return new Promise((resolve, reject) => {
       router.delete('/profile/avatar', {
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page: any) => {
           const authStore = useAuthStore()
-          authStore.updateUser({ avatarUrl: null })
+          // server may return updated user
+          const updatedUser = page.props?.auth?.user ?? null
+          if (updatedUser) {
+            authStore.updateUser(updatedUser as Partial<User>)
+          } else {
+            authStore.updateUser({ avatarUrl: null })
+          }
           resolve(true)
         },
-        onError: (errors) => reject(errors),
+        onError: (errors: any) => reject(errors),
       })
     })
   }
 
   getInitials(firstName: string, lastName: string): string {
-    return `${firstName[0]}${lastName[0]}`.toUpperCase()
+    const f = firstName?.trim() || ''
+    const l = lastName?.trim() || ''
+    const fi = f ? f[0] : ''
+    const li = l ? l[0] : ''
+    return `${fi}${li}`.toUpperCase()
   }
 
   getFullName(firstName: string, lastName: string): string {
-    return `${firstName} ${lastName}`
+    const f = firstName?.trim() || ''
+    const l = lastName?.trim() || ''
+    return `${f} ${l}`.trim()
   }
 
   getAvatarUrl(avatarUrl: string | null | undefined): string | null {
@@ -46,7 +107,7 @@ class UserService {
   }
 
   validateAvatarFile(file: File): { valid: boolean; error?: string } {
-    const maxSize = 2 * 1024 * 1024
+    const maxSize = 2 * 1024 * 1024 // 2MB
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
     if (!allowedTypes.includes(file.type)) {
@@ -70,8 +131,12 @@ class UserService {
     return URL.createObjectURL(file)
   }
 
-  revokePreviewUrl(url: string) {
-    URL.revokeObjectURL(url)
+  revokePreviewUrl(url: string): void {
+    try {
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      // ignore invalid urls
+    }
   }
 }
 

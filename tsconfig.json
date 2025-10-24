@@ -2,17 +2,7 @@
   "extends": "@adonisjs/tsconfig/tsconfig.app.json",
   "compilerOptions": {
     "rootDir": "./",
-    "outDir": "./build",
-    "paths": {
-      "~/*": ["./*"]
-    }
+    "outDir": "./build"
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.d.ts",
-    "src/**/*.tsx",
-    "src/**/*.vue",
-    "components.d.ts" // Include the generated type file
-  ],
   "exclude": ["./inertia/**/*", "node_modules", "build"]
 }

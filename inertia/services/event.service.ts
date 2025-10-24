@@ -1,6 +1,6 @@
 // inertia/services/event.service.ts
-import { router } from '@inertiajs/vue3'
-import type { EventFilters } from '~/types/event'
+import { router } from '@inertiajs/react'
+import type { EventFilters, Event } from '~/types/event'
 
 /**
  * Event service
@@ -12,7 +12,7 @@ class EventService {
    * @param filters - Search filters
    * @param page - Page number
    */
-  async fetchEvents(filters: EventFilters = {}, page: number = 1) {
+  async fetchEvents(filters: EventFilters = {}, page: number = 1): Promise<boolean> {
     return new Promise((resolve) => {
       router.get(
         '/events',
@@ -30,7 +30,7 @@ class EventService {
    * Get event details
    * @param id - Event ID
    */
-  async getEvent(id: number) {
+  async getEvent(id: number): Promise<boolean> {
     return new Promise((resolve) => {
       router.visit(`/events/${id}`, {
         onSuccess: () => resolve(true),
@@ -42,7 +42,7 @@ class EventService {
    * Register for an event
    * @param eventId - Event ID
    */
-  async register(eventId: number) {
+  async register(eventId: number): Promise<boolean> {
     return new Promise((resolve, reject) => {
       router.post(
         `/events/${eventId}/register`,
@@ -50,7 +50,7 @@ class EventService {
         {
           preserveScroll: true,
           onSuccess: () => resolve(true),
-          onError: (errors) => reject(errors),
+          onError: (errors: any) => reject(errors),
         }
       )
     })
@@ -69,6 +69,7 @@ class EventService {
     if (filters.eventType) params.append('eventType', filters.eventType)
     if (filters.gameType) params.append('gameType', filters.gameType)
     if (filters.difficulty) params.append('difficulty', filters.difficulty)
+    if (typeof filters.page !== 'undefined') params.append('page', String(filters.page))
 
     return params.toString()
   }
@@ -77,7 +78,7 @@ class EventService {
    * Check if user can register for event
    * @param event - Event data
    */
-  canRegister(event: any): boolean {
+  canRegister(event: Event | any): boolean {
     return event.canRegister && !event.isFull && event.isUpcoming
   }
 
@@ -85,7 +86,7 @@ class EventService {
    * Get event status badge
    * @param event - Event data
    */
-  getStatusBadge(event: any): { text: string; color: string } {
+  getStatusBadge(event: Event | any): { text: string; color: string } {
     if (event.isOngoing) {
       return { text: 'En cours', color: 'blue' }
     } else if (event.isUpcoming) {

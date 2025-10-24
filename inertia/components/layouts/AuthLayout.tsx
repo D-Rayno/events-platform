@@ -1,8 +1,8 @@
 import { usePage, Link } from '@inertiajs/react'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { useState } from 'react'
 import Alert from '~/components/ui/Alert'
-import { use_theme } from '~/composables/use_theme'
+import { useTheme } from '~/hooks/useTheme'
 
 interface FlashMessages {
   success?: string
@@ -17,7 +17,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children }: AuthLayoutProps) {
   const { props } = usePage()
-  const { config } = use_theme()
+  const { config } = useTheme()
   const [dismissedFlash, setDismissedFlash] = useState<Set<string>>(new Set())
 
   const flash = props.flash as FlashMessages | undefined
@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex flex-col relative overflow-hidden">
+    <div className="min-h-screen bg-linear-to-br from-primary-50 via-white to-primary-100 flex flex-col relative overflow-hidden">
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -60,7 +60,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
         <div className="max-w-7xl mx-auto">
           <Link href="/" className="inline-flex items-center gap-3 group">
             <motion.div
-              className="w-12 h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
+              className="w-12 h-12 bg-linear-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105"
               initial={{ rotate: -180, scale: 0 }}
               animate={{ rotate: 0, scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}

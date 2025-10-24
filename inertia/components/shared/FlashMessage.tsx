@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'motion/react'
 import Alert from '~/components/ui/Alert'
 import type { AlertType } from '~/types'
 
