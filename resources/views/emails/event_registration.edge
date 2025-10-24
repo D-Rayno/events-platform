@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            Confirmation d'inscription
+        </title>
+        <style>
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .container {
+                max-width: 600px;
+                margin: 40px auto;
+                background-color: #ffffff;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .header {
+                background: linear-gradient(135deg, #5A45FF 0%, #7B68FF 100%);
+                padding: 40px 20px;
+                text-align: center;
+                color: white;
+            }
+            
+            .header h1 {
+                margin: 0;
+                font-size: 28px;
+            }
+            
+            .content {
+                padding: 40px 30px;
+            }
+            
+            .content p {
+                margin-bottom: 20px;
+                color: #555;
+            }
+            
+            .event-info {
+                background-color: #f8f8f8;
+                padding: 20px;
+                border-radius: 6px;
+                margin: 20px 0;
+            }
+            
+            .event-info h2 {
+                margin: 0 0 15px 0;
+                color: #5A45FF;
+                font-size: 20px;
+            }
+            
+            .event-info p {
+                margin: 8px 0;
+                color: #555;
+            }
+            
+            .event-info strong {
+                color: #333;
+            }
+            
+            .qr-code {
+                text-align: center;
+                padding: 20px;
+                background-color: #fff;
+                border: 2px dashed #5A45FF;
+                border-radius: 8px;
+                margin: 20px 0;
+            }
+            
+            .qr-code p {
+                margin: 10px 0 0 0;
+                font-size: 14px;
+                color: #666;
+            }
+            
+            .important {
+                padding: 15px;
+                background-color: #FFF3CD;
+                border-left: 4px solid #FFC107;
+                border-radius: 4px;
+                margin: 20px 0;
+            }
+            
+            .important p {
+                margin: 0;
+                color: #856404;
+            }
+            
+            .footer {
+                background-color: #f8f8f8;
+                padding: 20px 30px;
+                text-align: center;
+                font-size: 12px;
+                color: #888;
+                border-top: 1px solid #e0e0e0;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>
+                    🎉 Inscription confirmée !
+                </h1>
+            </div>
+
+            <div class="content">
+                <p>
+                    Bonjour <strong>{{ firstName }}</strong>,
+                </p>
+
+                <p>
+                    Votre inscription à l'événement <strong>{{ eventName }}</strong>a été confirmée avec succès !
+                </p>
+
+                <div class="event-info">
+                    <h2>
+                        Détails de l'événement
+                    </h2>
+                    <p>
+                        <strong>📅 Date :</strong>{{ eventDate.toFormat('dd/MM/yyyy à HH:mm') }}
+                    </p>
+                </div>
+
+                <div class="important">
+                    <p>
+                        <strong>⚠️ Important :</strong>Conservez précieusement le QR code ci-joint. Vous devrez le présenter le jour de l'événement pour valider votre présence.
+                    </p>
+                </div>
+
+                <div class="qr-code">
+                    <p style="margin-bottom: 15px; font-weight: bold; color: #5A45FF;">
+                        Votre QR Code d'accès
+                    </p>
+                    <p style="font-size: 12px; color: #888;">
+                        (Le QR code est joint en pièce jointe)
+                    </p>
+                </div>
+
+                <p>
+                    <strong>Conseils :</strong>
+                </p>
+                <ul style="color: #555;">
+                    <li>
+                        Téléchargez le QR code sur votre téléphone
+                    </li>
+                    <li>
+                        Imprimez cette confirmation si vous préférez
+                    </li>
+                    <li>
+                        Arrivez quelques minutes en avance
+                    </li>
+                </ul>
+
+                <p>
+                    Nous avons hâte de vous voir à l'événement ! 🚀
+                </p>
+            </div>
+
+            <div class="footer">
+                <p>
+                    © 2025 Plateforme d'événements - Tous droits réservés
+                </p>
+                <p>
+                    Cet email a été envoyé automatiquement, merci de ne pas y répondre.
+                </p>
+            </div>
+        </div>
+    </body>
+</html>

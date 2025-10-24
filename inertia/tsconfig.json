@@ -1,0 +1,28 @@
+{
+  "extends": "@adonisjs/tsconfig/tsconfig.client.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "module": "ESNext",
+    "paths": {
+      "~/*": ["./*"],
+      "#ui": ["./components/ui"],
+      "#ui/*": ["./components/ui/*"],
+      "#shared": ["./components/shared"],
+      "#shared/*": ["./components/shared/*"],
+      "#layouts": ["./components/layouts"],
+      "#layouts/*": ["./components/layouts/*"],
+      "#hooks": ["hooks"],
+      "#hooks/*": ["hooks/*"],
+      "#services": ["./services"],
+      "#services/*": ["./services/*"],
+      "#stores": ["./stores"],
+      "#stores/*": ["./stores/*"],
+      "#lib": ["./lib"],
+      "#lib/*": ["./lib/*"],
+      "#types": ["./types"],
+      "#types/*": ["./types/*"]
+    }
+  },
+  "include": ["./**/*.ts", "app/ssr.tsx", "app/app.tsx", "components/layouts/AppLayout.tsx", "components/layouts/AuthLayout.tsx", "components/shared/FlashMessage.tsx", "components/shared/Header.tsx", "components/ui/Alert.tsx", "components/ui/Avatar.tsx", "components/ui/Badge.tsx", "components/ui/Button.tsx", "components/ui/Card.tsx"]
+}
