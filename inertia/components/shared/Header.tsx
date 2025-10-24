@@ -22,7 +22,7 @@ export default function Header() {
   const userMenuRef = useRef<HTMLDivElement>(null)
 
   const isActive = (name: string): boolean => {
-    return props.component?.startsWith(name) || false
+    return (props.component as any)?.startsWith(name) || false
   }
 
   const navLinks = [
