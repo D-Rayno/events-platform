@@ -1,3 +1,4 @@
+// start/routes/web.ts - IMPROVED VERSION
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
@@ -8,88 +9,101 @@ const RegistrationsController = () => import('#controllers/registrations_control
 
 export default () => {
   /*
-|--------------------------------------------------------------------------
-| Routes authentifiées
-|--------------------------------------------------------------------------
-*/
-  router
-    .group(() => {
-      // Déconnexion
-      router.post('/auth/logout', [AuthController, 'logout']).as('auth.logout')
-
-      // Renvoyer email de vérification
-      router
-        .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
-        .as('auth.resend_verification')
-
-      // Profil utilisateur
-      router.get('/profile', [ProfileController, 'show']).as('profile.show')
-      router.post('/profile', [ProfileController, 'update']).as('profile.update')
-      router
-        .delete('/profile/avatar', [ProfileController, 'deleteAvatar'])
-        .as('profile.delete_avatar')
-
-      // Inscriptions aux événements
-      router.get('/registrations', [RegistrationsController, 'index']).as('registrations.index')
-      router.get('/registrations/:id', [RegistrationsController, 'show']).as('registrations.show')
-      router
-        .post('/events/:eventId/register', [RegistrationsController, 'store'])
-        .as('registrations.store')
-      router
-        .delete('/registrations/:id', [RegistrationsController, 'destroy'])
-        .as('registrations.destroy')
+  |--------------------------------------------------------------------------
+  | Public Routes
+  |--------------------------------------------------------------------------
+  */
+  
+  // Home page
+  router.get('/', async ({ inertia, auth }) => {
+    return inertia.render('home', {
+      auth: {
+        user: auth.user || null
+      }
     })
-    .middleware(middleware.auth())
+  }).as('home')
 
-  /*
-|--------------------------------------------------------------------------
-| Routes événements (accessibles à tous)
-|--------------------------------------------------------------------------
-*/
+  // Events (public)
   router.get('/events', [EventsController, 'index']).as('events.index')
   router.get('/events/:id', [EventsController, 'show']).as('events.show')
 
   /*
-|--------------------------------------------------------------------------
-| Page d'accueil
-|--------------------------------------------------------------------------
-*/
-  router.on('/').renderInertia('home')
-
-  /*
-|--------------------------------------------------------------------------
-| Routes d'authentification (accessibles uniquement aux invités)
-|--------------------------------------------------------------------------
-*/
+  |--------------------------------------------------------------------------
+  | Auth Routes (Guest Only)
+  |--------------------------------------------------------------------------
+  */
   router
     .group(() => {
-      // Inscription
-      router.get('/register', [AuthController, 'showRegister']).as('auth.register.show')
-      router.post('/register', [AuthController, 'register']).as('auth.register')
+      // Registration
+      router.get('/register', [AuthController, 'showRegister']).as('register.show')
+      router.post('/register', [AuthController, 'register']).as('register')
 
-      // Connexion
-      router.get('/login', [AuthController, 'showLogin']).as('auth.login.show')
-      router.post('/login', [AuthController, 'login']).as('auth.login')
+      // Login
+      router.get('/login', [AuthController, 'showLogin']).as('login.show')
+      router.post('/login', [AuthController, 'login']).as('login')
 
-      // Mot de passe oublié
-      router
-        .get('/forgot-password', [AuthController, 'showForgotPassword'])
-        .as('auth.forgot_password.show')
-      router.post('/forgot-password', [AuthController, 'forgotPassword']).as('auth.forgot_password')
+      // Forgot Password
+      router.get('/forgot-password', [AuthController, 'showForgotPassword']).as('forgot_password.show')
+      router.post('/forgot-password', [AuthController, 'forgotPassword']).as('forgot_password')
 
-      // Réinitialisation mot de passe
-      router
-        .get('/reset-password', [AuthController, 'showResetPassword'])
-        .as('auth.reset_password.show')
-      router.post('/reset-password', [AuthController, 'resetPassword']).as('auth.reset_password')
+      // Reset Password
+      router.get('/reset-password', [AuthController, 'showResetPassword']).as('reset_password.show')
+      router.post('/reset-password', [AuthController, 'resetPassword']).as('reset_password')
     })
     .prefix('/auth')
     .middleware(middleware.guest())
 
   /*
-|--------------------------------------------------------------------------
-| Vérification email (accessible à tous)
-|--------------------------------------------------------------------------
-*/
-  router.get('/auth/verify-email', [AuthController, 'verifyEmail']).as('auth.verify_email')
+  |--------------------------------------------------------------------------
+  | Email Verification (Public)
+  |--------------------------------------------------------------------------
+  */
+  router.get('/auth/verify-email', [AuthController, 'verifyEmail']).as('verify_email')
+
+  /*
+  |--------------------------------------------------------------------------
+  | Authenticated Routes
+  |--------------------------------------------------------------------------
+  */
+  router
+    .group(() => {
+      // Logout
+      router.post('/auth/logout', [AuthController, 'logout']).as('logout')
+
+      // Resend verification email
+      router.post('/auth/resend-verification', [AuthController, 'resendVerificationEmail']).as('resend_verification')
+
+      // Profile
+      router.get('/profile', [ProfileController, 'show']).as('profile.show')
+      router.post('/profile', [ProfileController, 'update']).as('profile.update')
+      router.delete('/profile/avatar', [ProfileController, 'deleteAvatar']).as('profile.delete_avatar')
+
+      // Registrations
+      router.get('/registrations', [RegistrationsController, 'index']).as('registrations.index')
+      router.get('/registrations/:id', [RegistrationsController, 'show']).as('registrations.show')
+      router.post('/registrations/:id/resend-qr', [RegistrationsController, 'resendQRCode']).as('registrations.resend_qr')
+      router.delete('/registrations/:id', [RegistrationsController, 'destroy']).as('registrations.destroy')
+      
+      // Event registration
+      router.post('/events/:eventId/register', [RegistrationsController, 'store']).as('events.register')
+    })
+    .middleware(middleware.auth())
+
+  /*
+  |--------------------------------------------------------------------------
+  | Error Routes
+  |--------------------------------------------------------------------------
+  */
+  router.get('/404', async ({ inertia }) => {
+    return inertia.render('errors/not_found')
+  }).as('errors.not_found')
+
+  router.get('/500', async ({ inertia }) => {
+    return inertia.render('errors/server_error')
+  }).as('errors.server_error')
+
+  // Catch-all 404
+  router.any('*', async ({ response }) => {
+    return response.redirect('/404')
+  })
 }

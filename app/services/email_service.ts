@@ -1,3 +1,4 @@
+// app/services/email_service.ts - FIXED
 import mail from '@adonisjs/mail/services/main'
 import env from '#start/env'
 import User from '#models/user'
@@ -9,16 +10,22 @@ import QRService from '#services/qr_code_service'
 
 export default class EmailService {
   /**
+   * Get app URL from environment
+   */
+  private static getAppUrl(): string {
+    return env.get('APP_URL') || 'http://localhost:3333'
+  }
+
+  /**
    * Envoie l'email de vérification
    */
   static async sendVerificationEmail(user: User): Promise<void> {
     const token = string.generateRandom(64)
 
-    // Sauvegarde du token dans la base de données
     user.emailVerificationToken = token
     await user.save()
 
-    const verificationUrl = `${env.get('APP_URL')}/auth/verify-email?token=${token}`
+    const verificationUrl = `${this.getAppUrl()}/auth/verify-email?token=${token}`
 
     await mail.send((message) => {
       message
@@ -27,6 +34,7 @@ export default class EmailService {
         .htmlView('emails/verify_email', {
           firstName: user.firstName,
           verificationUrl,
+          appUrl: this.getAppUrl(),
         })
     })
   }
@@ -37,12 +45,11 @@ export default class EmailService {
   static async sendPasswordResetEmail(user: User): Promise<void> {
     const token = string.generateRandom(64)
 
-    // Sauvegarde du token avec expiration de 1 heure
     user.passwordResetToken = token
     user.passwordResetExpiresAt = DateTime.now().plus({ hours: 1 })
     await user.save()
 
-    const resetUrl = `${env.get('APP_URL')}/auth/reset-password?token=${token}`
+    const resetUrl = `${this.getAppUrl()}/auth/reset-password?token=${token}`
 
     await mail.send((message) => {
       message
@@ -51,6 +58,7 @@ export default class EmailService {
         .htmlView('emails/reset_password', {
           firstName: user.firstName,
           resetUrl,
+          appUrl: this.getAppUrl(),
         })
     })
   }
@@ -63,7 +71,6 @@ export default class EmailService {
     event: Event,
     registration: Registration
   ): Promise<void> {
-    // Générer le QR code
     const qrCodeBuffer = await QRService.generateQRCodeBuffer(registration)
 
     await mail.send((message) => {
@@ -77,6 +84,7 @@ export default class EmailService {
           eventDate: event.startDate.setLocale('fr').toFormat('dd MMMM yyyy à HH:mm'),
           price: registration.price,
           qrCode: registration.qrCode,
+          appUrl: this.getAppUrl(),
         })
         .attachData(qrCodeBuffer, {
           filename: 'qr-code.png',
@@ -87,15 +95,14 @@ export default class EmailService {
 
   /**
    * Envoie l'email de bienvenue après vérification
+   * FIXED: Pass all required variables
    */
   static async sendWelcomeEmail(user: User): Promise<void> {
     await mail.send((message) => {
-      message
-        .to(user.email)
-        .subject('Bienvenue sur notre plateforme !')
-        .htmlView('emails/welcome', {
-          firstName: user.firstName,
-        })
+      message.to(user.email).subject('Bienvenue sur G-Agency Events !').htmlView('emails/welcome', {
+        firstName: user.firstName,
+        appUrl: this.getAppUrl(),
+      })
     })
   }
 
@@ -112,6 +119,7 @@ export default class EmailService {
           eventName: event.name,
           eventLocation: event.location,
           eventDate: event.startDate.setLocale('fr').toFormat('dd MMMM yyyy à HH:mm'),
+          appUrl: this.getAppUrl(),
         })
     })
   }

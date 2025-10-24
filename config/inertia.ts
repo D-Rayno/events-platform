@@ -1,3 +1,4 @@
+// config/inertia.ts - FIXED
 import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
 
@@ -11,7 +12,11 @@ const inertiaConfig = defineConfig({
    * Data that should be shared with all rendered pages
    */
   sharedData: {
-    // user: (ctx) => ctx.inertia.always(() => ctx.auth.user),
+    // Share flash messages
+    flash: (ctx) => ctx.session.flashMessages.all(),
+    
+    // Errors are automatically shared by Inertia
+    errors: (ctx) => ctx.session.flashMessages.get('errors'),
   },
 
   /**
@@ -26,5 +31,28 @@ const inertiaConfig = defineConfig({
 export default inertiaConfig
 
 declare module '@adonisjs/inertia/types' {
-  export interface SharedProps extends InferSharedProps<typeof inertiaConfig> {}
+  export interface SharedProps extends InferSharedProps<typeof inertiaConfig> {
+    auth?: {
+      user?: {
+        id: number
+        firstName: string
+        lastName: string
+        email: string
+        age: number
+        province: string
+        commune: string
+        phoneNumber?: string
+        avatarUrl?: string
+        isEmailVerified: boolean
+        isAdmin: boolean
+      } | null
+    }
+    flash?: {
+      success?: string
+      error?: string
+      warning?: string
+      info?: string
+    }
+    errors?: Record<string, string>
+  }
 }

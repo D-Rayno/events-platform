@@ -1,13 +1,12 @@
 import { Head, router } from '@inertiajs/react'
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import {
   CalendarIcon,
   MapPinIcon,
   UsersIcon,
   ClockIcon,
   TagIcon,
-  CurrencyDollarIcon,
   CheckCircleIcon,
   XCircleIcon,
   ArrowLeftIcon,

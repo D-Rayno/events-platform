@@ -1,3 +1,4 @@
+// app/controllers/auth_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import { registerValidator } from '#validators/register'
@@ -12,7 +13,11 @@ export default class AuthController {
   /**
    * Affiche le formulaire d'inscription
    */
-  async showRegister({ inertia }: HttpContext) {
+  async showRegister({ inertia, auth, response }: HttpContext) {
+    // Redirect if already authenticated
+    if (auth.user) {
+      return response.redirect('/')
+    }
     return inertia.render('auth/register')
   }
 
@@ -39,15 +44,13 @@ export default class AuthController {
           isEmailVerified: false,
           isActive: true,
           isBlocked: false,
-          isAdmin: false, // Explicitly set isAdmin
+          isAdmin: false,
         },
         { client: trx }
       )
 
-      // Commit the transaction before sending email
       await trx.commit()
 
-      // Log for debugging
       console.log('User created successfully:', {
         id: user.id,
         email: user.email,
@@ -59,7 +62,6 @@ export default class AuthController {
         await EmailService.sendVerificationEmail(user)
       } catch (emailError) {
         console.error('Failed to send verification email:', emailError)
-        // Don't fail registration if email fails
       }
 
       session.flash(
@@ -71,7 +73,6 @@ export default class AuthController {
       await trx.rollback()
       console.error("Erreur lors de l'inscription:", error)
 
-      // Provide more detailed error message
       if (error.code === 'ER_DUP_ENTRY' || error.message?.includes('unique')) {
         session.flash('error', 'Cet email est déjà utilisé.')
       } else {
@@ -85,7 +86,11 @@ export default class AuthController {
   /**
    * Affiche le formulaire de connexion
    */
-  async showLogin({ inertia }: HttpContext) {
+  async showLogin({ inertia, auth, response }: HttpContext) {
+    // Redirect if already authenticated
+    if (auth.user) {
+      return response.redirect('/')
+    }
     return inertia.render('auth/login')
   }
 
@@ -94,13 +99,12 @@ export default class AuthController {
    */
   async login({ request, response, auth, session }: HttpContext) {
     try {
-      // Validation des données
       const { email, password } = await request.validateUsing(loginValidator)
 
-      // Vérification des credentials
+      // Verify credentials
       const user = await User.verifyCredentials(email, password)
 
-      // Vérifier si l'utilisateur peut se connecter
+      // Check if user can login
       if (!user.canLogin()) {
         if (!user.isEmailVerified) {
           session.flash(
@@ -115,10 +119,16 @@ export default class AuthController {
         return response.redirect().back()
       }
 
-      // Connexion réussie
+      // Login user - THIS IS THE KEY FIX
       await auth.use('web').login(user)
+      
       session.flash('success', `Bienvenue ${user.firstName} !`)
-      return response.redirect('/')
+      
+      // Redirect to intended URL or home
+      const intendedUrl = session.get('intended_url', '/')
+      session.forget('intended_url')
+      
+      return response.redirect(intendedUrl)
     } catch (error) {
       console.error('Erreur lors de la connexion:', error)
       session.flash('error', 'Email ou mot de passe incorrect.')
@@ -153,7 +163,6 @@ export default class AuthController {
       return response.redirect('/auth/login')
     }
 
-    // Vérifier si l'email n'est pas déjà vérifié
     if (user.isEmailVerified) {
       session.flash('info', 'Votre email est déjà vérifié.')
       return response.redirect('/auth/login')
@@ -164,7 +173,7 @@ export default class AuthController {
     user.emailVerificationToken = null
     await user.save()
 
-    // Envoyer l'email de bienvenue
+    // Send welcome email
     try {
       await EmailService.sendWelcomeEmail(user)
     } catch (error) {
@@ -191,14 +200,12 @@ export default class AuthController {
   async forgotPassword({ request, response, session }: HttpContext) {
     try {
       const { email } = await request.validateUsing(forgotPasswordValidator)
-
       const user = await User.findBy('email', email)
 
       if (user) {
         await EmailService.sendPasswordResetEmail(user)
       }
 
-      // Message générique pour éviter de divulguer si l'email existe
       session.flash(
         'success',
         'Si un compte existe avec cet email, vous recevrez un lien de réinitialisation dans quelques instants.'

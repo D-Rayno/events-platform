@@ -1,3 +1,4 @@
+// inertia/pages/events/index.tsx - IMPROVED VERSION
 import { Head, router } from '@inertiajs/react'
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
@@ -7,7 +8,6 @@ import {
   MapPinIcon,
   CalendarIcon,
   UsersIcon,
-  TagIcon,
   XMarkIcon,
 } from '@heroicons/react/24/outline'
 import AppLayout from '~/components/layouts/AppLayout'
@@ -56,9 +56,13 @@ interface Props {
 }
 
 export default function EventsIndex({ events, filters }: Props) {
-  const { config, getPlaceholder } = useTheme()
+  const { getPlaceholder } = useTheme()
   const [showFilters, setShowFilters] = useState(false)
-  const [localFilters, setLocalFilters] = useState(filters)
+
+  // Local state for immediate UI updates
+  const [searchValue, setSearchValue] = useState(filters.search || '')
+  const [categoryValue, setCategoryValue] = useState(filters.category || '')
+  const [provinceValue, setProvinceValue] = useState(filters.province || '')
 
   const categoryOptions = EVENT_CATEGORIES.map((cat) => ({
     value: cat,
@@ -72,36 +76,60 @@ export default function EventsIndex({ events, filters }: Props) {
 
   const activeFiltersCount = useMemo(() => {
     let count = 0
-    if (localFilters.search) count++
-    if (localFilters.category) count++
-    if (localFilters.province) count++
+    if (filters.search) count++
+    if (filters.category) count++
+    if (filters.province) count++
     return count
-  }, [localFilters])
+  }, [filters])
 
-  const handleSearch = (value: string | number) => {
-    setLocalFilters({ ...localFilters, search: value.toString() })
-  }
-
-  const handleFilterChange = (key: string, value: any) => {
-    setLocalFilters({ ...localFilters, [key]: value })
-  }
-
-  const applyFilters = () => {
-    router.get('/events', localFilters, {
+  // Auto-apply filters when dropdown values change
+  const applyFiltersAutomatically = (newFilters: any) => {
+    router.get('/events', newFilters, {
       preserveState: true,
       preserveScroll: true,
+      only: ['events', 'filters'],
     })
-    setShowFilters(false)
+  }
+
+  const handleSearchSubmit = () => {
+    applyFiltersAutomatically({
+      search: searchValue,
+      category: categoryValue,
+      province: provinceValue,
+    })
+  }
+
+  const handleCategoryChange = (value: string | number) => {
+    const newCategory = value as string
+    setCategoryValue(newCategory)
+    applyFiltersAutomatically({
+      search: searchValue,
+      category: newCategory,
+      province: provinceValue,
+    })
+  }
+
+  const handleProvinceChange = (value: string | number) => {
+    const newProvince = value as string
+    setProvinceValue(newProvince)
+    applyFiltersAutomatically({
+      search: searchValue,
+      category: categoryValue,
+      province: newProvince,
+    })
   }
 
   const clearFilters = () => {
-    setLocalFilters({ search: '', category: '', province: '' })
+    setSearchValue('')
+    setCategoryValue('')
+    setProvinceValue('')
     router.get(
       '/events',
       {},
       {
         preserveState: true,
         preserveScroll: true,
+        only: ['events', 'filters'],
       }
     )
     setShowFilters(false)
@@ -110,10 +138,16 @@ export default function EventsIndex({ events, filters }: Props) {
   const handlePageChange = (page: number) => {
     router.get(
       '/events',
-      { ...localFilters, page },
+      {
+        search: searchValue,
+        category: categoryValue,
+        province: provinceValue,
+        page,
+      },
       {
         preserveState: true,
         preserveScroll: false,
+        only: ['events'],
       }
     )
   }
@@ -144,7 +178,7 @@ export default function EventsIndex({ events, filters }: Props) {
       <Head title="Événements" />
       <AppLayout>
         {/* Hero Section */}
-        <section className="relative bg-linear-to-br from-primary-600 via-primary-700 to-secondary-600 text-white py-16 -mt-8 mb-8">
+        <section className="relative bg-linear-to-br from-primary-600 via-primary-700 to-secondary-600 text-white py-20 -mt-8 mb-12">
           <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10" />
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
@@ -152,29 +186,31 @@ export default function EventsIndex({ events, filters }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h1 className="text-4xl md:text-5xl font-bold mb-4">Découvrez nos événements</h1>
+              <h1 className="text-5xl md:text-6xl font-bold mb-4">Découvrez nos événements</h1>
               <p className="text-xl text-white/90 mb-8 max-w-2xl">
                 Explorez une sélection d'événements passionnants près de chez vous
               </p>
 
               {/* Search Bar */}
               <div className="max-w-2xl">
-                <div className="relative">
-                  <Input
-                    value={localFilters.search || ''}
-                    onChange={handleSearch}
-                    placeholder="Rechercher un événement..."
-                    icon={MagnifyingGlassIcon}
-                    size="lg"
-                    onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter') applyFilters()
-                    }}
-                  />
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <Input
+                      value={searchValue}
+                      onChange={(value) => setSearchValue(value as string)}
+                      placeholder="Rechercher un événement..."
+                      icon={MagnifyingGlassIcon}
+                      size="lg"
+                      onKeyDown={(e: React.KeyboardEvent) => {
+                        if (e.key === 'Enter') handleSearchSubmit()
+                      }}
+                    />
+                  </div>
                   <Button
                     variant="primary"
                     size="lg"
-                    className="absolute right-2 top-1/2 -translate-y-1/2"
-                    onClick={applyFilters}
+                    onClick={handleSearchSubmit}
+                    className="shadow-lg"
                   >
                     Rechercher
                   </Button>
@@ -184,7 +220,7 @@ export default function EventsIndex({ events, filters }: Props) {
           </div>
         </section>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
           {/* Filters Bar */}
           <motion.div
             className="flex items-center justify-between mb-8 flex-wrap gap-4"
@@ -219,7 +255,7 @@ export default function EventsIndex({ events, filters }: Props) {
             </p>
           </motion.div>
 
-          {/* Filters Panel */}
+          {/* Filters Panel - FIXED: Added z-index and proper positioning */}
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -227,34 +263,35 @@ export default function EventsIndex({ events, filters }: Props) {
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
-                className="mb-8 overflow-hidden"
+                className="mb-8 relative z-20"
               >
-                <Card variant="bordered" padding="lg">
+                <Card variant="bordered" padding="lg" className="overflow-visible">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Select
-                      label="Catégorie"
-                      value={localFilters.category || ''}
-                      onChange={(value) => handleFilterChange('category', value)}
-                      options={categoryOptions}
-                      placeholder="Toutes les catégories"
-                      searchable
-                    />
-                    <Select
-                      label="Wilaya"
-                      value={localFilters.province || ''}
-                      onChange={(value) => handleFilterChange('province', value)}
-                      options={provinceOptions}
-                      placeholder="Toutes les wilayas"
-                      searchable
-                    />
+                    <div className="relative z-30">
+                      <Select
+                        label="Catégorie"
+                        value={categoryValue}
+                        onChange={handleCategoryChange}
+                        options={categoryOptions}
+                        placeholder="Toutes les catégories"
+                        searchable
+                      />
+                    </div>
+                    <div className="relative z-20">
+                      <Select
+                        label="Wilaya"
+                        value={provinceValue}
+                        onChange={handleProvinceChange}
+                        options={provinceOptions}
+                        placeholder="Toutes les wilayas"
+                        searchable
+                      />
+                    </div>
                   </div>
 
                   <div className="flex justify-end gap-3 mt-6">
                     <Button variant="ghost" onClick={() => setShowFilters(false)}>
-                      Annuler
-                    </Button>
-                    <Button variant="primary" onClick={applyFilters}>
-                      Appliquer les filtres
+                      Fermer
                     </Button>
                   </div>
                 </Card>
@@ -278,7 +315,7 @@ export default function EventsIndex({ events, filters }: Props) {
             </motion.div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {events.data.map((event, index) => (
                   <motion.div
                     key={event.id}
@@ -286,7 +323,7 @@ export default function EventsIndex({ events, filters }: Props) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.4, delay: index * 0.05 }}
                   >
-                    <Card hoverable clickable className="h-full flex flex-col">
+                    <Card hoverable clickable className="h-full flex flex-col overflow-hidden">
                       <div className="relative">
                         <Image
                           src={event.imageUrl || getPlaceholder('event')}
@@ -302,7 +339,7 @@ export default function EventsIndex({ events, filters }: Props) {
                         )}
                       </div>
 
-                      <div className="flex-1 flex flex-col mt-4">
+                      <div className="flex-1 flex flex-col mt-4 p-4">
                         <div className="flex items-start justify-between gap-2 mb-3">
                           <h3 className="text-lg font-bold text-neutral-900 line-clamp-2">
                             {event.name}
@@ -318,17 +355,17 @@ export default function EventsIndex({ events, filters }: Props) {
 
                         <div className="space-y-2 mb-4">
                           <div className="flex items-center gap-2 text-sm text-neutral-700">
-                            <CalendarIcon className="w-4 h-4 text-primary-600" />
+                            <CalendarIcon className="w-4 h-4 text-primary-600 shrink-0" />
                             <span>{formatDate(event.startDate)}</span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-neutral-700">
-                            <MapPinIcon className="w-4 h-4 text-primary-600" />
-                            <span>
+                            <MapPinIcon className="w-4 h-4 text-primary-600 shrink-0" />
+                            <span className="truncate">
                               {event.commune}, {event.province}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 text-sm text-neutral-700">
-                            <UsersIcon className="w-4 h-4 text-primary-600" />
+                            <UsersIcon className="w-4 h-4 text-primary-600 shrink-0" />
                             <span>
                               {event.availableSeats} place{event.availableSeats > 1 ? 's' : ''}{' '}
                               disponible{event.availableSeats > 1 ? 's' : ''}

@@ -1,157 +1,201 @@
+{{-- resources/views/emails/welcome.edge --}}
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>
-            Bienvenue !
-        </title>
-        <style>
-            body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                background-color: #f5f5f5;
-                margin: 0;
-                padding: 0;
-            }
-            
-            .container {
-                max-width: 600px;
-                margin: 40px auto;
-                background-color: #ffffff;
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            }
-            
-            .header {
-                background: linear-gradient(135deg, #5A45FF 0%, #7B68FF 100%);
-                padding: 40px 20px;
-                text-align: center;
-                color: white;
-            }
-            
-            .header h1 {
-                margin: 0;
-                font-size: 28px;
-            }
-            
-            .content {
-                padding: 40px 30px;
-            }
-            
-            .content p {
-                margin-bottom: 20px;
-                color: #555;
-            }
-            
-            .button {
-                display: inline-block;
-                padding: 14px 32px;
-                background-color: #5A45FF;
-                color: white;
-                text-decoration: none;
-                border-radius: 6px;
-                font-weight: 600;
-                margin: 20px 0;
-                transition: background-color 0.3s;
-            }
-            
-            .button:hover {
-                background-color: #4834CC;
-            }
-            
-            .features {
-                background-color: #f8f8f8;
-                padding: 20px;
-                border-radius: 6px;
-                margin: 20px 0;
-            }
-            
-            .features ul {
-                margin: 10px 0;
-                padding-left: 20px;
-            }
-            
-            .features li {
-                margin: 8px 0;
-                color: #555;
-            }
-            
-            .footer {
-                background-color: #f8f8f8;
-                padding: 20px 30px;
-                text-align: center;
-                font-size: 12px;
-                color: #888;
-                border-top: 1px solid #e0e0e0;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>
-                    🎉 Bienvenue !
-                </h1>
-            </div>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue sur EventHub</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+    }
+    .header {
+      background: linear-gradient(135deg, #0ea5e9 0%, #a855f7 100%);
+      padding: 40px 20px;
+      text-align: center;
+    }
+    .header h1 {
+      color: #ffffff;
+      margin: 0;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .welcome-message {
+      font-size: 20px;
+      color: #1f2937;
+      margin-bottom: 20px;
+      font-weight: 600;
+    }
+    .message-text {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #4b5563;
+      margin-bottom: 30px;
+    }
+    .button {
+      display: inline-block;
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #0ea5e9 0%, #a855f7 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 16px;
+      margin: 20px 0;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .features {
+      background-color: #f9fafb;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 30px 0;
+    }
+    .feature-item {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+    .feature-icon {
+      margin-right: 12px;
+      font-size: 24px;
+    }
+    .feature-text {
+      flex: 1;
+    }
+    .feature-title {
+      font-weight: 600;
+      color: #1f2937;
+      margin-bottom: 4px;
+    }
+    .feature-description {
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .footer {
+      background-color: #1f2937;
+      color: #9ca3af;
+      padding: 30px 20px;
+      text-align: center;
+      font-size: 14px;
+    }
+    .footer a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <h1>🎉 G-Agency Events</h1>
+    </div>
 
-            <div class="content">
-                <p>
-                    Bonjour <strong>{{ firstName }}</strong>,
-                </p>
+    <!-- Content -->
+    <div class="content">
+      <p class="welcome-message">Bonjour {{ firstName }} ! 👋</p>
+      
+      <p class="message-text">
+        Bienvenue sur <strong>G-Agency Events</strong> ! Nous sommes ravis de vous compter parmi nous. 
+        Votre email a été vérifié avec succès et votre compte est maintenant actif.
+      </p>
 
-                <p>
-                    Félicitations ! Votre compte a été vérifié avec succès. Vous êtes maintenant membre de notre communauté d'événements.
-                </p>
+      <p class="message-text">
+        Vous pouvez maintenant profiter de toutes les fonctionnalités de notre plateforme pour découvrir 
+        et vous inscrire aux meilleurs événements près de chez vous.
+      </p>
 
-                <div class="features">
-                    <p>
-                        <strong>Voici ce que vous pouvez faire maintenant :</strong>
-                    </p>
-                    <ul>
-                        <li>
-                            🎫 Découvrir tous les événements disponibles
-                        </li>
-                        <li>
-                            📝 S'inscrire aux événements qui vous intéressent
-                        </li>
-                        <li>
-                            🎨 Personnaliser votre profil et ajouter une photo
-                        </li>
-                        <li>
-                            📧 Recevoir vos QR codes d'accès par email
-                        </li>
-                        <li>
-                            ⭐ Suivre vos événements favoris
-                        </li>
-                    </ul>
-                </div>
-
-                <div style="text-align: center;">
-                    <a href="{{ env('APP_URL') }}" class="button">
-                        Découvrir les événements
+      <div style="text-align: center;">
+        <a href="{{ appUrl }}/events" class="button">
+          Découvrir les événements
         </a>
-                </div>
+      </div>
 
-                <p>
-                    Si vous avez des questions, n'hésitez pas à nous contacter. Nous sommes là pour vous aider !
-                </p>
-
-                <p>
-                    À bientôt sur la plateforme ! 🚀
-                </p>
+      <!-- Features -->
+      <div class="features">
+        <h3 style="margin-top: 0; color: #1f2937; margin-bottom: 20px;">
+          Ce que vous pouvez faire maintenant :
+        </h3>
+        
+        <div class="feature-item">
+          <div class="feature-icon">🎪</div>
+          <div class="feature-text">
+            <div class="feature-title">Explorer les événements</div>
+            <div class="feature-description">
+              Découvrez des centaines d'événements dans toutes les wilayas d'Algérie
             </div>
-
-            <div class="footer">
-                <p>
-                    © 2025 Plateforme d'événements - Tous droits réservés
-                </p>
-                <p>
-                    Cet email a été envoyé automatiquement, merci de ne pas y répondre.
-                </p>
-            </div>
+          </div>
         </div>
-    </body>
+
+        <div class="feature-item">
+          <div class="feature-icon">🎟️</div>
+          <div class="feature-text">
+            <div class="feature-title">Réserver facilement</div>
+            <div class="feature-description">
+              Inscrivez-vous en quelques clics et recevez votre QR code par email
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">📱</div>
+          <div class="feature-text">
+            <div class="feature-title">Gérer vos inscriptions</div>
+            <div class="feature-description">
+              Suivez toutes vos inscriptions depuis votre espace personnel
+            </div>
+          </div>
+        </div>
+
+        <div class="feature-item">
+          <div class="feature-icon">🔔</div>
+          <div class="feature-text">
+            <div class="feature-title">Recevoir des notifications</div>
+            <div class="feature-description">
+              Soyez informé des nouveaux événements et des rappels importants
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="message-text">
+        Besoin d'aide ? N'hésitez pas à nous contacter à tout moment. 
+        Notre équipe de support est là pour vous aider.
+      </p>
+
+      <p class="message-text" style="margin-bottom: 0;">
+        À très bientôt sur G-Agency Events ! 🎊
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p style="margin: 0 0 10px 0;">
+        <strong>G-Agency Events</strong>
+      </p>
+      <p style="margin: 0 0 10px 0;">
+        La plateforme moderne pour organiser et participer aux meilleurs événements
+      </p>
+      <p style="margin: 0 0 10px 0;">
+        <a href="{{ appUrl }}">Visiter le site</a> |
+        <a href="{{ appUrl }}/events">Événements</a> |
+        <a href="mailto:contact@eventhub.dz">Contact</a>
+      </p>
+      <p style="margin: 10px 0 0 0; font-size: 12px; color: #6b7280;">
+        © {{ new Date().getFullYear() }} G-Agency Events. Tous droits réservés.
+      </p>
+    </div>
+  </div>
+</body>
 </html>

@@ -1,7 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+// inertia/components/ui/Select.tsx - FIXED VERSION
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDownIcon, CheckIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useTheme } from '~/hooks/useTheme'
+import { createPortal } from 'react-dom'
 
 interface Option {
   value: string | number
@@ -41,6 +43,8 @@ export default function Select({
   const { getAnimation } = useTheme()
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const triggerRef = useRef<HTMLDivElement>(null)
+  const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
 
   const selectedOption = useMemo(() => {
     return options.find((opt) => opt.value === value)
@@ -75,24 +79,57 @@ export default function Select({
     setSearchQuery('')
   }
 
+  // Update dropdown position when opened
+  useEffect(() => {
+    if (isOpen && triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect()
+      setDropdownPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: rect.left + window.scrollX,
+        width: rect.width,
+      })
+    }
+  }, [isOpen])
+
+  // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (!(event.target as HTMLElement).closest('.select-container')) {
+      if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
+        const dropdown = document.getElementById('select-dropdown-portal')
+        if (dropdown && !dropdown.contains(event.target as Node)) {
+          setIsOpen(false)
+        }
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isOpen])
+
+  // Close on escape
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
         setIsOpen(false)
       }
     }
 
     if (isOpen) {
-      document.addEventListener('click', handleClickOutside)
+      document.addEventListener('keydown', handleEscape)
     }
 
     return () => {
-      document.removeEventListener('click', handleClickOutside)
+      document.removeEventListener('keydown', handleEscape)
     }
   }, [isOpen])
 
   return (
-    <div className="space-y-2 select-container">
+    <div className="space-y-2 relative">
       {label && (
         <motion.label
           className="block text-sm font-semibold text-neutral-800"
@@ -104,7 +141,7 @@ export default function Select({
         </motion.label>
       )}
 
-      <div className="relative">
+      <div ref={triggerRef}>
         <motion.div
           className={triggerClasses}
           onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -127,11 +164,20 @@ export default function Select({
             <ChevronDownIcon className="w-5 h-5 text-neutral-400" />
           </motion.div>
         </motion.div>
+      </div>
 
-        <AnimatePresence>
-          {isOpen && (
+      {/* Portal for dropdown to prevent overflow */}
+      {isOpen &&
+        createPortal(
+          <AnimatePresence>
             <motion.div
-              className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-2xl border-2 border-neutral-200 overflow-hidden"
+              id="select-dropdown-portal"
+              className="fixed z-9999 bg-white rounded-xl shadow-2xl border-2 border-neutral-200 overflow-hidden"
+              style={{
+                top: `${dropdownPosition.top}px`,
+                left: `${dropdownPosition.left}px`,
+                width: `${dropdownPosition.width}px`,
+              }}
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -152,6 +198,7 @@ export default function Select({
                       placeholder="Rechercher..."
                       className="w-full pl-10 pr-4 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500"
                       onClick={(e) => e.stopPropagation()}
+                      autoFocus
                     />
                   </div>
                 </div>
@@ -206,9 +253,9 @@ export default function Select({
                 )}
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+          </AnimatePresence>,
+          document.body
+        )}
 
       {(error || hint) && (
         <motion.p

@@ -1,3 +1,4 @@
+// app/controllers/events_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Registration from '#models/registration'
@@ -8,9 +9,9 @@ export default class EventController {
    */
   async index({ request, inertia, auth }: HttpContext) {
     const page = request.input('page', 1)
-    const search = request.input('search')
-    const category = request.input('category')
-    const province = request.input('province')
+    const search = request.input('search', '')
+    const category = request.input('category', '')
+    const province = request.input('province', '')
     const user = auth.user
 
     let query = Event.query()
@@ -18,17 +19,19 @@ export default class EventController {
       .where('status', 'published')
       .orderBy('start_date', 'asc')
 
-    if (search) {
+    // FIX: Remove COLLATE from search to fix charset issue
+    if (search && search.trim()) {
       query = query.where((q) => {
-        q.whereLike('name', `%${search}%`).orWhereLike('description', `%${search}%`)
+        q.whereLike('name', `%${search}%`)
+          .orWhereLike('description', `%${search}%`)
       })
     }
 
-    if (category) {
+    if (category && category.trim()) {
       query = query.where('category', category)
     }
 
-    if (province) {
+    if (province && province.trim()) {
       query = query.where('province', province)
     }
 
@@ -72,9 +75,9 @@ export default class EventController {
         meta: events.getMeta(),
       },
       filters: {
-        category,
-        search,
-        province,
+        category: category || '',
+        search: search || '',
+        province: province || '',
       },
     })
   }
@@ -92,11 +95,9 @@ export default class EventController {
       return response.redirect('/events')
     }
 
-    // Mettre à jour le statut si nécessaire
     event.updateStatus()
     await event.save()
 
-    // Vérifier si l'utilisateur est inscrit
     let userRegistration = null
     if (user) {
       userRegistration = await Registration.query()
