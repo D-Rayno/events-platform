@@ -3,6 +3,7 @@ import hash from '@adonisjs/core/services/hash'
 import { compose } from '@adonisjs/core/helpers'
 import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
+import { DbAccessTokensProvider } from '@adonisjs/auth/access_tokens'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Registration from '#models/registration'
 
@@ -77,6 +78,11 @@ export default class User extends compose(BaseModel, AuthFinder) {
    */
   @hasMany(() => Registration)
   declare registrations: HasMany<typeof Registration>
+
+  /**
+   * Access tokens for API authentication
+   */
+  static accessTokens = DbAccessTokensProvider.forModel(User)
 
   /**
    * Nom complet de l'utilisateur

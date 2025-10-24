@@ -8,23 +8,80 @@ const AdminUserController = () => import('#controllers/api/admin/users_controlle
 
 export default () => {
   /*
-|--------------------------------------------------------------------------
-| Routes API Admin (Mobile App)
-|--------------------------------------------------------------------------
-*/
+  |--------------------------------------------------------------------------
+  | Routes API Admin (Mobile App)
+  |--------------------------------------------------------------------------
+  |
+  | Ces routes sont utilisées par l'application mobile admin.
+  | Elles implémentent un système de tokens avec refresh automatique.
+  |
+  */
 
   router
     .group(() => {
-      // Authentification
+      // ========================================
+      // Routes d'authentification (NON PROTÉGÉES)
+      // ========================================
+      
+      /**
+       * Connexion initiale avec le token statique
+       * POST /api/admin/auth/login
+       * Body: { token: "votre_token_statique_depuis_.env" }
+       * Retourne: { accessToken, refreshToken, expiresAt, expiresIn }
+       */
       router.post('/auth/login', [AdminAuthController, 'login'])
 
-      // Routes protégées par le middleware admin
+      /**
+       * Rafraîchir un token expiré
+       * POST /api/admin/auth/refresh
+       * Body: { refreshToken: "votre_refresh_token" }
+       * Retourne: { accessToken (nouveau), refreshToken (nouveau), expiresAt, expiresIn }
+       */
+      router.post('/auth/refresh', [AdminAuthController, 'refresh'])
+
+      // ========================================
+      // Routes protégées par le middleware adminApi
+      // ========================================
       router
         .group(() => {
-          // Vérification du token
+          // ---- Auth Management ----
+          
+          /**
+           * Vérifier si le token actuel est valide
+           * GET /api/admin/auth/check
+           * Header: Authorization: Bearer <access_token>
+           */
           router.get('/auth/check', [AdminAuthController, 'check'])
 
-          // Événements
+          /**
+           * Déconnexion (révoque le token actuel)
+           * POST /api/admin/auth/logout
+           * Header: Authorization: Bearer <access_token>
+           */
+          router.post('/auth/logout', [AdminAuthController, 'logout'])
+
+          /**
+           * Statistiques des tokens (nombre de sessions actives, etc.)
+           * GET /api/admin/auth/stats
+           * Header: Authorization: Bearer <access_token>
+           */
+          router.get('/auth/stats', [AdminAuthController, 'stats'])
+
+          /**
+           * Liste de toutes les sessions actives
+           * GET /api/admin/auth/sessions
+           * Header: Authorization: Bearer <access_token>
+           */
+          router.get('/auth/sessions', [AdminAuthController, 'sessions'])
+
+          /**
+           * Révoquer toutes les sessions (déconnexion globale)
+           * POST /api/admin/auth/revoke-all
+           * Header: Authorization: Bearer <access_token>
+           */
+          router.post('/auth/revoke-all', [AdminAuthController, 'revokeAll'])
+
+          // ---- Événements ----
           router.get('/events', [AdminEventController, 'index'])
           router.get('/events/stats', [AdminEventController, 'stats'])
           router.get('/events/:id', [AdminEventController, 'show'])
@@ -32,7 +89,7 @@ export default () => {
           router.put('/events/:id', [AdminEventController, 'update'])
           router.delete('/events/:id', [AdminEventController, 'destroy'])
 
-          // Inscriptions
+          // ---- Inscriptions ----
           router.get('/registrations', [AdminRegistrationController, 'index'])
           router.get('/registrations/stats', [AdminRegistrationController, 'stats'])
           router.get('/registrations/:id', [AdminRegistrationController, 'show'])
@@ -40,7 +97,7 @@ export default () => {
           router.post('/registrations/confirm', [AdminRegistrationController, 'confirmAttendance'])
           router.delete('/registrations/:id', [AdminRegistrationController, 'cancel'])
 
-          // Utilisateurs
+          // ---- Utilisateurs ----
           router.get('/users', [AdminUserController, 'index'])
           router.get('/users/stats', [AdminUserController, 'stats'])
           router.get('/users/:id', [AdminUserController, 'show'])
