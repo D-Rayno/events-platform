@@ -1,12 +1,12 @@
 {
   "app": {
-    "name": "EventHub",
+    "name": "G-Agency Events",
     "tagline": "Découvrez et créez des événements inoubliables",
     "description": "La plateforme moderne pour organiser et participer aux meilleurs événements près de chez vous"
   },
   "branding": {
     "logo": {
-      "text": "EventHub",
+      "text": "G-Agency Events",
       "icon": "🎪",
       "url": "/"
     },
