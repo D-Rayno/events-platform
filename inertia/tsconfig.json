@@ -25,5 +25,5 @@
       "#types/*": ["./types/*"]
     }
   },
-  "include": ["./**/*.ts", "./**/*.vue"]
+  "include": ["./**/*.ts", "./**/*.vue", "app/ssr.tsx", "app/app.tsx"]
 }

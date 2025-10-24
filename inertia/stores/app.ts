@@ -1,90 +1,50 @@
-import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { create } from 'zustand'
 import type { FlashMessages } from '~/types/common'
 
-/**
- * Application Store
- * Manages global app state like loading, flash messages, and UI state
- */
-export const useAppStore = defineStore('app', () => {
-  // State
-  const loading = ref(false)
-  const flashMessages = ref<FlashMessages>({})
-  const mobileMenuOpen = ref(false)
-  const sidebarOpen = ref(true)
+interface AppState {
+  loading: boolean
+  flashMessages: FlashMessages
+  mobileMenuOpen: boolean
+  sidebarOpen: boolean
 
   // Actions
-  /**
-   * Set loading state
-   */
-  function setLoading(state: boolean) {
-    loading.value = state
-  }
+  setLoading: (state: boolean) => void
+  setFlashMessages: (messages: FlashMessages) => void
+  addFlashMessage: (type: keyof FlashMessages, message: string) => void
+  clearFlashMessages: () => void
+  clearFlashMessage: (type: keyof FlashMessages) => void
+  toggleMobileMenu: () => void
+  closeMobileMenu: () => void
+  toggleSidebar: () => void
+}
 
-  /**
-   * Set flash messages from server
-   */
-  function setFlashMessages(messages: FlashMessages) {
-    flashMessages.value = messages
-  }
+export const useAppStore = create<AppState>((set) => ({
+  loading: false,
+  flashMessages: {},
+  mobileMenuOpen: false,
+  sidebarOpen: true,
 
-  /**
-   * Add a flash message
-   */
-  function addFlashMessage(type: keyof FlashMessages, message: string) {
-    flashMessages.value[type] = message
-  }
+  setLoading: (state) => set({ loading: state }),
 
-  /**
-   * Clear flash messages
-   */
-  function clearFlashMessages() {
-    flashMessages.value = {}
-  }
+  setFlashMessages: (messages) => set({ flashMessages: messages }),
 
-  /**
-   * Clear specific flash message
-   */
-  function clearFlashMessage(type: keyof FlashMessages) {
-    delete flashMessages.value[type]
-  }
+  addFlashMessage: (type, message) =>
+    set((state) => ({
+      flashMessages: { ...state.flashMessages, [type]: message },
+    })),
 
-  /**
-   * Toggle mobile menu
-   */
-  function toggleMobileMenu() {
-    mobileMenuOpen.value = !mobileMenuOpen.value
-  }
+  clearFlashMessages: () => set({ flashMessages: {} }),
 
-  /**
-   * Close mobile menu
-   */
-  function closeMobileMenu() {
-    mobileMenuOpen.value = false
-  }
+  clearFlashMessage: (type) =>
+    set((state) => {
+      const { [type]: _, ...rest } = state.flashMessages
+      return { flashMessages: rest }
+    }),
 
-  /**
-   * Toggle sidebar
-   */
-  function toggleSidebar() {
-    sidebarOpen.value = !sidebarOpen.value
-  }
+  toggleMobileMenu: () =>
+    set((state) => ({ mobileMenuOpen: !state.mobileMenuOpen })),
 
-  return {
-    // State
-    loading,
-    flashMessages,
-    mobileMenuOpen,
-    sidebarOpen,
+  closeMobileMenu: () => set({ mobileMenuOpen: false }),
 
-    // Actions
-    setLoading,
-    setFlashMessages,
-    addFlashMessage,
-    clearFlashMessages,
-    clearFlashMessage,
-    toggleMobileMenu,
-    closeMobileMenu,
-    toggleSidebar,
-  }
-})
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
+}))

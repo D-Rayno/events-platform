@@ -1,3 +1,13 @@
+import { type ClassValue, clsx } from 'clsx'
+import { twMerge } from 'tailwind-merge'
+
+/**
+ * Merge Tailwind CSS classes
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
 /**
  * Format a date to a readable string
  */
@@ -126,29 +136,8 @@ export const generateId = (prefix: string = 'id'): string => {
 /**
  * Clone deep object
  */
-export const deepClone = <T>(obj: T): T => {
+export const deepClone = <T,>(obj: T): T => {
   return JSON.parse(JSON.stringify(obj))
-}
-
-/**
- * Merge objects
- */
-export const merge = <T extends Record<string, any>>(target: T, ...sources: T[]): T => {
-  if (!sources.length) return target
-  const source = sources.shift()
-
-  if (typeof target === 'object' && typeof source === 'object') {
-    for (const key in source) {
-      if (typeof source[key] === 'object') {
-        if (!target[key]) Object.assign(target, { [key]: {} })
-        merge(target[key], source[key])
-      } else {
-        Object.assign(target, { [key]: source[key] })
-      }
-    }
-  }
-
-  return merge(target, ...sources)
 }
 
 /**
@@ -174,33 +163,4 @@ export const getInitials = (name: string): string => {
     .join('')
     .toUpperCase()
     .slice(0, 2)
-}
-
-/**
- * Parse query string to object
- */
-export const parseQuery = (query: string): Record<string, string> => {
-  const params = new URLSearchParams(query)
-  const obj: Record<string, string> = {}
-
-  params.forEach((value, key) => {
-    obj[key] = value
-  })
-
-  return obj
-}
-
-/**
- * Build query string from object
- */
-export const buildQuery = (obj: Record<string, any>): string => {
-  const params = new URLSearchParams()
-
-  Object.entries(obj).forEach(([key, value]) => {
-    if (value !== null && value !== undefined && value !== '') {
-      params.append(key, String(value))
-    }
-  })
-
-  return params.toString()
 }

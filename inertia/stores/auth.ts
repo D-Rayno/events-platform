@@ -1,141 +1,111 @@
-import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { create } from 'zustand'
 import type { User } from '~/types/user'
 
-/**
- * Authentication Store
- * Manages user authentication state and related operations
- */
-export const useAuthStore = defineStore('auth', () => {
-  // State
-  const user = ref<User | null>(null)
-  const isInitialized = ref(false)
+interface AuthState {
+  user: User | null
+  isInitialized: boolean
+  
+  // Computed getters
+  isAuthenticated: () => boolean
+  isEmailVerified: () => boolean
+  fullName: () => string
+  initials: () => string
+  avatarUrl: () => string | null
+  needsVerification: () => boolean
+  
+  // Actions
+  initializeAuth: (userData: User | null) => void
+  setUser: (userData: User | null) => void
+  updateUser: (updates: Partial<User>) => void
+  clearUser: () => void
+  updateAvatar: (url: string | null) => void
+  markEmailAsVerified: () => void
+  hasPermission: (permission: string) => boolean
+  getAgeCategory: () => 'youth' | 'adult' | 'senior' | null
+}
 
-  // Computed properties
-  const isAuthenticated = computed(() => !!user.value)
+export const useAuthStore = create<AuthState>((set, get) => ({
+  user: null,
+  isInitialized: false,
 
-  const isEmailVerified = computed(() => {
-    return user.value?.isEmailVerified || false
-  })
-
-  const fullName = computed(() => {
-    if (!user.value) return ''
-    return `${user.value.firstName} ${user.value.lastName}`
-  })
-
-  const initials = computed(() => {
-    if (!user.value) return ''
-    return `${user.value.firstName[0]}${user.value.lastName[0]}`.toUpperCase()
-  })
-
-  const avatarUrl = computed(() => {
-    if (!user.value?.avatarUrl) return null
-    return user.value.avatarUrl.startsWith('http')
-      ? user.value.avatarUrl
-      : `/uploads/${user.value.avatarUrl}`
-  })
-
-  const needsVerification = computed(() => {
-    return isAuthenticated.value && !isEmailVerified.value
-  })
+  // Computed getters
+  isAuthenticated: () => !!get().user,
+  
+  isEmailVerified: () => get().user?.isEmailVerified || false,
+  
+  fullName: () => {
+    const user = get().user
+    if (!user) return ''
+    return `${user.firstName} ${user.lastName}`
+  },
+  
+  initials: () => {
+    const user = get().user
+    if (!user) return ''
+    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+  },
+  
+  avatarUrl: () => {
+    const user = get().user
+    if (!user?.avatarUrl) return null
+    return user.avatarUrl.startsWith('http')
+      ? user.avatarUrl
+      : `/uploads/${user.avatarUrl}`
+  },
+  
+  needsVerification: () => {
+    return get().isAuthenticated() && !get().isEmailVerified()
+  },
 
   // Actions
-  /**
-   * Initialize auth state from shared props
-   * @param userData - User data from server
-   */
-  function initializeAuth(userData: User | null) {
-    user.value = userData
-    isInitialized.value = true
-  }
+  initializeAuth: (userData) => {
+    set({ user: userData, isInitialized: true })
+  },
 
-  /**
-   * Set user data
-   * @param userData - User data to set
-   */
-  function setUser(userData: User | null) {
-    user.value = userData
-  }
+  setUser: (userData) => {
+    set({ user: userData })
+  },
 
-  /**
-   * Update user data (partial update)
-   * @param updates - Partial user data to update
-   */
-  function updateUser(updates: Partial<User>) {
-    if (user.value) {
-      user.value = { ...user.value, ...updates }
-    }
-  }
+  updateUser: (updates) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updates } : null,
+    }))
+  },
 
-  /**
-   * Clear user data (logout)
-   */
-  function clearUser() {
-    user.value = null
-  }
+  clearUser: () => {
+    set({ user: null })
+  },
 
-  /**
-   * Update user avatar
-   * @param url - New avatar URL
-   */
-  function updateAvatar(url: string | null) {
-    if (user.value) {
-      user.value.avatarUrl = url
-    }
-  }
+  updateAvatar: (url) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, avatarUrl: url } : null,
+    }))
+  },
 
-  /**
-   * Mark email as verified
-   */
-  function markEmailAsVerified() {
-    if (user.value) {
-      user.value.isEmailVerified = true
-      user.value.emailVerifiedAt = new Date().toISOString()
-    }
-  }
+  markEmailAsVerified: () => {
+    set((state) => ({
+      user: state.user
+        ? {
+            ...state.user,
+            isEmailVerified: true,
+            emailVerifiedAt: new Date().toISOString(),
+          }
+        : null,
+    }))
+  },
 
-  /**
-   * Check if user has a specific permission or role
-   * @param permission - Permission to check
-   */
-  function hasPermission(permission: string): boolean {
+  hasPermission: (permission: string) => {
     // Implement permission logic here
     return false
-  }
+  },
 
-  /**
-   * Get user age category
-   */
-  function getAgeCategory(): 'youth' | 'adult' | 'senior' | null {
-    if (!user.value) return null
+  getAgeCategory: () => {
+    const user = get().user
+    if (!user) return null
 
-    const age = user.value.age
+    const age = user.age
     if (age < 26) return 'youth'
     if (age >= 60) return 'senior'
     return 'adult'
-  }
-
-  return {
-    // State
-    user,
-    isInitialized,
-
-    // Computed
-    isAuthenticated,
-    isEmailVerified,
-    fullName,
-    initials,
-    avatarUrl,
-    needsVerification,
-
-    // Actions
-    initializeAuth,
-    setUser,
-    updateUser,
-    clearUser,
-    updateAvatar,
-    markEmailAsVerified,
-    hasPermission,
-    getAgeCategory,
-  }
-})
+  },
+}))

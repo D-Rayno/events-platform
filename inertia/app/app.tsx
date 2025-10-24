@@ -2,27 +2,13 @@
 /// <reference path="../../config/inertia.ts" />
 
 import '../css/app.css'
-import { createSSRApp, h } from 'vue'
-import type { DefineComponent } from 'vue'
-import { createInertiaApp } from '@inertiajs/vue3'
-import { router } from '@inertiajs/vue3'
-import { createPinia } from 'pinia'
+import { createRoot } from 'react-dom/client'
+import { createInertiaApp } from '@inertiajs/react'
+import { router } from '@inertiajs/react'
 import { useAuthStore } from '~/stores/auth'
 import { useAppStore } from '~/stores/app'
-import { clickAwayDirective } from '~/directives/click-away'
-
 
 const appName = import.meta.env.VITE_APP_NAME || 'EventHub'
-
-// Helper to resolve page components
-function resolvePageComponent(path: string, pages: Record<string, any>) {
-  for (const p in pages) {
-    if (p.endsWith(`${path.replace('../pages/', '')}.vue`)) {
-      return typeof pages[p] === 'function' ? pages[p]() : pages[p]
-    }
-  }
-  throw new Error(`Page not found: ${path}`)
-}
 
 createInertiaApp({
   progress: {
@@ -33,50 +19,47 @@ createInertiaApp({
   title: (title) => `${title} - ${appName}`,
 
   resolve: (name) => {
-    return resolvePageComponent(
-      `../pages/${name}`,
-      import.meta.glob<DefineComponent>('../pages/**/*.vue')
-    )
+    const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
+    return pages[`../pages/${name}.tsx`]
   },
 
-  setup({ el, App, props, plugin }) {
-    const pinia = createPinia()
-    const app = createSSRApp({ render: () => h(App, props) })
-
-    // Register global directive
-    app.directive('click-away', clickAwayDirective)
-
-    app.use(pinia)
-    app.use(plugin)
+  setup({ el, App, props }) {
+    const root = createRoot(el)
 
     // Initialize stores from page props
-    const authStore = useAuthStore()
-    const appStore = useAppStore()
+    const initializeStores = () => {
+      const authStore = useAuthStore.getState()
+      const appStore = useAppStore.getState()
 
-    if (props.initialPage.props.auth?.user) {
-      authStore.initializeAuth(props.initialPage.props.auth.user)
+      if (props.initialPage.props.auth?.user) {
+        authStore.initializeAuth(props.initialPage.props.auth.user)
+      }
+
+      if (props.initialPage.props.flash) {
+        appStore.setFlashMessages(props.initialPage.props.flash)
+      }
     }
 
-    if (props.initialPage.props.flash) {
-      appStore.setFlashMessages(props.initialPage.props.flash)
-    }
+    initializeStores()
 
     // Global router event handlers
     router.on('start', () => {
-      appStore.setLoading(true)
+      useAppStore.getState().setLoading(true)
     })
 
     router.on('finish', () => {
-      appStore.setLoading(false)
+      useAppStore.getState().setLoading(false)
     })
 
     router.on('success', (event) => {
       const page = event.detail.page
+      const authStore = useAuthStore.getState()
+      const appStore = useAppStore.getState()
 
       // Update auth state
       if (page.props.auth?.user) {
         authStore.setUser(page.props.auth.user)
-      } else if (authStore.isAuthenticated && !page.props.auth?.user) {
+      } else if (authStore.isAuthenticated() && !page.props.auth?.user) {
         authStore.clearUser()
       }
 
@@ -95,9 +78,10 @@ createInertiaApp({
     router.on('error', (event) => {
       console.error('Navigation error:', event)
       
-      // Type-safe error handling
       const errorDetail = event.detail as any
       const status = errorDetail.status || errorDetail.response?.status
+      const authStore = useAuthStore.getState()
+      const appStore = useAppStore.getState()
       
       if (status === 401) {
         authStore.clearUser()
@@ -111,6 +95,6 @@ createInertiaApp({
       }
     })
 
-    app.mount(el)
+    root.render(<App {...props} />)
   },
 })

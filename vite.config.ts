@@ -1,26 +1,24 @@
 import { defineConfig } from 'vite'
 import { getDirname } from '@adonisjs/core/helpers'
 import inertia from '@adonisjs/inertia/client'
-import vue from '@vitejs/plugin-vue'
+import react from '@vitejs/plugin-react'
 import adonisjs from '@adonisjs/vite/client'
 import tailwindcss from '@tailwindcss/vite'
-import MotionResolver from 'motion-v/resolver'
-import Components from 'unplugin-vue-components/vite'
 
 const __dirname = getDirname(import.meta.url)
 
 export default defineConfig({
   plugins: [
-    inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.ts' } }),
-    vue(),
-    Components({
-      dts: true,
-      resolvers: [MotionResolver()],
-      extensions: ['vue'],
+    inertia({ 
+      ssr: { 
+        enabled: true, 
+        entrypoint: 'inertia/app/ssr.tsx' 
+      } 
     }),
+    react(),
     tailwindcss(),
     adonisjs({
-      entrypoints: ['inertia/app/app.ts'],
+      entrypoints: ['inertia/app/app.tsx'],
       reload: ['resources/views/**/*.edge'],
     }),
   ],
@@ -28,14 +26,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '~/': `${__dirname}/inertia/`,
+      '@/': `${__dirname}/inertia/`,
       '#ui': `${__dirname}/inertia/components/ui`,
       '#ui/*': `${__dirname}/inertia/components/ui/*`,
       '#shared': `${__dirname}/inertia/components/shared`,
       '#shared/*': `${__dirname}/inertia/components/shared/*`,
       '#layouts': `${__dirname}/inertia/components/layouts`,
       '#layouts/*': `${__dirname}/inertia/components/layouts/*`,
-      '#composables': `${__dirname}/inertia/composables`,
-      '#composables/*': `${__dirname}/inertia/composables/*`,
+      '#hooks': `${__dirname}/inertia/hooks`,
+      '#hooks/*': `${__dirname}/inertia/hooks/*`,
       '#services': `${__dirname}/inertia/services`,
       '#services/*': `${__dirname}/inertia/services/*`,
       '#stores': `${__dirname}/inertia/stores`,
