@@ -22,7 +22,7 @@ export default class ProfileController {
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
-        createdAt: user.createdAt.toFormat('dd/MM/yyyy'),
+        createdAt: user.createdAt,
       },
     })
   }

@@ -8,7 +8,14 @@ export default function render(page: any) {
     render: ReactDOMServer.renderToString,
     resolve: (name) => {
       const pages = import.meta.glob('../pages/**/*.tsx', { eager: true })
-      return pages[`../pages/${name}.tsx`]
+      const component = pages[`../pages/${name}.tsx`]
+      
+      if (!component) {
+        console.error(`Page not found: ${name}`)
+        throw new Error(`Page component not found: ${name}`)
+      }
+      
+      return component
     },
     setup: ({ App, props }) => <App {...props} />,
   })

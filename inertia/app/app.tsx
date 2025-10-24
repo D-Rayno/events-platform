@@ -56,10 +56,11 @@ createInertiaApp({
       const authStore = useAuthStore.getState()
       const appStore = useAppStore.getState()
 
-      // Update auth state - FIX: Check if user exists properly
+      // Update auth state - properly check for user
       if (page.props.auth?.user) {
         authStore.setUser(page.props.auth.user)
-      } else if (authStore.user && !page.props.auth?.user) {
+      } else if (!page.props.auth?.user && authStore.user) {
+        // User logged out
         authStore.clearUser()
       }
 
@@ -77,12 +78,12 @@ createInertiaApp({
 
     router.on('error', (event) => {
       console.error('Navigation error:', event)
-      
+
       const errorDetail = event.detail as any
       const status = errorDetail.status || errorDetail.response?.status
       const authStore = useAuthStore.getState()
       const appStore = useAppStore.getState()
-      
+
       if (status === 401) {
         authStore.clearUser()
         router.visit('/auth/login')

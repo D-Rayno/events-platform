@@ -45,7 +45,7 @@ interface Props {
   user: User
 }
 
-export default function ProfileIndex({ user }: Props) {
+export default function ProfileShow({ user }: Props) {
   useRouteGuard({ requiresAuth: true })
 
   const [isEditing, setIsEditing] = useState(false)

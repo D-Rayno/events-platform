@@ -13,15 +13,18 @@ export default () => {
   | Public Routes
   |--------------------------------------------------------------------------
   */
-  
-  // Home page
-  router.get('/', async ({ inertia, auth }) => {
-    return inertia.render('home', {
-      auth: {
-        user: auth.user || null
+
+  // Home page - redirect authenticated users to events
+  router
+    .get('/', async ({ inertia, auth, response }) => {
+      // If user is authenticated, redirect to events
+      if (auth.user) {
+        return response.redirect('/events')
       }
+
+      return inertia.render('home')
     })
-  }).as('home')
+    .as('home')
 
   // Events (public)
   router.get('/events', [EventsController, 'index']).as('events.index')
@@ -43,7 +46,9 @@ export default () => {
       router.post('/login', [AuthController, 'login']).as('login')
 
       // Forgot Password
-      router.get('/forgot-password', [AuthController, 'showForgotPassword']).as('forgot_password.show')
+      router
+        .get('/forgot-password', [AuthController, 'showForgotPassword'])
+        .as('forgot_password.show')
       router.post('/forgot-password', [AuthController, 'forgotPassword']).as('forgot_password')
 
       // Reset Password
@@ -71,21 +76,31 @@ export default () => {
       router.post('/auth/logout', [AuthController, 'logout']).as('logout')
 
       // Resend verification email
-      router.post('/auth/resend-verification', [AuthController, 'resendVerificationEmail']).as('resend_verification')
+      router
+        .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
+        .as('resend_verification')
 
       // Profile
       router.get('/profile', [ProfileController, 'show']).as('profile.show')
       router.post('/profile', [ProfileController, 'update']).as('profile.update')
-      router.delete('/profile/avatar', [ProfileController, 'deleteAvatar']).as('profile.delete_avatar')
+      router
+        .delete('/profile/avatar', [ProfileController, 'deleteAvatar'])
+        .as('profile.delete_avatar')
 
       // Registrations
       router.get('/registrations', [RegistrationsController, 'index']).as('registrations.index')
       router.get('/registrations/:id', [RegistrationsController, 'show']).as('registrations.show')
-      router.post('/registrations/:id/resend-qr', [RegistrationsController, 'resendQRCode']).as('registrations.resend_qr')
-      router.delete('/registrations/:id', [RegistrationsController, 'destroy']).as('registrations.destroy')
-      
+      router
+        .post('/registrations/:id/resend-qr', [RegistrationsController, 'resendQRCode'])
+        .as('registrations.resend_qr')
+      router
+        .delete('/registrations/:id', [RegistrationsController, 'destroy'])
+        .as('registrations.destroy')
+
       // Event registration
-      router.post('/events/:eventId/register', [RegistrationsController, 'store']).as('events.register')
+      router
+        .post('/events/:eventId/register', [RegistrationsController, 'store'])
+        .as('events.register')
     })
     .middleware(middleware.auth())
 
@@ -94,13 +109,17 @@ export default () => {
   | Error Routes
   |--------------------------------------------------------------------------
   */
-  router.get('/404', async ({ inertia }) => {
-    return inertia.render('errors/not_found')
-  }).as('errors.not_found')
+  router
+    .get('/404', async ({ inertia }) => {
+      return inertia.render('errors/not_found')
+    })
+    .as('errors.not_found')
 
-  router.get('/500', async ({ inertia }) => {
-    return inertia.render('errors/server_error')
-  }).as('errors.server_error')
+  router
+    .get('/500', async ({ inertia }) => {
+      return inertia.render('errors/server_error')
+    })
+    .as('errors.server_error')
 
   // Catch-all 404
   router.any('*', async ({ response }) => {

@@ -119,16 +119,13 @@ export default class AuthController {
         return response.redirect().back()
       }
 
-      // Login user - THIS IS THE KEY FIX
+      // Login user
       await auth.use('web').login(user)
-      
+
       session.flash('success', `Bienvenue ${user.firstName} !`)
-      
-      // Redirect to intended URL or home
-      const intendedUrl = session.get('intended_url', '/')
-      session.forget('intended_url')
-      
-      return response.redirect(intendedUrl)
+
+      // Redirect authenticated users to events page
+      return response.redirect('/events')
     } catch (error) {
       console.error('Erreur lors de la connexion:', error)
       session.flash('error', 'Email ou mot de passe incorrect.')
