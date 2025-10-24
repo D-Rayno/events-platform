@@ -10,6 +10,7 @@ interface BadgeProps {
   pulse?: boolean
   outline?: boolean
   children: React.ReactNode
+  className?: string
 }
 
 export default function Badge({
@@ -20,6 +21,7 @@ export default function Badge({
   pulse = false,
   outline = false,
   children,
+  className = '',
 }: BadgeProps) {
   const { getAnimation } = useTheme()
 
@@ -68,6 +70,7 @@ export default function Badge({
     variantClasses[variant],
     sizeClasses[size],
     rounded ? 'rounded-full' : 'rounded-lg',
+    className,
   ].join(' ')
 
   return (

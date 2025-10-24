@@ -58,7 +58,7 @@ interface Props {
 export default function EventsIndex({ events, filters }: Props) {
   const { getPlaceholder } = useTheme()
   const [showFilters, setShowFilters] = useState(false)
-
+  
   // Local state for immediate UI updates
   const [searchValue, setSearchValue] = useState(filters.search || '')
   const [categoryValue, setCategoryValue] = useState(filters.category || '')
@@ -123,33 +123,25 @@ export default function EventsIndex({ events, filters }: Props) {
     setSearchValue('')
     setCategoryValue('')
     setProvinceValue('')
-    router.get(
-      '/events',
-      {},
-      {
-        preserveState: true,
-        preserveScroll: true,
-        only: ['events', 'filters'],
-      }
-    )
+    router.get('/events', {}, {
+      preserveState: true,
+      preserveScroll: true,
+      only: ['events', 'filters'],
+    })
     setShowFilters(false)
   }
 
   const handlePageChange = (page: number) => {
-    router.get(
-      '/events',
-      {
-        search: searchValue,
-        category: categoryValue,
-        province: provinceValue,
-        page,
-      },
-      {
-        preserveState: true,
-        preserveScroll: false,
-        only: ['events'],
-      }
-    )
+    router.get('/events', {
+      search: searchValue,
+      category: categoryValue,
+      province: provinceValue,
+      page,
+    }, {
+      preserveState: true,
+      preserveScroll: false,
+      only: ['events'],
+    })
   }
 
   const getEventStatusBadge = (event: Event) => {

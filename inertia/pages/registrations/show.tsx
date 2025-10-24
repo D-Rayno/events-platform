@@ -205,7 +205,7 @@ export default function RegistrationShow({ registration }: Props) {
                     <div className="flex-1">
                       <div className="flex items-start justify-between gap-4 mb-3">
                         <div>
-                          <Badge variant="primary">
+                          <Badge variant="primary" className="mb-2">
                             {registration.event.category}
                           </Badge>
                           <h1 className="text-2xl font-bold text-neutral-900 mb-2">
@@ -272,7 +272,8 @@ export default function RegistrationShow({ registration }: Props) {
                       </motion.div>
 
                       <p className="text-sm text-neutral-600 mt-6 max-w-md mx-auto">
-                        Présentez ce QR code à l'entrée de l'événement pour confirmer votre présence
+                        Présentez ce QR code à l'entrée de l'événement pour confirmer votre
+                        présence
                       </p>
 
                       <div className="flex flex-wrap justify-center gap-3 mt-6">
@@ -322,9 +323,7 @@ export default function RegistrationShow({ registration }: Props) {
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckCircleIcon className="w-5 h-5 text-success-600 mt-0.5 shrink-0" />
-                      <span>
-                        Assurez-vous que votre QR code est lisible (téléchargé ou imprimé)
-                      </span>
+                      <span>Assurez-vous que votre QR code est lisible (téléchargé ou imprimé)</span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckCircleIcon className="w-5 h-5 text-success-600 mt-0.5 shrink-0" />
@@ -462,7 +461,9 @@ export default function RegistrationShow({ registration }: Props) {
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-600">Date</span>
-                <span className="font-semibold">{formatDate(registration.event.startDate)}</span>
+                <span className="font-semibold">
+                  {formatDate(registration.event.startDate)}
+                </span>
               </div>
             </div>
           </div>

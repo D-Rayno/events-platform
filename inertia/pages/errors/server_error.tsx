@@ -1,4 +1,4 @@
-// inertia/pages/errors/not_found.tsx
+// inertia/pages/errors/server_error.tsx
 import { Head } from '@inertiajs/react'
 import { motion } from 'motion/react'
 import { HomeIcon, ArrowPathIcon } from '@heroicons/react/24/outline'
@@ -50,10 +50,12 @@ export default function ServerError() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <h2 className="text-4xl font-bold text-neutral-900 mb-4">Erreur interne du serveur</h2>
+            <h2 className="text-4xl font-bold text-neutral-900 mb-4">
+              Erreur interne du serveur
+            </h2>
             <p className="text-xl text-neutral-600 mb-8 max-w-lg mx-auto">
-              Quelque chose s'est mal passé de notre côté. Nos équipes techniques ont été informées
-              et travaillent sur le problème.
+              Quelque chose s'est mal passé de notre côté. Nos équipes techniques ont été
+              informées et travaillent sur le problème.
             </p>
 
             {/* Action Buttons */}
