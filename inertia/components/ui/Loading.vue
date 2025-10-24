@@ -1,83 +1,95 @@
+// ============================================
+// 9. Enhanced Loading Component (inertia/components/ui/Loading.vue)
+// ============================================
 <script setup lang="ts">
-import { computed } from 'vue'
+;
 
 interface Props {
-  size?: 'sm' | 'md' | 'lg'
-  variant?: 'spinner' | 'skeleton' | 'pulse'
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  variant?: 'spinner' | 'dots' | 'pulse' | 'bars'
   label?: string
   fullscreen?: boolean
+  color?: 'primary' | 'secondary' | 'white'
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   size: 'md',
   variant: 'spinner',
-  fullscreen: false,
+  color: 'primary',
 })
 
 const sizeClasses = {
-  sm: 'w-6 h-6 border-2',
-  md: 'w-10 h-10 border-4',
-  lg: 'w-16 h-16 border-4',
+  sm: 'w-6 h-6',
+  md: 'w-10 h-10',
+  lg: 'w-16 h-16',
+  xl: 'w-24 h-24',
 }
 
-const textSizeClasses = {
-  sm: 'text-xs',
-  md: 'text-sm',
-  lg: 'text-base',
+const colorClasses = {
+  primary: 'border-primary-200 border-t-primary-600',
+  secondary: 'border-secondary-200 border-t-secondary-600',
+  white: 'border-white/20 border-t-white',
 }
 
-const containerClasses = computed(() => ({
-  spinner: 'flex flex-col items-center justify-center gap-3',
-  skeleton: 'space-y-3',
-  pulse: 'flex items-center justify-center',
-}))
-
-const loadingIndicatorClasses = computed(() => ({
-  spinner: 'animate-spin border-primary-200 border-t-primary-600 rounded-full',
-  skeleton: 'h-4 bg-neutral-200 rounded animate-pulse',
-  pulse: 'animate-pulse-glow',
-}))
+const dotColorClasses = {
+  primary: 'bg-primary-600',
+  secondary: 'bg-secondary-600',
+  white: 'bg-white',
+}
 </script>
 
 <template>
-  <div
-    :class="fullscreen ? 'fixed inset-0 bg-white/80 backdrop-blur-sm' : ''"
-    class="flex items-center justify-center z-50"
-  >
-    <div :class="[containerClasses[variant], 'p-6']">
+  <div :class="props.fullscreen ? 'fixed inset-0 bg-white/90 backdrop-blur-sm z-50' : ''" class="flex items-center justify-center">
+    <div class="flex flex-col items-center gap-4">
       <!-- Spinner -->
-      <div
-        v-if="variant === 'spinner'"
-        :class="[sizeClasses[size], loadingIndicatorClasses.spinner]"
+      <motion.div
+        v-if="props.variant === 'spinner'"
+        :class="[sizeClasses[props.size], colorClasses[props.color], 'rounded-full border-4']"
+        :animate="{ rotate: 360 }"
+        :transition="{ duration: 1, repeat: Infinity, ease: 'linear' }"
       />
 
-      <!-- Skeleton -->
-      <div v-if="variant === 'skeleton'" class="w-full max-w-sm space-y-3">
-        <div class="h-4 bg-neutral-200 rounded animate-pulse" />
-        <div class="h-4 bg-neutral-200 rounded animate-pulse w-5/6" />
-        <div class="h-4 bg-neutral-200 rounded animate-pulse w-4/6" />
+      <!-- Dots -->
+      <div v-else-if="props.variant === 'dots'" class="flex gap-2">
+        <motion.div
+          v-for="i in 3"
+          :key="i"
+          :class="[dotColorClasses[props.color], 'w-3 h-3 rounded-full']"
+          :animate="{ y: [-8, 0, -8] }"
+          :transition="{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }"
+        />
       </div>
 
       <!-- Pulse -->
-      <div v-if="variant === 'pulse'" class="flex gap-1">
-        <div
-          class="w-2 h-2 bg-primary-600 rounded-full animate-bounce-light"
-          :style="{ animationDelay: '0s' }"
+      <div v-else-if="props.variant === 'pulse'" class="relative">
+        <motion.div
+          :class="[sizeClasses[props.size], dotColorClasses[props.color], 'rounded-full']"
+          :animate="{ scale: [1, 1.2, 1], opacity: [1, 0.5, 1] }"
+          :transition="{ duration: 1.5, repeat: Infinity }"
         />
-        <div
-          class="w-2 h-2 bg-primary-500 rounded-full animate-bounce-light"
-          :style="{ animationDelay: '0.1s' }"
-        />
-        <div
-          class="w-2 h-2 bg-primary-400 rounded-full animate-bounce-light"
-          :style="{ animationDelay: '0.2s' }"
+      </div>
+
+      <!-- Bars -->
+      <div v-else-if="props.variant === 'bars'" class="flex gap-1.5">
+        <motion.div
+          v-for="i in 4"
+          :key="i"
+          :class="[dotColorClasses[props.color], 'w-2 rounded-full']"
+          :animate="{ height: ['16px', '40px', '16px'] }"
+          :transition="{ duration: 1, repeat: Infinity, delay: i * 0.1 }"
         />
       </div>
 
       <!-- Label -->
-      <p v-if="label" :class="[textSizeClasses[size], 'text-neutral-600 font-medium']">
-        {{ label }}
-      </p>
+      <motion.p
+        v-if="props.label"
+        class="text-sm font-medium text-neutral-600"
+        :initial="{ opacity: 0 }"
+        :animate="{ opacity: 1 }"
+        :transition="{ delay: 0.2 }"
+      >
+        {{ props.label }}
+      </motion.p>
     </div>
   </div>
 </template>

@@ -5,6 +5,7 @@ import AppHeader from '#shared/Header.vue'
 import AppFooter from '#shared/Footer.vue'
 import FlashMessages from '#shared/FlashMessage.vue'
 import { useAuthMiddleware } from '#composables/use_auth_middleware'
+import { motion } from 'motion-v'
 
 interface Props {
   showHeader?: boolean
@@ -29,18 +30,18 @@ const { requireAuth } = useAuthMiddleware()
 
 <template>
   <div class="min-h-screen bg-neutral-50 flex flex-col antialiased">
-    <AppHeader v-if="showHeader" :user="auth?.user" />
+    <AppHeader v-if="props.showHeader" :user="auth?.user" />
     <FlashMessages />
 
-    <main class="flex-1" v-motion :initial="{ opacity: 0 }" :enter="{ opacity: 1, transition: { duration: 300, delay: 100 } }">
-      <div v-if="layout === 'full'" class="w-full">
+    <motion.main class="flex-1" :initial="{ opacity: 0 }" :enter="{ opacity: 1, transition: { duration: 300, delay: 100 } }">
+      <div v-if="props.layout === 'full'" class="w-full">
         <slot />
       </div>
-      <div v-else :class="containerClass">
+      <div v-else :class="props.containerClass">
         <slot />
       </div>
-    </main>
+    </motion.main>
 
-    <AppFooter v-if="showFooter" />
+    <AppFooter v-if="props.showFooter" />
   </div>
 </template>

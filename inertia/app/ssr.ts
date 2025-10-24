@@ -2,7 +2,6 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, h, type DefineComponent } from 'vue'
 import { createPinia } from 'pinia'
-import { MotionPlugin } from '@vueuse/motion'
 import { clickAwayDirective } from '~/directives/click-away'
 import '../css/app.css'
 
@@ -28,14 +27,11 @@ export default function render(page: any) {
     setup({ App, props, plugin }) {
       const pinia = createPinia()
       const app = createSSRApp({ render: () => h(App, props) })
-      
+
       // Register directive on SSR too
       app.directive('click-away', clickAwayDirective)
-      
-      return app
-        .use(plugin)
-        .use(MotionPlugin)
-        .use(pinia)
+
+      return app.use(plugin).use(pinia)
     },
   })
 }

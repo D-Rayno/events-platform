@@ -108,6 +108,19 @@ export function use_theme() {
     return config.value.seo.titleTemplate.replace('%s', pageTitle)
   }
 
+  const getColor = (colorPath: string) => {
+    const parts = colorPath.split('.')
+    let value: any = themeConfig.colors
+    for (const part of parts) {
+      value = value?.[part]
+    }
+    return value || colorPath
+  }
+
+  const getAnimation = (speed: 'fast' | 'normal' | 'slow' = 'normal') => {
+    return themeConfig.animations.duration[speed]
+  }
+
   return {
     config,
     appName,
@@ -120,5 +133,7 @@ export function use_theme() {
     getSocialLinks,
     getContactInfo,
     formatTitle,
+    getColor,
+    getAnimation,
   }
 }

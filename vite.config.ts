@@ -4,6 +4,8 @@ import inertia from '@adonisjs/inertia/client'
 import vue from '@vitejs/plugin-vue'
 import adonisjs from '@adonisjs/vite/client'
 import tailwindcss from '@tailwindcss/vite'
+import MotionResolver from 'motion-v/resolver'
+import Components from 'unplugin-vue-components/vite'
 
 const __dirname = getDirname(import.meta.url)
 
@@ -11,6 +13,11 @@ export default defineConfig({
   plugins: [
     inertia({ ssr: { enabled: true, entrypoint: 'inertia/app/ssr.ts' } }),
     vue(),
+    Components({
+      dts: true,
+      resolvers: [MotionResolver()],
+      extensions: ['vue'],
+    }),
     tailwindcss(),
     adonisjs({
       entrypoints: ['inertia/app/app.ts'],

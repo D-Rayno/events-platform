@@ -7,10 +7,10 @@ import type { DefineComponent } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
 import { router } from '@inertiajs/vue3'
 import { createPinia } from 'pinia'
-import { MotionPlugin } from '@vueuse/motion'
 import { useAuthStore } from '~/stores/auth'
 import { useAppStore } from '~/stores/app'
 import { clickAwayDirective } from '~/directives/click-away'
+
 
 const appName = import.meta.env.VITE_APP_NAME || 'EventHub'
 
@@ -47,7 +47,6 @@ createInertiaApp({
     app.directive('click-away', clickAwayDirective)
 
     app.use(pinia)
-    app.use(MotionPlugin)
     app.use(plugin)
 
     // Initialize stores from page props

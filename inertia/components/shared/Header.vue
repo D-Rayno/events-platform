@@ -6,6 +6,7 @@ import Button from '#ui/Button.vue'
 import Avatar from '#ui/Avatar.vue'
 import { useAuthStore } from '~/stores/auth'
 import { use_theme } from '~/composables/use_theme'
+import { motion } from 'motion-v'
 
 const authStore = useAuthStore()
 const page = usePage()
@@ -43,9 +44,8 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header
+  <motion.header
     class="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-neutral-200/80 shadow-sm"
-    v-motion
     :initial="{ y: -100, opacity: 0 }"
     :enter="{ y: 0, opacity: 1, transition: { duration: 400, delay: 100 } }"
   >
@@ -103,7 +103,7 @@ const handleLogout = () => {
                 aria-label="Menu utilisateur"
                 :aria-expanded="userMenuOpen"
               >
-                <Avatar :name="authStore.fullName" :src="authStore.avatarUrl" size="sm" />
+                <Avatar :name="authStore.fullName" :src="authStore.avatarUrl as string | undefined" size="sm" />
                 <div class="hidden lg:block text-left">
                   <div
                     class="text-sm font-medium text-neutral-900 group-hover:text-primary-600 transition-colors"
@@ -138,7 +138,7 @@ const handleLogout = () => {
                     class="px-4 py-4 border-b border-neutral-100 bg-gradient-to-r from-primary-50 to-secondary-50"
                   >
                     <div class="flex items-center gap-3">
-                      <Avatar :name="authStore.fullName" :src="authStore.avatarUrl" size="md" />
+                      <Avatar :name="authStore.fullName" :src="authStore.avatarUrl as string | undefined" size="md" />
                       <div class="flex-1 min-w-0">
                         <p class="text-sm font-semibold text-neutral-900 truncate">
                           {{ authStore.fullName }}
@@ -266,5 +266,5 @@ const handleLogout = () => {
         </div>
       </Transition>
     </div>
-  </header>
+  </motion.header>
 </template>
