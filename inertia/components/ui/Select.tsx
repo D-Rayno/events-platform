@@ -1,4 +1,3 @@
-// inertia/components/ui/Select.tsx - FIXED VERSION
 import { useState, useMemo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { ChevronDownIcon, CheckIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
@@ -44,6 +43,7 @@ export default function Select({
   const [isOpen, setIsOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const triggerRef = useRef<HTMLDivElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0, width: 0 })
 
   const selectedOption = useMemo(() => {
@@ -79,26 +79,54 @@ export default function Select({
     setSearchQuery('')
   }
 
-  // Update dropdown position when opened
-  useEffect(() => {
+  // Update dropdown position when opened or on scroll/resize
+  const updateDropdownPosition = () => {
     if (isOpen && triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.bottom
+      const spaceAbove = rect.top
+      const dropdownHeight = 300 // approximate max height
+
+      // Decide if dropdown should open above or below
+      const shouldOpenAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
+
       setDropdownPosition({
-        top: rect.bottom + window.scrollY + 8,
+        top: shouldOpenAbove ? rect.top + window.scrollY - dropdownHeight - 8 : rect.bottom + window.scrollY + 8,
         left: rect.left + window.scrollX,
         width: rect.width,
       })
+    }
+  }
+
+  useEffect(() => {
+    updateDropdownPosition()
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const handleScroll = () => updateDropdownPosition()
+    const handleResize = () => updateDropdownPosition()
+
+    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+      window.removeEventListener('resize', handleResize)
     }
   }, [isOpen])
 
   // Close on click outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (triggerRef.current && !triggerRef.current.contains(event.target as Node)) {
-        const dropdown = document.getElementById('select-dropdown-portal')
-        if (dropdown && !dropdown.contains(event.target as Node)) {
-          setIsOpen(false)
-        }
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(event.target as Node) &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false)
       }
     }
 
@@ -166,17 +194,18 @@ export default function Select({
         </motion.div>
       </div>
 
-      {/* Portal for dropdown to prevent overflow */}
+      {/* Portal for dropdown */}
       {isOpen &&
         createPortal(
           <AnimatePresence>
             <motion.div
-              id="select-dropdown-portal"
-              className="fixed z-9999 bg-white rounded-xl shadow-2xl border-2 border-neutral-200 overflow-hidden"
+              ref={dropdownRef}
+              className="fixed bg-white rounded-xl shadow-2xl border-2 border-neutral-200 overflow-hidden"
               style={{
                 top: `${dropdownPosition.top}px`,
                 left: `${dropdownPosition.left}px`,
                 width: `${dropdownPosition.width}px`,
+                zIndex: 9999,
               }}
               initial={{ opacity: 0, y: -10, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}

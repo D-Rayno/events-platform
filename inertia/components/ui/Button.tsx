@@ -1,4 +1,3 @@
-// inertia/components/ui/Button.tsx
 import { Link } from '@inertiajs/react'
 import { motion } from 'motion/react'
 import { useTheme } from '~/hooks/useTheme'
@@ -26,19 +25,19 @@ const baseClasses =
 
 const variantClasses = {
   primary:
-    'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white focus:ring-primary-500/30 active:scale-[0.98]',
+    'bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white focus:ring-primary-500/30 shadow-md hover:shadow-lg',
   secondary:
-    'bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 text-white focus:ring-secondary-500/30 active:scale-[0.98]',
+    'bg-gradient-to-r from-secondary-600 to-secondary-700 hover:from-secondary-700 hover:to-secondary-800 text-white focus:ring-secondary-500/30 shadow-md hover:shadow-lg',
   outline:
-    'border-2 border-neutral-300 hover:border-primary-600 hover:bg-primary-50 text-neutral-700 hover:text-primary-700 focus:ring-primary-500/20 active:scale-[0.98]',
+    'border-2 border-neutral-300 hover:border-primary-600 hover:bg-primary-50 text-neutral-700 hover:text-primary-700 focus:ring-primary-500/20',
   ghost:
-    'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 focus:ring-neutral-500/20 active:scale-[0.98]',
+    'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 focus:ring-neutral-500/20',
   danger:
-    'bg-gradient-to-r from-error-600 to-error-700 hover:from-error-700 hover:to-error-800 text-white focus:ring-error-500/30 active:scale-[0.98]',
+    'bg-gradient-to-r from-error-600 to-error-700 hover:from-error-700 hover:to-error-800 text-white focus:ring-error-500/30 shadow-md hover:shadow-lg',
   success:
-    'bg-gradient-to-r from-success-600 to-success-700 hover:from-success-700 hover:to-success-800 text-white focus:ring-success-500/30 active:scale-[0.98]',
+    'bg-gradient-to-r from-success-600 to-success-700 hover:from-success-700 hover:to-success-800 text-white focus:ring-success-500/30 shadow-md hover:shadow-lg',
   gradient:
-    'bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 bg-size-200 hover:bg-pos-100 text-white focus:ring-primary-500/30 active:scale-[0.98]',
+    'bg-gradient-to-r from-primary-600 via-secondary-600 to-primary-600 bg-size-200 hover:bg-pos-100 text-white focus:ring-primary-500/30 shadow-md hover:shadow-xl',
 }
 
 const sizeClasses = {
@@ -105,9 +104,19 @@ export default function Button({
 
   const content = (
     <>
-      {/* Shimmer Effect */}
+      {/* Enhanced Shimmer Effect */}
       {!loading && !disabled && (
-        <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-white/20 to-transparent" />
+        <>
+          <span className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-linear-to-r from-transparent via-white/30 to-transparent" />
+          
+          {/* Glow effect on hover */}
+          <motion.span
+            className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            style={{
+              background: 'radial-gradient(circle at center, rgba(255,255,255,0.3) 0%, transparent 70%)',
+            }}
+          />
+        </>
       )}
 
       {/* Loading State */}
@@ -139,9 +148,25 @@ export default function Button({
         </span>
       ) : (
         <span className="relative z-10 inline-flex items-center gap-2">
-          {IconLeft && <IconLeft className={iconSizes[size]} />}
+          {IconLeft && (
+            <motion.span
+              initial={{ x: 0 }}
+              whileHover={{ x: -2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <IconLeft className={iconSizes[size]} />
+            </motion.span>
+          )}
           {children}
-          {IconRight && <IconRight className={iconSizes[size]} />}
+          {IconRight && (
+            <motion.span
+              initial={{ x: 0 }}
+              whileHover={{ x: 2 }}
+              transition={{ duration: 0.2 }}
+            >
+              <IconRight className={iconSizes[size]} />
+            </motion.span>
+          )}
         </span>
       )}
     </>
@@ -150,15 +175,23 @@ export default function Button({
   const motionProps = {
     initial: { opacity: 0, scale: 0.9 },
     animate: { opacity: 1, scale: 1 },
-    whileHover: isDisabled ? {} : { scale: 1.02 },
-    whileTap: isDisabled ? {} : { scale: 0.98 },
+    whileHover: isDisabled ? {} : { 
+      scale: 1.03,
+      y: -2,
+      transition: { duration: 0.2 }
+    },
+    whileTap: isDisabled ? {} : { 
+      scale: 0.97,
+      y: 0,
+      transition: { duration: 0.1 }
+    },
     transition: { duration: getAnimation('fast') / 1000 },
   }
 
   if (href) {
     return (
       <Link href={href} className={buttonClasses}>
-        <motion.div {...motionProps} className="w-full">
+        <motion.div {...motionProps} className="w-full flex items-center justify-center">
           {content}
         </motion.div>
       </Link>

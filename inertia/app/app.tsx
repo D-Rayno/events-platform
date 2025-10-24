@@ -56,10 +56,10 @@ createInertiaApp({
       const authStore = useAuthStore.getState()
       const appStore = useAppStore.getState()
 
-      // Update auth state
+      // Update auth state - FIX: Check if user exists properly
       if (page.props.auth?.user) {
         authStore.setUser(page.props.auth.user)
-      } else if (authStore.isAuthenticated() && !page.props.auth?.user) {
+      } else if (authStore.user && !page.props.auth?.user) {
         authStore.clearUser()
       }
 

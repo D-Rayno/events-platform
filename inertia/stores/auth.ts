@@ -5,14 +5,6 @@ interface AuthState {
   user: User | null
   isInitialized: boolean
   
-  // Computed getters
-  isAuthenticated: boolean
-  isEmailVerified: boolean
-  fullName: string
-  initials: string
-  avatarUrl: string | null
-  needsVerification: boolean
-  
   // Actions
   initializeAuth: (userData: User | null) => void
   setUser: (userData: User | null) => void
@@ -24,42 +16,10 @@ interface AuthState {
   getAgeCategory: () => 'youth' | 'adult' | 'senior' | null
 }
 
+// Computed getters as separate functions
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isInitialized: false,
-
-  // Computed getters as properties
-  get isAuthenticated() {
-    return !!get().user
-  },
-  
-  get isEmailVerified() {
-    return get().user?.isEmailVerified || false
-  },
-  
-  get fullName() {
-    const user = get().user
-    if (!user) return ''
-    return `${user.firstName} ${user.lastName}`
-  },
-  
-  get initials() {
-    const user = get().user
-    if (!user) return ''
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-  },
-  
-  get avatarUrl() {
-    const user = get().user
-    if (!user?.avatarUrl) return null
-    return user.avatarUrl.startsWith('http')
-      ? user.avatarUrl
-      : `/uploads/${user.avatarUrl}`
-  },
-  
-  get needsVerification() {
-    return get().isAuthenticated && !get().isEmailVerified
-  },
 
   // Actions
   initializeAuth: (userData) => {
@@ -99,6 +59,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hasPermission: (permission: string) => {
+    permission;
     // Implement permission logic here
     return false
   },
@@ -113,3 +74,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     return 'adult'
   },
 }))
+
+// Export computed selector hooks
+export const useIsAuthenticated = () => useAuthStore((state) => !!state.user)
+export const useIsEmailVerified = () => useAuthStore((state) => state.user?.isEmailVerified || false)
+export const useFullName = () => useAuthStore((state) => {
+  const user = state.user
+  if (!user) return ''
+  return `${user.firstName} ${user.lastName}`
+})
+export const useInitials = () => useAuthStore((state) => {
+  const user = state.user
+  if (!user) return ''
+  return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
+})
+export const useAvatarUrl = () => useAuthStore((state) => {
+  const user = state.user
+  if (!user?.avatarUrl) return null
+  return user.avatarUrl.startsWith('http')
+    ? user.avatarUrl
+    : `/uploads/${user.avatarUrl}`
+})
+export const useNeedsVerification = () => {
+  const isAuth = useIsAuthenticated()
+  const isVerified = useIsEmailVerified()
+  return isAuth && !isVerified
+}
