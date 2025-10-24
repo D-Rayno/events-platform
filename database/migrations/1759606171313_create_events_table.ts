@@ -114,7 +114,7 @@ export default class extends BaseSchema {
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
 
-      // Index pour recherche et filtrage
+      // Index
       table.index(['status', 'start_date'])
       table.index('category')
       table.index(['province', 'commune'])

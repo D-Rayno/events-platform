@@ -79,14 +79,24 @@ export const createEventValidator = vine.compile(
 =======
     startDate: vine.date(),
     endDate: vine.date().afterField('startDate'),
+    registrationStartDate: vine.date().optional(),
+    registrationEndDate: vine.date().optional(),
+    
+    // Capacité et restrictions
     capacity: vine.number().min(1),
     minAge: vine.number().min(0).optional(),
     maxAge: vine.number().optional(),
+    
+    // Tarification
     basePrice: vine.number().optional(),
     youthPrice: vine.number().optional(),
     seniorPrice: vine.number().optional(),
+    
+    // Catégorie et tags
     category: vine.string().trim().minLength(2).maxLength(100),
     tags: vine.array(vine.string().trim()).optional(),
+    
+    // Paramètres
     isPublic: vine.boolean().optional(),
     requiresApproval: vine.boolean().optional(),
     registrationStartDate: vine.date().optional(),
@@ -126,10 +136,11 @@ createEventValidator.messagesProvider = new class {
     const messages: Record<string, string> = {
       'required': 'Le champ est obligatoire',
       'string': 'Le champ doit être une chaîne de caractères',
-      'minLength': `Le champ doit contenir au moins ${args?.count ?? ''} caractères`,
-      'maxLength': `Le champ ne peut pas dépasser ${args?.count ?? ''} caractères`,
+      'minLength': `Le champ doit contenir au moins ${args?.minLength ?? ''} caractères`,
+      'maxLength': `Le champ ne peut pas dépasser ${args?.maxLength ?? ''} caractères`,
       'number': 'Le champ doit être un nombre',
-      'min': `La valeur doit être au moins ${args?.value ?? ''}`,
+      'min': `La valeur doit être au moins ${args?.min ?? ''}`,
+      'max': `La valeur ne peut pas dépasser ${args?.max ?? ''}`,
       'date': 'La date n\'est pas valide',
       'afterField': 'La date de fin doit être après la date de début',
       'boolean': 'La valeur doit être un booléen',

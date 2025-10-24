@@ -94,43 +94,42 @@ export const updateEventValidator = vine.compile(
  */
 export const updateEventValidator = vine.compile(
   vine.object({
-    name: vine.string().trim().minLength(3).maxLength(255),
-
-    description: vine.string().trim().minLength(10),
-
-    location: vine.string().trim().minLength(3).maxLength(255),
-
+    // Informations de base
+    name: vine.string().trim().minLength(3).maxLength(255).optional(),
+    description: vine.string().trim().minLength(10).optional(),
+    location: vine.string().trim().minLength(3).maxLength(255).optional(),
+    province: vine.string().trim().minLength(2).maxLength(100).optional(),
+    commune: vine.string().trim().minLength(2).maxLength(100).optional(),
+    
+    // Dates
     startDate: vine.date({
       formats: ['YYYY-MM-DD HH:mm', 'YYYY-MM-DDTHH:mm'],
-    }),
-
+    }).optional(),
     endDate: vine.date({
       formats: ['YYYY-MM-DD HH:mm', 'YYYY-MM-DDTHH:mm'],
-    }),
-
-    maxCapacity: vine.number().min(1).max(10000),
-
-    category: vine.enum([
-      'conference',
-      'workshop',
-      'seminar',
-      'concert',
-      'sport',
-      'exhibition',
-      'networking',
-      'other',
-    ]),
-
-    status: vine.enum(['draft', 'published', 'cancelled', 'completed']),
-
-    price: vine.number().min(0).max(1000000),
-
-    organizerName: vine.string().trim().minLength(2).maxLength(255),
-
-    organizerEmail: vine.string().trim().email().normalizeEmail(),
-
-    organizerPhone: vine.string().trim().mobile().optional(),
-
+    }).optional(),
+    registrationStartDate: vine.date().optional(),
+    registrationEndDate: vine.date().optional(),
+    
+    // Capacité
+    capacity: vine.number().min(1).max(10000).optional(),
+    minAge: vine.number().min(0).optional(),
+    maxAge: vine.number().optional(),
+    
+    // Tarification
+    basePrice: vine.number().min(0).max(1000000).optional(),
+    youthPrice: vine.number().min(0).optional(),
+    seniorPrice: vine.number().min(0).optional(),
+    
+    // Catégorie
+    category: vine.string().trim().minLength(2).maxLength(100).optional(),
+    tags: vine.array(vine.string().trim()).optional(),
+    
+    // Statut
+    status: vine.enum(['draft', 'published', 'ongoing', 'finished', 'cancelled']).optional(),
+    isPublic: vine.boolean().optional(),
+    requiresApproval: vine.boolean().optional(),
+    isActive: vine.boolean().optional(),
     isFeatured: vine.boolean().optional(),
 
     requiresApproval: vine.boolean().optional(),
@@ -205,42 +204,21 @@ updateEventValidator.messagesProvider = new (class {
         minLength: 'Le nom doit contenir au moins 3 caractères',
       },
       description: {
-        required: 'La description est obligatoire',
         minLength: 'La description doit contenir au moins 10 caractères',
       },
-      location: {
-        required: "Le lieu de l'événement est obligatoire",
-      },
-      startDate: {
-        required: 'La date de début est obligatoire',
-        date: 'Le format de la date de début est invalide',
-      },
-      endDate: {
-        required: 'La date de fin est obligatoire',
-        date: 'Le format de la date de fin est invalide',
-      },
-      maxCapacity: {
-        required: 'La capacité maximale est obligatoire',
+      capacity: {
         min: 'La capacité doit être au moins 1',
+        max: 'La capacité ne peut pas dépasser 10 000',
       },
-      category: {
-        required: 'La catégorie est obligatoire',
-        enum: 'La catégorie sélectionnée est invalide',
-      },
-      status: {
-        required: 'Le statut est obligatoire',
-        enum: 'Le statut sélectionné est invalide',
-      },
-      price: {
-        required: 'Le prix est obligatoire',
+      basePrice: {
         min: 'Le prix ne peut pas être négatif',
       },
-      organizerName: {
-        required: "Le nom de l'organisateur est obligatoire",
+      gameType: {
+        minLength: 'Le type de jeu doit contenir au moins 2 caractères',
       },
-      organizerEmail: {
-        required: "L'email de l'organisateur est obligatoire",
-        email: "L'email de l'organisateur n'est pas valide",
+      durationMinutes: {
+        min: 'La durée doit être au moins 1 minute',
+        max: 'La durée ne peut pas dépasser 24 heures',
       },
       organizerPhone: {
         mobile: "Le numéro de téléphone n'est pas valide",

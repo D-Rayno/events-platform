@@ -38,7 +38,6 @@ export default defineConfig({
     () => import('@adonisjs/auth/auth_provider')
   ],
 
-<<<<<<< HEAD
   /*
   |--------------------------------------------------------------------------
   | Preloads
@@ -48,9 +47,6 @@ export default defineConfig({
   |
   */
   preloads: [() => import('#start/routes'), () => import('#start/kernel')],
-=======
-  preloads: [() => import('./routes/index.routes.js'), () => import('#start/kernel')],
->>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 
   tests: {
     suites: [

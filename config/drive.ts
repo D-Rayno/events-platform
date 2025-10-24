@@ -16,8 +16,4 @@ export default defineConfig({
       visibility: 'public',
     }),
   },
-<<<<<<< HEAD
 })
-=======
-})
->>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)

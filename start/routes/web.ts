@@ -49,10 +49,6 @@ export default () => {
   router.get('/events', [EventsController, 'index']).as('events.index')
   router.get('/events/:id', [EventsController, 'show']).as('events.show')
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
   /*
 |--------------------------------------------------------------------------
 | Page d'accueil
@@ -96,31 +92,4 @@ export default () => {
 |--------------------------------------------------------------------------
 */
   router.get('/auth/verify-email', [AuthController, 'verifyEmail']).as('auth.verify_email')
-<<<<<<< HEAD
-=======
-
-  /*
-|--------------------------------------------------------------------------
-| Routes authentifiées
-|--------------------------------------------------------------------------
-*/
-  router
-    .group(() => {
-      // Déconnexion
-      router.post('/auth/logout', [AuthController, 'logout']).as('auth.logout')
-
-      // Renvoyer email de vérification
-      router
-        .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
-        .as('auth.resend_verification')
-
-      // Profil utilisateur
-      router.get('/profile', [ProfileController, 'show']).as('profile.show')
-      router.post('/profile', [ProfileController, 'update']).as('profile.update')
-      router
-        .delete('/profile/avatar', [ProfileController, 'deleteAvatar'])
-        .as('profile.delete_avatar')
-    })
-    .middleware(middleware.auth())
->>>>>>> 47214e9 (feat: admin api's & user profile management, events and registration for both web and api)
 }
