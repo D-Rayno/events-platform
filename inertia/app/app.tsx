@@ -31,10 +31,15 @@ createInertiaApp({
       const authStore = useAuthStore.getState()
       const appStore = useAppStore.getState()
 
+      // Initialize auth from page props
       if (props.initialPage.props.auth?.user) {
         authStore.initializeAuth(props.initialPage.props.auth.user)
+      } else {
+        // Clear auth if no user
+        authStore.clearUser()
       }
 
+      // Initialize flash messages
       if (props.initialPage.props.flash) {
         appStore.setFlashMessages(props.initialPage.props.flash)
       }
@@ -88,11 +93,11 @@ createInertiaApp({
         authStore.clearUser()
         router.visit('/auth/login')
       } else if (status === 403) {
-        appStore.addFlashMessage('error', 'You do not have permission to access this page.')
+        appStore.addFlashMessage('error', 'Vous n\'avez pas la permission d\'accéder à cette page.')
       } else if (status === 404) {
         router.visit('/404')
       } else if (status === 500 || status >= 500) {
-        appStore.addFlashMessage('error', 'A server error occurred. Please try again.')
+        appStore.addFlashMessage('error', 'Une erreur serveur est survenue. Veuillez réessayer.')
       }
     })
 

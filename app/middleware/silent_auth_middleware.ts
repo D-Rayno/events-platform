@@ -26,6 +26,7 @@ export default class SilentAuthMiddleware {
           avatarUrl: auth.user.avatarUrl,
           isEmailVerified: auth.user.isEmailVerified,
           isAdmin: auth.user.isAdmin,
+          createdAt: auth.user.createdAt.toISO(), // Convert DateTime to string
         } : null,
       },
     })

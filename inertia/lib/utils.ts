@@ -12,76 +12,130 @@ export function cn(...inputs: ClassValue[]) {
  * Format a date to a readable string
  */
 export const formatDate = (date: Date | string, locale: string = 'fr-FR'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  }).format(d)
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    
+    // Check if date is valid
+    if (isNaN(d.getTime())) {
+      console.error('Invalid date:', date)
+      return 'Date invalide'
+    }
+    
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(d)
+  } catch (error) {
+    console.error('Error formatting date:', error, date)
+    return 'Date invalide'
+  }
 }
 
 /**
  * Format a date and time
  */
 export const formatDateTime = (date: Date | string, locale: string = 'fr-FR'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat(locale, {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(d)
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    
+    // Check if date is valid
+    if (isNaN(d.getTime())) {
+      console.error('Invalid date:', date)
+      return 'Date invalide'
+    }
+    
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(d)
+  } catch (error) {
+    console.error('Error formatting datetime:', error, date)
+    return 'Date invalide'
+  }
 }
 
 /**
  * Format a time
  */
 export const formatTime = (date: Date | string, locale: string = 'fr-FR'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return new Intl.DateTimeFormat(locale, {
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(d)
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    
+    // Check if date is valid
+    if (isNaN(d.getTime())) {
+      console.error('Invalid date:', date)
+      return 'Heure invalide'
+    }
+    
+    return new Intl.DateTimeFormat(locale, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(d)
+  } catch (error) {
+    console.error('Error formatting time:', error, date)
+    return 'Heure invalide'
+  }
 }
 
 /**
  * Check if date is in the past
  */
 export const isPast = (date: Date | string): boolean => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d < new Date()
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    if (isNaN(d.getTime())) return false
+    return d < new Date()
+  } catch {
+    return false
+  }
 }
 
 /**
  * Check if date is today
  */
 export const isToday = (date: Date | string): boolean => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const today = new Date()
-  return (
-    d.getDate() === today.getDate() &&
-    d.getMonth() === today.getMonth() &&
-    d.getFullYear() === today.getFullYear()
-  )
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    if (isNaN(d.getTime())) return false
+    
+    const today = new Date()
+    return (
+      d.getDate() === today.getDate() &&
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear()
+    )
+  } catch {
+    return false
+  }
 }
 
 /**
  * Get relative time string (e.g., "2 days ago")
  */
 export const getRelativeTime = (date: Date | string, locale: string = 'fr-FR'): string => {
-  const d = typeof date === 'string' ? new Date(date) : date
-  const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
+  try {
+    const d = typeof date === 'string' ? new Date(date) : date
+    if (isNaN(d.getTime())) return 'Date invalide'
+    
+    const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
 
-  const now = new Date()
-  const seconds = Math.floor((now.getTime() - d.getTime()) / 1000)
+    const now = new Date()
+    const seconds = Math.floor((now.getTime() - d.getTime()) / 1000)
 
-  if (seconds < 60) return rtf.format(-Math.floor(seconds), 'second')
-  if (seconds < 3600) return rtf.format(-Math.floor(seconds / 60), 'minute')
-  if (seconds < 86400) return rtf.format(-Math.floor(seconds / 3600), 'hour')
-  if (seconds < 604800) return rtf.format(-Math.floor(seconds / 86400), 'day')
+    if (seconds < 60) return rtf.format(-Math.floor(seconds), 'second')
+    if (seconds < 3600) return rtf.format(-Math.floor(seconds / 60), 'minute')
+    if (seconds < 86400) return rtf.format(-Math.floor(seconds / 3600), 'hour')
+    if (seconds < 604800) return rtf.format(-Math.floor(seconds / 86400), 'day')
 
-  return formatDate(d, locale)
+    return formatDate(d, locale)
+  } catch (error) {
+    console.error('Error getting relative time:', error, date)
+    return 'Date invalide'
+  }
 }
 
 /**

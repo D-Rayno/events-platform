@@ -1,3 +1,4 @@
+// app/controllers/profiles_controller.ts - FIXED
 import type { HttpContext } from '@adonisjs/core/http'
 import { updateProfileValidator } from '#validators/update_profile'
 import drive from '@adonisjs/drive/services/main'
@@ -22,7 +23,8 @@ export default class ProfileController {
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
-        createdAt: user.createdAt,
+        // Convert DateTime to ISO string
+        createdAt: user.createdAt.toISO(),
       },
     })
   }
