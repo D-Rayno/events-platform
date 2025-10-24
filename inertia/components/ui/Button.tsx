@@ -22,7 +22,7 @@ interface ButtonProps {
 }
 
 const baseClasses =
-  'inline-flex items-center justify-center font-semibold transition-all duration-300 focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group'
+  'inline-flex cursor-pointer items-center justify-center font-semibold transition-all duration-300 focus:outline-none focus:ring-4 disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group'
 
 const variantClasses = {
   primary:

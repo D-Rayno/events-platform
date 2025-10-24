@@ -139,7 +139,7 @@ export default function Password({
         />
 
         {(IconRight || type === 'password') && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 cursor-pointer">
             {type === 'password' && !disabled ? (
               <button
                 type="button"
@@ -176,7 +176,7 @@ export default function Password({
             animate={{ opacity: 1, translateY: 0, scale: 1 }}
             exit={{ opacity: 0, translateY: -1, scale: 0.95 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="flex items-start gap-2 text-sm text-red-600 font-medium"
+            className="flex items-start gap-2 text-sm text-red-600 font-medium "
           >
             <svg className="w-4 h-4 mt-0.5 shrink-0 animate-bounce-subtle" viewBox="0 0 20 20" fill="currentColor">
               <path
