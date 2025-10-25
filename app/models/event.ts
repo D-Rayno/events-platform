@@ -1,4 +1,4 @@
-// app/models/event.ts - ADD SERIALIZE DECORATOR FOR JSON COLUMNS
+// app/models/event.ts - FIXED JSON SERIALIZATION
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, afterSave, afterDelete } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
@@ -67,10 +67,21 @@ export default class Event extends BaseModel {
   @column()
   declare category: string
 
-  // JSON COLUMN - needs proper serialization
+  // JSON COLUMN - FIXED serialization
   @column({
-    prepare: (value: string[]) => JSON.stringify(value),
-    consume: (value: string) => JSON.parse(value),
+    prepare: (value: string[]) => JSON.stringify(value || []),
+    consume: (value: string) => {
+      if (!value) return []
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return []
+        }
+      }
+      return value
+    },
+    serialize: (value: string[]) => value || [],
   })
   declare tags: string[]
 
@@ -123,22 +134,55 @@ export default class Event extends BaseModel {
   @column()
   declare autoTeamFormation: boolean
 
-  // JSON COLUMNS - need proper serialization
+  // JSON COLUMNS - FIXED serialization
   @column({
     prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) => {
+      if (!value) return null
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return null
+        }
+      }
+      return value
+    },
+    serialize: (value: string[] | null) => value || null,
   })
   declare requiredItems: string[] | null
 
   @column({
     prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) => {
+      if (!value) return null
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return null
+        }
+      }
+      return value
+    },
+    serialize: (value: string[] | null) => value || null,
   })
   declare prohibitedItems: string[] | null
 
   @column({
     prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
-    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+    consume: (value: string | null) => {
+      if (!value) return null
+      if (typeof value === 'string') {
+        try {
+          return JSON.parse(value)
+        } catch {
+          return null
+        }
+      }
+      return value
+    },
+    serialize: (value: string[] | null) => value || null,
   })
   declare safetyRequirements: string[] | null
 

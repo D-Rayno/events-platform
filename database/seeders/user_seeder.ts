@@ -1,9 +1,12 @@
-// database/seeders/user_seeder.ts - UPDATED FOR 30 IMAGES
+// database/seeders/user_seeder.ts - Add environment check
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import User from '#models/user'
 import { DateTime } from 'luxon'
 
 export default class UserSeeder extends BaseSeeder {
+  // This seeder should only run through MainSeeder
+  static environment = ['development']
+
   async run() {
     const provinces = [
       'Alger',
@@ -73,23 +76,36 @@ export default class UserSeeder extends BaseSeeder {
       'Farsi',
     ]
 
-    // Create admin user
-    await User.create({
-      firstName: 'Admin',
-      lastName: 'System',
-      email: 'admin@events.dz',
-      password: 'Admin@123',
-      age: 30,
-      province: 'Alger',
-      commune: 'Kouba',
-      phoneNumber: '+213555000000',
-      avatarUrl: 'uploads/avatars/avatar-1.webp',
-      isEmailVerified: true,
-      emailVerifiedAt: DateTime.now(),
-      isActive: true,
-      isBlocked: false,
-      isAdmin: true,
-    })
+    // Check if admin already exists
+    const existingAdmin = await User.findBy('email', 'admin@events.dz')
+    if (!existingAdmin) {
+      // Create admin user
+      await User.create({
+        firstName: 'Admin',
+        lastName: 'System',
+        email: 'admin@events.dz',
+        password: 'Admin@123',
+        age: 30,
+        province: 'Alger',
+        commune: 'Kouba',
+        phoneNumber: '+213555000000',
+        avatarUrl: 'uploads/avatars/avatar-1.webp',
+        isEmailVerified: true,
+        emailVerifiedAt: DateTime.now(),
+        isActive: true,
+        isBlocked: false,
+        isAdmin: true,
+      })
+    }
+
+    // Check if users already exist
+    const existingUsersCount = await User.query().where('is_admin', false).count('* as total')
+    const count = Number(existingUsersCount[0].$extras.total)
+    
+    if (count > 0) {
+      console.log('ℹ️  Users already exist, skipping user seeding')
+      return
+    }
 
     // Create 100 regular users (cycling through 30 avatar images)
     const users = []

@@ -1,4 +1,4 @@
-// database/seeders/registration_seeder.ts
+// database/seeders/registration_seeder.ts - Add duplicate prevention
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import User from '#models/user'
 import Event from '#models/event'
@@ -7,7 +7,19 @@ import { DateTime } from 'luxon'
 import string from '@adonisjs/core/helpers/string'
 
 export default class RegistrationSeeder extends BaseSeeder {
+  // This seeder should only run through MainSeeder
+  static environment = ['development']
+
   async run() {
+    // Check if registrations already exist
+    const existingRegsCount = await Registration.query().count('* as total')
+    const count = Number(existingRegsCount[0].$extras.total)
+
+    if (count > 0) {
+      console.log('ℹ️  Registrations already exist, skipping registration seeding')
+      return
+    }
+
     // Fetch all users (excluding admin) and published events
     const users = await User.query().where('is_admin', false).exec()
     const events = await Event.query()

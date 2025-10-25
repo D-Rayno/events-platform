@@ -1,10 +1,22 @@
-// database/seeders/event_seeder.ts - FIXED TAGS ARRAY
+// database/seeders/event_seeder.ts - Add environment check and duplicate prevention
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import Event from '#models/event'
 import { DateTime } from 'luxon'
 
 export default class EventSeeder extends BaseSeeder {
+  // This seeder should only run through MainSeeder
+  static environment = ['development']
+
   async run() {
+    // Check if events already exist
+    const existingEventsCount = await Event.query().count('* as total')
+    const count = Number(existingEventsCount[0].$extras.total)
+    
+    if (count > 0) {
+      console.log('ℹ️  Events already exist, skipping event seeding')
+      return
+    }
+
     const provinces = [
       'Alger',
       'Oran',
@@ -157,7 +169,7 @@ export default class EventSeeder extends BaseSeeder {
           Math.floor(Math.random() * eventNames[category as keyof typeof eventNames].length)
         ]
 
-      // Create tags array properly - must be actual array, not stringified
+      // Create tags array properly
       const eventTags = [
         category,
         province.toLowerCase(),
@@ -187,7 +199,7 @@ export default class EventSeeder extends BaseSeeder {
         isPublic: Math.random() > 0.1,
         requiresApproval: Math.random() > 0.8,
         category,
-        tags: eventTags, // Pass as array - prepare() will stringify it
+        tags: eventTags,
         registrationStartDate,
         registrationEndDate,
         isActive: true,
@@ -219,7 +231,7 @@ export default class EventSeeder extends BaseSeeder {
           isGameEvent && Math.random() > 0.5 ? [10, 20, 30][Math.floor(Math.random() * 3)] : null,
         autoTeamFormation: isGameEvent && Math.random() > 0.7,
         
-        // JSON arrays - pass as arrays, prepare() will stringify
+        // JSON arrays
         requiredItems: isGameEvent ? ['Comfortable shoes', 'Water bottle', 'ID Card'] : null,
         prohibitedItems: isGameEvent ? ['Phones', 'Cameras', 'Sharp objects'] : null,
         safetyRequirements: isGameEvent
