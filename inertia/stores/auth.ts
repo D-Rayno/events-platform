@@ -4,15 +4,15 @@ import type { User } from '~/types/user'
 interface AuthState {
   user: User | null
   isInitialized: boolean
-  
-  // Computed getters
-  isAuthenticated: boolean
-  isEmailVerified: boolean
-  fullName: string
-  initials: string
-  avatarUrl: string | null
-  needsVerification: boolean
-  
+
+  // Derived / Computed values
+  isAuthenticated: () => boolean
+  isEmailVerified: () => boolean
+  fullName: () => string
+  initials: () => string
+  avatarUrl: () => string | null
+  needsVerification: () => boolean
+
   // Actions
   initializeAuth: (userData: User | null) => void
   setUser: (userData: User | null) => void
@@ -28,40 +28,40 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isInitialized: false,
 
-  // Computed getters as properties
-  get isAuthenticated() {
-    return !!get().user
+  /**
+   * ─── COMPUTED SELECTORS ────────────────────────────────
+   */
+  isAuthenticated: () => !!get().user,
+
+  isEmailVerified: () => get().user?.isEmailVerified || false,
+
+  fullName: () => {
+    const user = get().user
+    return user ? `${user.firstName} ${user.lastName}` : ''
   },
-  
-  get isEmailVerified() {
-    return get().user?.isEmailVerified || false
-  },
-  
-  get fullName() {
+
+  initials: () => {
     const user = get().user
     if (!user) return ''
-    return `${user.firstName} ${user.lastName}`
+    const first = user.firstName?.[0]?.toUpperCase() ?? ''
+    const last = user.lastName?.[0]?.toUpperCase() ?? ''
+    return `${first}${last}`
   },
-  
-  get initials() {
-    const user = get().user
-    if (!user) return ''
-    return `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
-  },
-  
-  get avatarUrl() {
+
+  avatarUrl: () => {
     const user = get().user
     if (!user?.avatarUrl) return null
     return user.avatarUrl.startsWith('http')
       ? user.avatarUrl
       : `/uploads/${user.avatarUrl}`
   },
-  
-  get needsVerification() {
-    return get().isAuthenticated && !get().isEmailVerified
-  },
 
-  // Actions
+  needsVerification: () =>
+    get().isAuthenticated() && !get().isEmailVerified(),
+
+  /**
+   * ─── ACTIONS ───────────────────────────────────────────
+   */
   initializeAuth: (userData) => {
     set({ user: userData, isInitialized: true })
   },
@@ -99,18 +99,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   hasPermission: (permission: string) => {
-    permission;
-    // Implement permission logic here
-    return false
+    // const user = get().user
+    // if (!user?.permissions) return false
+    // return user.permissions.includes(permission)
+    return !!permission
   },
 
   getAgeCategory: () => {
     const user = get().user
-    if (!user) return null
-
-    const age = user.age
-    if (age < 26) return 'youth'
-    if (age >= 60) return 'senior'
+    if (!user || !user.age) return null
+    if (user.age < 26) return 'youth'
+    if (user.age >= 60) return 'senior'
     return 'adult'
   },
 }))

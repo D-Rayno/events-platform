@@ -169,7 +169,7 @@ export default function Register() {
                   label="Âge"
                   type="number"
                   value={form.data.age}
-                  onChange={(value) => form.setData('age', value)}
+                  onChange={(value) => form.setData('age', value.toString())}
                   onBlur={() => handleBlur('age')}
                   error={shouldShowError('age') ? getError('age') : undefined}
                   icon={CalendarIcon}

@@ -20,7 +20,7 @@ import { motion } from 'motion/react'
 
 export default function Home() {
   const { config, appName, appTagline } = useTheme()
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated())
   const user = useAuthStore((s) => s.user)
 
   const features = [

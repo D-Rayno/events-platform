@@ -11,14 +11,73 @@ import db from '@adonisjs/lucid/services/db'
 
 export default class AuthController {
   /**
-   * Affiche le formulaire d'inscription
+   * Process login with smart redirect
+   */
+  async login({ request, response, auth, session }: HttpContext) {
+    try {
+      const { email, password } = await request.validateUsing(loginValidator)
+
+      // Verify credentials
+      const user = await User.verifyCredentials(email, password)
+
+      // Check if user can login
+      if (!user.canLogin()) {
+        if (!user.isEmailVerified) {
+          session.flash('error', 'Veuillez vérifier votre email avant de vous connecter.')
+        } else if (user.isBlocked) {
+          session.flash('error', 'Votre compte a été bloqué.')
+        } else if (!user.isActive) {
+          session.flash('error', "Votre compte n'est pas actif.")
+        }
+        return response.redirect().back()
+      }
+
+      // Login user
+      await auth.use('web').login(user)
+
+      session.flash('success', `Bienvenue ${user.firstName} !`)
+
+      // Get intended URL or redirect to /events
+      const intendedUrl = session.get('intended_url', '/events')
+      session.forget('intended_url')
+
+      return response.redirect(intendedUrl)
+    } catch (error) {
+      console.error('Login error:', error)
+      session.flash('error', 'Email ou mot de passe incorrect.')
+      return response.redirect().back()
+    }
+  }
+
+  /**
+   * Show login page (only for guests)
+   */
+  async showLogin({ inertia, auth, response }: HttpContext) {
+    // This check is redundant if guest middleware is applied
+    // but kept as a safety measure
+    if (auth.user) {
+      return response.redirect('/events')
+    }
+    return inertia.render('auth/login')
+  }
+
+  /**
+   * Show register page (only for guests)
    */
   async showRegister({ inertia, auth, response }: HttpContext) {
-    // Redirect if already authenticated
     if (auth.user) {
-      return response.redirect('/')
+      return response.redirect('/events')
     }
     return inertia.render('auth/register')
+  }
+
+  /**
+   * Logout and redirect to login
+   */
+  async logout({ auth, response, session }: HttpContext) {
+    await auth.use('web').logout()
+    session.flash('success', 'Vous avez été déconnecté avec succès.')
+    return response.redirect('/auth/login')
   }
 
   /**
@@ -81,65 +140,6 @@ export default class AuthController {
 
       return response.redirect().back()
     }
-  }
-
-  /**
-   * Affiche le formulaire de connexion
-   */
-  async showLogin({ inertia, auth, response }: HttpContext) {
-    // Redirect if already authenticated
-    if (auth.user) {
-      return response.redirect('/')
-    }
-    return inertia.render('auth/login')
-  }
-
-  /**
-   * Traite la connexion
-   */
-  async login({ request, response, auth, session }: HttpContext) {
-    try {
-      const { email, password } = await request.validateUsing(loginValidator)
-
-      // Verify credentials
-      const user = await User.verifyCredentials(email, password)
-
-      // Check if user can login
-      if (!user.canLogin()) {
-        if (!user.isEmailVerified) {
-          session.flash(
-            'error',
-            'Veuillez vérifier votre email avant de vous connecter. Consultez votre boîte de réception.'
-          )
-        } else if (user.isBlocked) {
-          session.flash('error', 'Votre compte a été bloqué. Contactez un administrateur.')
-        } else if (!user.isActive) {
-          session.flash('error', "Votre compte n'est pas actif.")
-        }
-        return response.redirect().back()
-      }
-
-      // Login user
-      await auth.use('web').login(user)
-
-      session.flash('success', `Bienvenue ${user.firstName} !`)
-
-      // Check for intended URL in session storage (will be read by frontend)
-      // Don't redirect here, let the frontend handle it
-      return response.redirect('/events')
-    } catch (error) {
-      console.error('Erreur lors de la connexion:', error)
-      session.flash('error', 'Email ou mot de passe incorrect.')
-      return response.redirect().back()
-    }
-  }
-  /**
-   * Déconnexion
-   */
-  async logout({ auth, response, session }: HttpContext) {
-    await auth.use('web').logout()
-    session.flash('success', 'Vous avez été déconnecté avec succès.')
-    return response.redirect('/auth/login')
   }
 
   /**

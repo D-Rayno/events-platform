@@ -1,7 +1,9 @@
 import { DateTime } from 'luxon'
-import { BaseModel, column, hasMany } from '@adonisjs/lucid/orm'
+import { BaseModel, column, hasMany, afterSave, afterDelete } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Registration from '#models/registration'
+import typesenseClient from '#services/typesense_service'
+import type { EventDocument } from '#services/typesense_service'
 
 export default class Event extends BaseModel {
   @column({ isPrimary: true })
@@ -171,36 +173,21 @@ export default class Event extends BaseModel {
    * Vérifie si c'est un événement de jeu
    */
   get isGameEvent(): boolean {
-    return this.eventType === 'game' && this.gameType !== null
+    return !!this.eventType
   }
 
   /**
    * Vérifie si l'événement est complet
    */
   get isFull(): boolean {
-    if (this.allowsTeams && this.maxTeams) {
-      const teamsCount = Math.ceil(this.registeredCount / (this.maxTeamSize || 1))
-      return teamsCount >= this.maxTeams
-    }
     return this.registeredCount >= this.capacity
   }
 
   /**
-   * Places disponibles
+   * Sièges disponibles
    */
   get availableSeats(): number {
     return Math.max(0, this.capacity - this.registeredCount)
-  }
-
-  /**
-   * Teams disponibles (si applicable)
-   */
-  get availableTeamSlots(): number | null {
-    if (!this.allowsTeams || !this.maxTeams) {
-      return null
-    }
-    const currentTeams = Math.ceil(this.registeredCount / (this.maxTeamSize || 1))
-    return Math.max(0, this.maxTeams - currentTeams)
   }
 
   /**
@@ -208,42 +195,16 @@ export default class Event extends BaseModel {
    */
   get isRegistrationOpen(): boolean {
     const now = DateTime.now()
-
-    if (this.status !== 'published') {
-      return false
-    }
-
-    if (this.registrationStartDate && now < this.registrationStartDate) {
-      return false
-    }
-
-    if (this.registrationEndDate && now > this.registrationEndDate) {
-      return false
-    }
-
-    if (this.isFull) {
-      return false
-    }
-
-    if (now >= this.startDate) {
-      return false
-    }
-
-    return true
+    const start = this.registrationStartDate || this.createdAt
+    const end = this.registrationEndDate || this.startDate
+    return now >= start && now <= end
   }
 
   /**
-   * Vérifie si l'événement a encore des places disponibles
+   * Vérifie s'il reste des places
    */
   hasAvailableSeats(): boolean {
     return this.availableSeats > 0
-  }
-
-  /**
-   * Vérifie si l'événement est terminé
-   */
-  isFinished(): boolean {
-    return this.endDate < DateTime.now()
   }
 
   /**
@@ -251,7 +212,14 @@ export default class Event extends BaseModel {
    */
   isOngoing(): boolean {
     const now = DateTime.now()
-    return this.startDate <= now && this.endDate >= now
+    return now >= this.startDate && now <= this.endDate
+  }
+
+  /**
+   * Vérifie si l'événement est terminé
+   */
+  isFinished(): boolean {
+    return this.endDate < DateTime.now()
   }
 
   /**
@@ -280,11 +248,9 @@ export default class Event extends BaseModel {
     if (this.youthPrice !== null && age < 26) {
       return this.youthPrice
     }
-
     if (this.seniorPrice !== null && age >= 60) {
       return this.seniorPrice
     }
-
     return this.basePrice
   }
 
@@ -292,14 +258,8 @@ export default class Event extends BaseModel {
    * Vérifie si l'âge est éligible pour l'événement
    */
   isAgeEligible(age: number): boolean {
-    if (age < this.minAge) {
-      return false
-    }
-
-    if (this.maxAge !== null && age > this.maxAge) {
-      return false
-    }
-
+    if (age < this.minAge) return false
+    if (this.maxAge !== null && age > this.maxAge) return false
     return true
   }
 
@@ -323,9 +283,7 @@ export default class Event extends BaseModel {
    * Vérifie si le check-in a commencé
    */
   isCheckInOpen(): boolean {
-    if (!this.checkInTime) {
-      return false
-    }
+    if (!this.checkInTime) return false
     const now = DateTime.now()
     return now >= this.checkInTime && now < this.startDate
   }
@@ -335,10 +293,7 @@ export default class Event extends BaseModel {
    */
   updateStatus(): void {
     const now = DateTime.now()
-
-    if (this.status === 'cancelled' || this.status === 'draft') {
-      return
-    }
+    if (this.status === 'cancelled' || this.status === 'draft') return
 
     if (now >= this.endDate) {
       this.status = 'finished'
@@ -351,28 +306,15 @@ export default class Event extends BaseModel {
    * Obtient un résumé des informations du jeu
    */
   getGameSummary(): string | null {
-    if (!this.isGameEvent) {
-      return null
-    }
+    if (!this.isGameEvent) return null
 
     const parts: string[] = []
-
-    if (this.gameType) {
-      parts.push(`Type: ${this.gameType}`)
-    }
-
-    if (this.difficulty) {
-      parts.push(`Difficulté: ${this.difficulty}`)
-    }
-
-    if (this.durationMinutes) {
-      parts.push(`Durée: ${this.durationMinutes} min`)
-    }
-
+    if (this.gameType) parts.push(`Type: ${this.gameType}`)
+    if (this.difficulty) parts.push(`Difficulté: ${this.difficulty}`)
+    if (this.durationMinutes) parts.push(`Durée: ${this.durationMinutes} min`)
     if (this.allowsTeams && this.minTeamSize && this.maxTeamSize) {
       parts.push(`Équipes: ${this.minTeamSize}-${this.maxTeamSize} joueurs`)
     }
-
     return parts.join(' | ')
   }
 
@@ -388,7 +330,6 @@ export default class Event extends BaseModel {
       hard: { text: 'Difficile', color: 'orange' },
       extreme: { text: 'Extrême', color: 'red' },
     }
-
     return badges[this.difficulty]
   }
 
@@ -401,7 +342,27 @@ export default class Event extends BaseModel {
       medium: { text: 'Modérée', color: 'yellow' },
       high: { text: 'Intense', color: 'red' },
     }
-
     return badges[this.physicalIntensity]
+  }
+
+  @afterSave()
+  static async indexEvent(event: Event) {
+    const doc: EventDocument = {
+      id: event.id.toString(),
+      name: event.name,
+      description: event.description,
+      category: event.category,
+      province: event.province,
+      start_date: event.startDate.toUnixInteger(),
+      event_type: event.eventType || null,
+      game_type: event.gameType || null,
+      difficulty: event.difficulty || null,
+    }
+    await typesenseClient.collections<EventDocument>('events').documents().upsert(doc)
+  }
+
+  @afterDelete()
+  static async removeEventFromIndex(event: Event) {
+    await typesenseClient.collections<EventDocument>('events').documents(event.id.toString()).delete()
   }
 }

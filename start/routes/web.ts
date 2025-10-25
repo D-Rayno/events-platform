@@ -1,4 +1,4 @@
-// start/routes/web.ts - FIXED VERSION
+// start/routes/web.ts - MERGED FIXED VERSION
 import router from '@adonisjs/core/services/router'
 import { middleware } from '#start/kernel'
 
@@ -14,14 +14,18 @@ export default () => {
   |--------------------------------------------------------------------------
   */
 
-  // Home page - NO REDIRECT, just render home page
+  // Home page - only for non-authenticated users
   router
-    .get('/', async ({ inertia }) => {
+    .get('/', async ({ inertia, auth, response }) => {
+      if (auth.user) {
+        // Redirect authenticated users to events
+        return response.redirect('/events')
+      }
       return inertia.render('home')
     })
     .as('home')
 
-  // Events (public)
+  // Events (publicly accessible)
   router.get('/events', [EventsController, 'index']).as('events.index')
   router.get('/events/:id', [EventsController, 'show']).as('events.show')
 
@@ -29,6 +33,8 @@ export default () => {
   |--------------------------------------------------------------------------
   | Auth Routes (Guest Only)
   |--------------------------------------------------------------------------
+  | Accessible to non-authenticated users only.
+  | Once logged in, users will be redirected away from these.
   */
   router
     .group(() => {
@@ -57,6 +63,7 @@ export default () => {
   |--------------------------------------------------------------------------
   | Email Verification (Public)
   |--------------------------------------------------------------------------
+  | Email verification link can be opened even by unauthenticated users.
   */
   router.get('/auth/verify-email', [AuthController, 'verifyEmail']).as('verify_email')
 
@@ -64,6 +71,7 @@ export default () => {
   |--------------------------------------------------------------------------
   | Authenticated Routes
   |--------------------------------------------------------------------------
+  | Only accessible for logged-in users.
   */
   router
     .group(() => {
@@ -75,7 +83,7 @@ export default () => {
         .post('/auth/resend-verification', [AuthController, 'resendVerificationEmail'])
         .as('resend_verification')
 
-      // Profile - MUST BE ACCESSIBLE
+      // Profile
       router.get('/profile', [ProfileController, 'show']).as('profile.show')
       router.post('/profile', [ProfileController, 'update']).as('profile.update')
       router
@@ -116,7 +124,11 @@ export default () => {
     })
     .as('errors.server_error')
 
-  // Catch-all 404
+  /*
+  |--------------------------------------------------------------------------
+  | Catch-All 404
+  |--------------------------------------------------------------------------
+  */
   router.any('*', async ({ response }) => {
     return response.redirect('/404')
   })

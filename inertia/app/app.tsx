@@ -60,6 +60,7 @@ createInertiaApp({
 
       console.log('[Router Success] Page component:', page.component)
       console.log('[Router Success] Auth props:', page.props.auth)
+      console.log('[Router Success] ', page.props)
 
       // Update auth state - properly check for user
       if (page.props.auth?.user) {

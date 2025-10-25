@@ -2,6 +2,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Registration from '#models/registration'
+import typesenseClient from '#services/typesense_service'
+import type { EventDocument } from '#services/typesense_service'
 
 export default class EventController {
   /**
@@ -9,35 +11,50 @@ export default class EventController {
    */
   async index({ request, inertia, auth }: HttpContext) {
     const page = request.input('page', 1)
-    const search = request.input('search', '')
-    const category = request.input('category', '')
-    const province = request.input('province', '')
+    const search = request.input('search', '').trim()
+    const category = request.input('category', '').trim()
+    const province = request.input('province', '').trim()
+    const eventType = request.input('eventType', '').trim()
+    const gameType = request.input('gameType', '').trim()
+    const difficulty = request.input('difficulty', '').trim()
     const user = auth.user
 
-    let query = Event.query()
-      .where('is_public', true)
-      .where('status', 'published')
-      .orderBy('start_date', 'asc')
+    // Build dynamic Typesense filter query
+    let filterBy = 'status:published && is_public:true'
+    if (category) filterBy += ` && category:${category}`
+    if (province) filterBy += ` && province:${province}`
+    if (eventType) filterBy += ` && event_type:${eventType}`
+    if (gameType) filterBy += ` && game_type:${gameType}`
+    if (difficulty) filterBy += ` && difficulty:${difficulty}`
 
-    // FIX: Remove COLLATE from search to fix charset issue
-    if (search && search.trim()) {
-      query = query.where((q) => {
-        q.whereLike('name', `%${search}%`)
-          .orWhereLike('description', `%${search}%`)
-      })
+    const searchParams = {
+      q: search || '*',
+      query_by: 'name,description',
+      filter_by: filterBy,
+      sort_by: 'start_date:asc',
+      page,
+      per_page: 12,
     }
 
-    if (category && category.trim()) {
-      query = query.where('category', category)
-    }
+    // Perform search in Typesense
+    const searchResults = await typesenseClient
+      .collections<EventDocument>('events')
+      .documents()
+      .search(searchParams)
 
-    if (province && province.trim()) {
-      query = query.where('province', province)
-    }
+    const hits = searchResults.hits || []
+    const found = searchResults.found || 0
+    const lastPage = Math.ceil(found / 12)
+    const eventIds = hits.map((hit) => parseInt(hit.document.id))
 
-    const events = await query.paginate(page, 12)
+    // Get events from the database matching Typesense results
+    const dbEvents = await Event.query().whereIn('id', eventIds).exec()
+    const eventMap = new Map(dbEvents.map((e) => [e.id, e]))
+    const orderedEvents = hits
+      .map((hit) => eventMap.get(parseInt(hit.document.id))!)
+      .filter(Boolean)
 
-    // Si l'utilisateur est connecté, récupérer ses inscriptions
+    // Fetch user registrations
     let userRegistrations: number[] = []
     if (user) {
       const registrations = await Registration.query()
@@ -48,36 +65,27 @@ export default class EventController {
       userRegistrations = registrations.map((r) => r.eventId)
     }
 
+    // Render with Inertia, using ordered events
     return inertia.render('events/index', {
       events: {
-        data: events.all().map((event) => ({
-          id: event.id,
-          name: event.name,
-          description: event.description,
-          location: event.location,
-          province: event.province,
-          commune: event.commune,
-          startDate: event.startDate.toISO(),
-          endDate: event.endDate.toISO(),
-          capacity: event.capacity,
-          registeredCount: event.registeredCount,
-          availableSeats: event.availableSeats,
-          imageUrl: event.imageUrl,
-          category: event.category,
-          basePrice: event.basePrice,
-          isFull: event.isFull,
-          canRegister: event.canRegister(),
+        data: orderedEvents.map((event) => ({
+          ...event.serialize(),
           isRegistered: userRegistrations.includes(event.id),
-          isUpcoming: event.isUpcoming(),
-          isOngoing: event.isOngoing(),
-          isFinished: event.isFinished(),
         })),
-        meta: events.getMeta(),
+        meta: {
+          current_page: page,
+          last_page: lastPage,
+          total: found,
+          per_page: 12,
+        },
       },
       filters: {
         category: category || '',
         search: search || '',
         province: province || '',
+        eventType: eventType || '',
+        gameType: gameType || '',
+        difficulty: difficulty || '',
       },
     })
   }
@@ -87,7 +95,6 @@ export default class EventController {
    */
   async show({ params, inertia, auth, response, session }: HttpContext) {
     const user = auth.user
-
     const event = await Event.find(params.id)
 
     if (!event || !event.isPublic) {
@@ -95,9 +102,11 @@ export default class EventController {
       return response.redirect('/events')
     }
 
+    // Update and persist event status (if needed)
     event.updateStatus()
     await event.save()
 
+    // Check if user is already registered
     let userRegistration = null
     if (user) {
       userRegistration = await Registration.query()

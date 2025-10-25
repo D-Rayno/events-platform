@@ -1,15 +1,13 @@
+// app/middleware/auth_middleware.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 import type { Authenticators } from '@adonisjs/auth/types'
 
 /**
- * Auth middleware is used authenticate HTTP requests and deny
- * access to unauthenticated users.
+ * Auth middleware enforces authentication
+ * Redirects unauthenticated users to login
  */
 export default class AuthMiddleware {
-  /**
-   * The URL to redirect to, when authentication fails
-   */
   redirectTo = '/auth/login'
 
   async handle(
@@ -19,7 +17,17 @@ export default class AuthMiddleware {
       guards?: (keyof Authenticators)[]
     } = {}
   ) {
+    // Store the intended URL for post-login redirect
+    if (!ctx.auth.user) {
+      const intendedUrl = ctx.request.url(true)
+      // Don't store auth URLs
+      if (!intendedUrl.startsWith('/auth/')) {
+        ctx.session.put('intended_url', intendedUrl)
+      }
+    }
+
     await ctx.auth.authenticateUsing(options.guards, { loginRoute: this.redirectTo })
+    
     return next()
   }
 }

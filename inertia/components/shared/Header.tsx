@@ -1,6 +1,13 @@
+// inertia/components/shared/Header.tsx
 import { useState, useRef, useEffect } from 'react'
 import { Link, router, usePage } from '@inertiajs/react'
-import { Bars3Icon, XMarkIcon, ChevronDownIcon, UserCircleIcon } from '@heroicons/react/24/outline'
+import { 
+  Bars3Icon, 
+  XMarkIcon, 
+  ChevronDownIcon, 
+  UserCircleIcon,
+  ArrowRightOnRectangleIcon 
+} from '@heroicons/react/24/outline'
 import { motion, AnimatePresence } from 'motion/react'
 import Button from '~/components/ui/Button'
 import Avatar from '~/components/ui/Avatar'
@@ -8,14 +15,15 @@ import { useAuthStore } from '~/stores/auth'
 import { useTheme } from '~/hooks/useTheme'
 
 export default function Header() {
-  // Use auth store instead of prop
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const user = useAuthStore((s) => s.user)
-  const fullName = useAuthStore((s) => s.fullName)
-  const avatarUrl = useAuthStore((s) => s.avatarUrl)
-
   const { props } = usePage()
   const { config } = useTheme()
+  
+  // Get auth state from store
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated())
+  console.log('isAuthenticated in Header:', isAuthenticated)
+  const user = useAuthStore((s) => s.user)
+  const fullName = useAuthStore((s) => s.fullName())
+  const avatarUrl = useAuthStore((s) => s.avatarUrl())
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
@@ -25,29 +33,24 @@ export default function Header() {
     return (props.component as any)?.startsWith(name) || false
   }
 
-  const navLinks = [
-    { label: 'Événements', href: '/events', name: 'events' },
-    {
-      label: 'Mes Inscriptions',
-      href: '/registrations',
-      name: 'registrations',
-      auth: true,
-    },
-    { label: 'Profil', href: '/profile', name: 'profile', auth: true },
-  ]
-
-  const activeLinks = navLinks.filter((link) => !link.auth || isAuthenticated)
+  // Navigation links (authenticated users see different links)
+  const navLinks = isAuthenticated 
+    ? [
+        { label: 'Événements', href: '/events', name: 'events' },
+        { label: 'Mes Inscriptions', href: '/registrations', name: 'registrations' },
+        { label: 'Profil', href: '/profile', name: 'profile' },
+      ]
+    : [
+        { label: 'Accueil', href: '/', name: 'home' },
+        { label: 'Événements', href: '/events', name: 'events' },
+      ]
 
   const handleLogout = () => {
-    router.post(
-      '/auth/logout',
-      {},
-      {
-        onSuccess: () => {
-          setUserMenuOpen(false)
-        },
-      }
-    )
+    router.post('/auth/logout', {}, {
+      onSuccess: () => {
+        setUserMenuOpen(false)
+      },
+    })
   }
 
   // Close user menu on click outside
@@ -74,7 +77,7 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href={isAuthenticated ? '/events' : '/'} className="flex items-center gap-3 group">
             <div className="w-10 h-10 bg-linear-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
               <span className="text-2xl">{config.branding.logo.icon}</span>
             </div>
@@ -85,7 +88,7 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-2">
-            {activeLinks.map((link, index) => (
+            {navLinks.map((link, index) => (
               <motion.div
                 key={link.href}
                 initial={{ opacity: 0, y: -10 }}
@@ -172,18 +175,8 @@ export default function Header() {
                             className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
                             onClick={() => setUserMenuOpen(false)}
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                              />
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                             </svg>
                             <span>Mes inscriptions</span>
                           </Link>
@@ -194,19 +187,7 @@ export default function Header() {
                             onClick={handleLogout}
                             className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-error-600 hover:bg-error-50 transition-colors"
                           >
-                            <svg
-                              className="w-5 h-5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                              />
-                            </svg>
+                            <ArrowRightOnRectangleIcon className="w-5 h-5" />
                             <span>Déconnexion</span>
                           </button>
                         </div>
@@ -216,6 +197,7 @@ export default function Header() {
                 </div>
               </div>
             ) : (
+              // Guest User Buttons
               <>
                 <Button
                   variant="ghost"
@@ -256,7 +238,7 @@ export default function Header() {
               transition={{ duration: 0.2 }}
               className="md:hidden border-t border-neutral-200 py-4 space-y-2 bg-white/95 backdrop-blur-lg overflow-hidden"
             >
-              {activeLinks.map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}

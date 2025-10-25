@@ -1,125 +1,114 @@
+// File: app/controllers/api/admin/event_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
-import Event from '#models/event'
-import db from '@adonisjs/lucid/services/db'
-import { createEventValidator } from '#validators/create_event'
 import { DateTime } from 'luxon'
+import db from '@adonisjs/lucid/services/db'
+
+// Models
+import Event from '#models/event'
 import Registration from '#models/registration'
+
+// Services & Validators
+import typesenseClient, { EventDocument } from '#services/typesense_service'
+import { createEventValidator } from '#validators/create_event'
 
 export default class EventController {
   /**
-   * Affiche la liste des événements publics
+   * ------------------------------------------------------------
+   * INDEX - List published & public events (Typesense search)
+   * ------------------------------------------------------------
    */
   async index({ request, inertia, auth }: HttpContext) {
-    const page = request.input('page', 1)
-    const search = request.input('search')
-    const category = request.input('category')
-    const province = request.input('province')
-    const eventType = request.input('eventType') // normal or game
-    const gameType = request.input('gameType')
-    const difficulty = request.input('difficulty')
     const user = auth.user
+    const page = Number(request.input('page', 1))
+    const search = (request.input('search', '') as string).trim()
 
-    let query = Event.query()
-      .where('is_public', true)
-      .where('status', 'published')
-      .orderBy('start_date', 'asc')
-
-    if (search) {
-      query = query.where((q) => {
-        q.whereLike('name', `%${search}%`).orWhereLike('description', `%${search}%`)
-      })
+    // Filters
+    const filters = {
+      category: request.input('category', ''),
+      province: request.input('province', ''),
+      eventType: request.input('eventType', ''),
+      gameType: request.input('gameType', ''),
+      difficulty: request.input('difficulty', ''),
     }
 
-    if (category) {
-      query = query.where('category', category)
+    // Build Typesense filter query dynamically
+    let filterBy = 'status:published && is_public:true'
+    for (const [key, value] of Object.entries(filters)) {
+      if (value) filterBy += ` && ${key}:${value}`
     }
 
-    if (province) {
-      query = query.where('province', province)
+    const searchParams = {
+      q: search || '*',
+      query_by: 'name,description',
+      filter_by: filterBy,
+      sort_by: 'start_date:asc',
+      page,
+      per_page: 12,
     }
 
-    if (eventType) {
-      query = query.where('event_type', eventType)
-    }
+    // Execute Typesense search
+    const searchResults = await typesenseClient
+      .collections<EventDocument>('events')
+      .documents()
+      .search(searchParams)
 
-    if (gameType) {
-      query = query.where('game_type', gameType)
-    }
+    const hits = searchResults.hits || []
+    const found = searchResults.found || 0
+    const lastPage = Math.ceil(found / 12)
 
-    if (difficulty) {
-      query = query.where('difficulty', difficulty)
-    }
+    // Extract event IDs & retrieve from DB
+    const eventIds = hits.map((hit) => Number(hit.document.id))
+    const dbEvents = eventIds.length
+      ? await Event.query().whereIn('id', eventIds)
+      : []
 
-    const events = await query.paginate(page, 12)
+    // Preserve order as in Typesense
+    const eventMap = new Map(dbEvents.map((e) => [e.id, e]))
+    const orderedEvents = hits
+      .map((hit) => eventMap.get(Number(hit.document.id))!)
+      .filter(Boolean)
 
-    // Si l'utilisateur est connecté, récupérer ses inscriptions
+    // Retrieve user registrations (for badges like "registered")
     let userRegistrations: number[] = []
     if (user) {
-      const registrations = await Registration.query()
+      const regs = await Registration.query()
         .where('user_id', user.id)
         .whereIn('status', ['pending', 'confirmed', 'attended'])
         .select('event_id')
-
-      userRegistrations = registrations.map((r) => r.eventId)
+      userRegistrations = regs.map((r) => r.eventId)
     }
 
     return inertia.render('events/index', {
       events: {
-        data: events.all().map((event) => ({
+        data: orderedEvents.map((event) => ({
           id: event.id,
           name: event.name,
           description: event.description,
-          location: event.location,
           province: event.province,
-          commune: event.commune,
-          startDate: event.startDate.toISO(),
-          endDate: event.endDate.toISO(),
-          capacity: event.capacity,
-          registeredCount: event.registeredCount,
-          availableSeats: event.availableSeats,
-          imageUrl: event.imageUrl,
+          startDate: event.startDate?.toISO(),
+          endDate: event.endDate?.toISO(),
           category: event.category,
-          basePrice: event.basePrice,
-          isFull: event.isFull,
-          canRegister: event.canRegister(),
+          imageUrl: event.imageUrl,
           isRegistered: userRegistrations.includes(event.id),
-          isUpcoming: event.isUpcoming(),
-          isOngoing: event.isOngoing(),
-          isFinished: event.isFinished(),
-          // Game-specific fields
-          eventType: event.eventType,
-          gameType: event.gameType,
-          difficulty: event.difficulty,
-          difficultyBadge: event.getDifficultyBadge(),
-          intensityBadge: event.getIntensityBadge(),
-          durationMinutes: event.durationMinutes,
-          allowsTeams: event.allowsTeams,
-          teamRegistration: event.teamRegistration,
-          minTeamSize: event.minTeamSize,
-          maxTeamSize: event.maxTeamSize,
-          availableTeamSlots: event.availableTeamSlots,
-          prizePool: event.prizePool,
-          gameSummary: event.getGameSummary(),
         })),
-        meta: events.getMeta(),
+        meta: {
+          current_page: page,
+          last_page: lastPage,
+          total: found,
+          per_page: 12,
+        },
       },
-      filters: {
-        category,
-        search,
-        province,
-        eventType,
-        gameType,
-        difficulty,
-      },
+      filters,
     })
   }
 
   /**
-   * Affiche les détails d'un événement
+   * ------------------------------------------------------------
+   * SHOW - Display single event details
+   * ------------------------------------------------------------
    */
   async show({ params, inertia, auth, response, session }: HttpContext) {
     const user = auth.user
-
     const event = await Event.find(params.id)
 
     if (!event || !event.isPublic) {
@@ -127,23 +116,16 @@ export default class EventController {
       return response.redirect('/events')
     }
 
-    // Mettre à jour le statut si nécessaire
-    event.updateStatus()
+    await event.updateStatus()
     await event.save()
 
-    // Vérifier si l'utilisateur est inscrit
-    let userRegistration = null
-    if (user) {
-      userRegistration = await Registration.query()
-        .where('user_id', user.id)
-        .where('event_id', event.id)
-        .whereIn('status', ['pending', 'confirmed', 'attended'])
-        .first()
-    }
-
-    // Check age eligibility if user is logged in
-    const isAgeEligible = user ? event.isAgeEligible(user.age) : true
-    const userPrice = user ? event.getPriceForAge(user.age) : event.basePrice
+    const userRegistration = user
+      ? await Registration.query()
+          .where('user_id', user.id)
+          .where('event_id', event.id)
+          .whereIn('status', ['pending', 'confirmed', 'attended'])
+          .first()
+      : null
 
     return inertia.render('events/show', {
       event: {
@@ -155,59 +137,22 @@ export default class EventController {
         commune: event.commune,
         startDate: event.startDate.toISO(),
         endDate: event.endDate.toISO(),
+        category: event.category,
         capacity: event.capacity,
         registeredCount: event.registeredCount,
         availableSeats: event.availableSeats,
-        imageUrl: event.imageUrl,
-        category: event.category,
-        tags: event.tags,
         basePrice: event.basePrice,
-        youthPrice: event.youthPrice,
-        seniorPrice: event.seniorPrice,
-        minAge: event.minAge,
-        maxAge: event.maxAge,
-        status: event.status,
-        requiresApproval: event.requiresApproval,
-        registrationStartDate: event.registrationStartDate?.toISO(),
-        registrationEndDate: event.registrationEndDate?.toISO(),
+        imageUrl: event.imageUrl,
         isFull: event.isFull,
-        canRegister: event.canRegister(),
         isUpcoming: event.isUpcoming(),
         isOngoing: event.isOngoing(),
         isFinished: event.isFinished(),
-
-        // Game-specific fields
+        // Game metadata
         eventType: event.eventType,
-        isGameEvent: event.isGameEvent,
         gameType: event.gameType,
         difficulty: event.difficulty,
         difficultyBadge: event.getDifficultyBadge(),
-        durationMinutes: event.durationMinutes,
-        physicalIntensity: event.physicalIntensity,
         intensityBadge: event.getIntensityBadge(),
-        allowsTeams: event.allowsTeams,
-        teamRegistration: event.teamRegistration,
-        minTeamSize: event.minTeamSize,
-        maxTeamSize: event.maxTeamSize,
-        maxTeams: event.maxTeams,
-        availableTeamSlots: event.availableTeamSlots,
-        autoTeamFormation: event.autoTeamFormation,
-        requiredItems: event.requiredItems,
-        prohibitedItems: event.prohibitedItems,
-        safetyRequirements: event.safetyRequirements,
-        waiverRequired: event.waiverRequired,
-        rulesDocumentUrl: event.rulesDocumentUrl,
-        checkInTime: event.checkInTime?.toISO(),
-        isCheckInOpen: event.isCheckInOpen(),
-        briefingDurationMinutes: event.briefingDurationMinutes,
-        totalDurationMinutes: event.totalDurationMinutes,
-        prizeInformation: event.prizeInformation,
-        prizePool: event.prizePool,
-        winnerAnnouncement: event.winnerAnnouncement?.toISO(),
-        photographyAllowed: event.photographyAllowed,
-        liveStreaming: event.liveStreaming,
-        specialInstructions: event.specialInstructions,
-        gameSummary: event.getGameSummary(),
       },
       registration: userRegistration
         ? {
@@ -218,12 +163,13 @@ export default class EventController {
         : null,
       isRegistered: !!userRegistration,
       userAge: user?.age,
-      isAgeEligible,
-      userPrice,
     })
   }
+
   /**
-   * Créer un nouvel événement
+   * ------------------------------------------------------------
+   * STORE - Create new event
+   * ------------------------------------------------------------
    */
   async store({ request, response }: HttpContext) {
     try {
@@ -238,17 +184,13 @@ export default class EventController {
         startDate: DateTime.fromJSDate(data.startDate),
         endDate: DateTime.fromJSDate(data.endDate),
         capacity: data.capacity,
-        registeredCount: 0,
-        minAge: data.minAge || 13,
+        category: data.category,
+        minAge: data.minAge,
         maxAge: data.maxAge,
-        basePrice: data.basePrice || 0,
+        basePrice: data.basePrice,
         youthPrice: data.youthPrice,
         seniorPrice: data.seniorPrice,
-        category: data.category,
-        tags: data.tags || [],
-        status: 'draft',
-        isPublic: data.isPublic !== undefined ? data.isPublic : true,
-        requiresApproval: data.requiresApproval || false,
+        requiresApproval: data.requiresApproval,
         registrationStartDate: data.registrationStartDate
           ? DateTime.fromJSDate(data.registrationStartDate)
           : undefined,
@@ -261,10 +203,7 @@ export default class EventController {
       return response.created({
         success: true,
         message: 'Événement créé avec succès',
-        data: {
-          id: event.id,
-          name: event.name,
-        },
+        data: { id: event.id, name: event.name },
       })
     } catch (error) {
       console.error('Erreur création événement:', error)
@@ -276,11 +215,12 @@ export default class EventController {
   }
 
   /**
-   * Mettre à jour un événement
+   * ------------------------------------------------------------
+   * UPDATE - Update existing event
+   * ------------------------------------------------------------
    */
   async update({ params, request, response }: HttpContext) {
     const event = await Event.find(params.id)
-
     if (!event) {
       return response.notFound({
         error: 'Événement non trouvé',
@@ -308,10 +248,7 @@ export default class EventController {
       return response.ok({
         success: true,
         message: 'Événement mis à jour avec succès',
-        data: {
-          id: event.id,
-          name: event.name,
-        },
+        data: { id: event.id, name: event.name },
       })
     } catch (error) {
       console.error('Erreur mise à jour événement:', error)
@@ -323,11 +260,12 @@ export default class EventController {
   }
 
   /**
-   * Supprimer un événement
+   * ------------------------------------------------------------
+   * DESTROY - Delete an event safely
+   * ------------------------------------------------------------
    */
   async destroy({ params, response }: HttpContext) {
     const event = await Event.find(params.id)
-
     if (!event) {
       return response.notFound({
         error: 'Événement non trouvé',
@@ -336,7 +274,6 @@ export default class EventController {
     }
 
     try {
-      // Vérifier s'il y a des inscriptions actives
       const activeRegistrations = await db
         .from('registrations')
         .where('event_id', event.id)
@@ -344,20 +281,15 @@ export default class EventController {
         .count('* as total')
 
       const count = activeRegistrations[0].total
-
       if (count > 0) {
         return response.badRequest({
           error: 'Suppression impossible',
-          message: `Cet événement a ${count} inscription(s) active(s). Veuillez les gérer avant de supprimer l'événement.`,
+          message: `Cet événement a ${count} inscription(s) active(s). Veuillez les gérer avant suppression.`,
         })
       }
 
       await event.delete()
-
-      return response.ok({
-        success: true,
-        message: 'Événement supprimé avec succès',
-      })
+      return response.ok({ success: true, message: 'Événement supprimé avec succès' })
     } catch (error) {
       console.error('Erreur suppression événement:', error)
       return response.internalServerError({
@@ -368,22 +300,24 @@ export default class EventController {
   }
 
   /**
-   * Obtenir les statistiques globales des événements
+   * ------------------------------------------------------------
+   * STATS - Global statistics of all events
+   * ------------------------------------------------------------
    */
   async stats({ response }: HttpContext) {
     const now = DateTime.now()
 
     const totalEvents = await Event.query().count('* as total').first()
-    const upcomingEvents = await Event.query()
+    const upcoming = await Event.query()
       .where('start_date', '>', now.toSQL())
       .count('* as total')
       .first()
-    const ongoingEvents = await Event.query()
+    const ongoing = await Event.query()
       .where('start_date', '<=', now.toSQL())
       .where('end_date', '>=', now.toSQL())
       .count('* as total')
       .first()
-    const finishedEvents = await Event.query()
+    const finished = await Event.query()
       .where('end_date', '<', now.toSQL())
       .count('* as total')
       .first()
@@ -392,9 +326,9 @@ export default class EventController {
       success: true,
       data: {
         total: Number(totalEvents?.$extras.total ?? 0),
-        upcoming: Number(upcomingEvents?.$extras.total ?? 0),
-        ongoing: Number(ongoingEvents?.$extras.total ?? 0),
-        finished: Number(finishedEvents?.$extras.total ?? 0),
+        upcoming: Number(upcoming?.$extras.total ?? 0),
+        ongoing: Number(ongoing?.$extras.total ?? 0),
+        finished: Number(finished?.$extras.total ?? 0),
       },
     })
   }

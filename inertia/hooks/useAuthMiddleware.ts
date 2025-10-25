@@ -21,7 +21,7 @@ export function useAuthMiddleware() {
    */
   const requireAuth = (): boolean => {
     const authState = authGet()
-    if (!authState.isAuthenticated) {
+    if (!authState.isAuthenticated()) {
       const app = appGet()
       app.addFlashMessage('error', 'Vous devez être connecté pour accéder à cette page.')
       // store intended url so user can be redirected back after login
@@ -42,7 +42,7 @@ export function useAuthMiddleware() {
    */
   const requireGuest = (): boolean => {
     const authState = authGet()
-    if (authState.isAuthenticated) {
+    if (authState.isAuthenticated()) {
       router.visit('/')
       return false
     }
