@@ -8,7 +8,7 @@ import Alert from '~/components/ui/Alert'
 import EventHeader from '~/components/events/Header'
 import EventDetails from '~/components/events/Details'
 import EventGameInfo from '~/components/events/GameInfo'
-import RegistrationCard from '~/components/registrations/Card'
+import RegistrationCard from '~/components/events/EventRegistrationCard'
 import EventInfo from '~/components/events/Info'
 import SimilarEvents from '~/components/events/Similar'
 import { formatDate, formatCurrency } from '~/lib/utils'
@@ -31,7 +31,6 @@ export default function EventShow({
 }: Props) {
   const [showRegisterModal, setShowRegisterModal] = useState(false)
   const [isRegistering, setIsRegistering] = useState(false)
-  const [isFavorite, setIsFavorite] = useState(false)
 
   const isAgeEligible = userAge
     ? userAge >= event.minAge && (!event.maxAge || userAge <= event.maxAge)
@@ -90,8 +89,6 @@ export default function EventShow({
           <EventHeader
             event={event}
             isRegistered={isRegistered}
-            isFavorite={isFavorite}
-            onToggleFavorite={() => setIsFavorite(!isFavorite)}
             onShare={handleShare}
           />
 

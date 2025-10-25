@@ -3,11 +3,9 @@ import { motion } from 'motion/react'
 import {
   ArrowLeftIcon,
   ShareIcon,
-  HeartIcon,
   CheckCircleIcon,
   TrophyIcon,
 } from '@heroicons/react/24/outline'
-import { HeartIcon as HeartSolidIcon } from '@heroicons/react/24/solid'
 import Card from '~/components/ui/Card'
 import Image from '~/components/ui/Image'
 import Badge from '~/components/ui/Badge'
@@ -19,16 +17,12 @@ import type { Event } from '~/types/event'
 interface EventHeaderProps {
   event: Event
   isRegistered: boolean
-  isFavorite: boolean
-  onToggleFavorite: () => void
   onShare: () => void
 }
 
 export default function EventHeader({
   event,
   isRegistered,
-  isFavorite,
-  onToggleFavorite,
   onShare,
 }: EventHeaderProps) {
   const { getPlaceholder } = useTheme()
@@ -125,7 +119,7 @@ export default function EventHeader({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.1 }}
       >
-        <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-start justify-between gap-4 mb-6 mt-4">
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3 mb-4">
               <Badge variant="primary" size="lg">
@@ -144,15 +138,6 @@ export default function EventHeader({
             )}
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              iconLeft={isFavorite ? HeartSolidIcon : HeartIcon}
-              onClick={onToggleFavorite}
-              className={isFavorite ? 'text-error-600 border-error-600' : ''}
-            >
-              {isFavorite ? 'Sauvegardé' : 'Sauvegarder'}
-            </Button>
             <Button variant="outline" size="sm" iconLeft={ShareIcon} onClick={onShare}>
               Partager
             </Button>

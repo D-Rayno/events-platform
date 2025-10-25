@@ -1,13 +1,18 @@
-// commands/index_registrations.ts - NEW FILE
+// commands/index_registrations.ts - FIXED VERSION
 import { BaseCommand } from '@adonisjs/core/ace'
 import Registration from '#models/registration'
 import typesenseClient, { isTypesenseReady, Collections } from '#services/typesense_service'
 import type { RegistrationDocument } from '#services/typesense_service'
 import typesenseConfig from '#config/typesense'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class IndexRegistrations extends BaseCommand {
   static commandName = 'index:registrations'
   static description = 'Indexes all registrations into Typesense'
+
+  static options: CommandOptions = {
+    startApp: true, // FIXED: This ensures the app is properly started
+  }
 
   async run() {
     if (!typesenseConfig.enabled) {
@@ -28,30 +33,31 @@ export default class IndexRegistrations extends BaseCommand {
     }
 
     this.logger.info('📊 Fetching registrations from database...')
-    const registrations = await Registration.query().preload('user').preload('event')
-
-    if (registrations.length === 0) {
-      this.logger.warning('⚠️  No registrations found in database')
-      return
-    }
-
-    this.logger.info(`Found ${registrations.length} registrations. Starting indexing...`)
-
-    const documents: RegistrationDocument[] = registrations.map((reg) => ({
-      id: reg.id.toString(),
-      user_id: reg.userId,
-      event_id: reg.eventId,
-      user_name: reg.user.fullName,
-      user_email: reg.user.email,
-      event_name: reg.event.name,
-      event_location: reg.event.location,
-      status: reg.status,
-      qr_code: reg.qrCode,
-      created_at: reg.createdAt.toUnixInteger(),
-      event_start_date: reg.event.startDate.toUnixInteger(),
-    }))
-
+    
     try {
+      const registrations = await Registration.query().preload('user').preload('event')
+
+      if (registrations.length === 0) {
+        this.logger.warning('⚠️  No registrations found in database')
+        return
+      }
+
+      this.logger.info(`Found ${registrations.length} registrations. Starting indexing...`)
+
+      const documents: RegistrationDocument[] = registrations.map((reg) => ({
+        id: reg.id.toString(),
+        user_id: reg.userId,
+        event_id: reg.eventId,
+        user_name: reg.user.fullName,
+        user_email: reg.user.email,
+        event_name: reg.event.name,
+        event_location: reg.event.location,
+        status: reg.status,
+        qr_code: reg.qrCode,
+        created_at: reg.createdAt.toUnixInteger(),
+        event_start_date: reg.event.startDate.toUnixInteger(),
+      }))
+
       const results = await typesenseClient
         .collections<RegistrationDocument>(Collections.REGISTRATIONS)
         .documents()

@@ -1,13 +1,18 @@
-// commands/index_users.ts
+// commands/index_users.ts - FIXED VERSION
 import { BaseCommand } from '@adonisjs/core/ace'
 import User from '#models/user'
 import typesenseClient, { isTypesenseReady, Collections } from '#services/typesense_service'
 import type { UserDocument } from '#services/typesense_service'
 import typesenseConfig from '#config/typesense'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class IndexUsers extends BaseCommand {
   static commandName = 'index:users'
   static description = 'Indexes all users into Typesense'
+
+  static options: CommandOptions = {
+    startApp: true, // FIXED: This ensures the app is properly started
+  }
 
   async run() {
     if (!typesenseConfig.enabled) {
@@ -28,32 +33,33 @@ export default class IndexUsers extends BaseCommand {
     }
 
     this.logger.info('📊 Fetching users from database...')
-    const users = await User.all()
-
-    if (users.length === 0) {
-      this.logger.warning('⚠️  No users found in database')
-      return
-    }
-
-    this.logger.info(`Found ${users.length} users. Starting indexing...`)
-
-    const documents: UserDocument[] = users.map((user) => ({
-      id: user.id.toString(),
-      first_name: user.firstName || '',
-      last_name: user.lastName || '',
-      full_name: user.fullName || `${user.firstName} ${user.lastName}`,
-      email: user.email || '',
-      age: user.age || 0,
-      province: user.province || '',
-      commune: user.commune || null,
-      phone_number: user.phoneNumber || null,
-      is_email_verified: Boolean(user.isEmailVerified),
-      is_active: Boolean(user.isActive),
-      is_blocked: Boolean(user.isBlocked),
-      created_at: user.createdAt.toUnixInteger(),
-    }))
-
+    
     try {
+      const users = await User.all()
+
+      if (users.length === 0) {
+        this.logger.warning('⚠️  No users found in database')
+        return
+      }
+
+      this.logger.info(`Found ${users.length} users. Starting indexing...`)
+
+      const documents: UserDocument[] = users.map((user) => ({
+        id: user.id.toString(),
+        first_name: user.firstName || '',
+        last_name: user.lastName || '',
+        full_name: user.fullName || `${user.firstName} ${user.lastName}`,
+        email: user.email || '',
+        age: user.age || 0,
+        province: user.province || '',
+        commune: user.commune || null,
+        phone_number: user.phoneNumber || null,
+        is_email_verified: Boolean(user.isEmailVerified),
+        is_active: Boolean(user.isActive),
+        is_blocked: Boolean(user.isBlocked),
+        created_at: user.createdAt.toUnixInteger(),
+      }))
+
       const results = await typesenseClient
         .collections<UserDocument>(Collections.USERS)
         .documents()
@@ -91,10 +97,8 @@ export default class IndexUsers extends BaseCommand {
         this.logger.error('\nDetailed import errors:')
         error.importResults.forEach((result: any, index: number) => {
           if (!result.success) {
-            const user = users[index]
-            this.logger.error(`\nUser ${index + 1} (ID: ${user?.id}, Email: ${user?.email}):`)
+            this.logger.error(`\nUser ${index + 1}:`)
             this.logger.error(`  Error: ${result.error}`)
-            this.logger.error(`  Document: ${JSON.stringify(documents[index], null, 2)}`)
           }
         })
       }

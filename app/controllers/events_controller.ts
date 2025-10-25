@@ -1,4 +1,4 @@
-// app/controllers/events_controller.ts - ENHANCED VERSION
+// app/controllers/events_controller.ts - FIXED VERSION
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Registration from '#models/registration'
@@ -16,8 +16,8 @@ export default class EventController {
     const eventType = request.input('eventType', '').trim()
     const gameType = request.input('gameType', '').trim()
     const difficulty = request.input('difficulty', '').trim()
-    const priceRange = request.input('priceRange', '').trim() // new: free, paid, premium
-    const status = request.input('status', '').trim() // new: upcoming, ongoing
+    const priceRange = request.input('priceRange', '').trim()
+    const status = request.input('status', '').trim()
     const user = auth.user
 
     console.log('[Events Controller] Filters:', {
@@ -31,19 +31,31 @@ export default class EventController {
       status,
     })
 
-    // Try Typesense first
-    const searchResult = await SearchService.searchEvents({
-      search,
-      category,
-      province,
-      eventType,
-      gameType,
-      difficulty,
-      status: 'published',
-      isPublic: true,
-      page,
-      perPage: 12,
-    })
+    // Try Typesense first - ONLY if there's an actual search query
+    let searchResult = null
+
+    // FIXED: Only use Typesense when there's a meaningful search or no filters
+    // This ensures search works properly
+    if (search || (!category && !province && !eventType && !gameType && !difficulty)) {
+      searchResult = await SearchService.searchEvents({
+        search: search || '*', // Use wildcard if no search term
+        category,
+        province,
+        eventType,
+        gameType,
+        difficulty,
+        status: 'published',
+        isPublic: true,
+        page,
+        perPage: 12,
+      })
+
+      if (searchResult) {
+        console.log(
+          `[Events] Typesense returned ${searchResult.found} results for query: "${search}"`
+        )
+      }
+    }
 
     let orderedEvents: Event[] = []
     let totalFound = 0
@@ -58,9 +70,7 @@ export default class EventController {
       if (eventIds.length > 0) {
         const dbEvents = await Event.query().whereIn('id', eventIds).exec()
         const eventMap = new Map(dbEvents.map((e) => [e.id, e]))
-        orderedEvents = hits
-          .map((hit) => eventMap.get(parseInt(hit.document.id))!)
-          .filter(Boolean)
+        orderedEvents = hits.map((hit) => eventMap.get(parseInt(hit.document.id))!).filter(Boolean)
       }
     } else {
       console.warn('[Events] Using database fallback for search')
@@ -80,12 +90,8 @@ export default class EventController {
       lastPage = result.lastPage
     }
 
-    // Apply client-side filters for price range and status (if not using Typesense)
-    if (!searchResult) {
-      orderedEvents = this.applyClientFilters(orderedEvents, priceRange, status)
-      totalFound = orderedEvents.length
-      lastPage = Math.ceil(totalFound / 12)
-    }
+    // NOTE: Filters are now applied at database level in fallbackDatabaseSearch
+    // No need for client-side filtering anymore
 
     // Fetch user registrations
     let userRegistrations: number[] = []
@@ -129,7 +135,7 @@ export default class EventController {
   }
 
   /**
-   * Enhanced fallback database search
+   * Enhanced fallback database search - FIXED
    */
   private async fallbackDatabaseSearch(
     page: number,
@@ -142,26 +148,26 @@ export default class EventController {
     priceRange: string,
     status: string
   ) {
-    let query = Event.query()
-      .where('status', 'published')
-      .where('is_public', true)
-      .orderBy('start_date', 'asc')
+    let query = Event.query().where('status', 'published').where('is_public', true)
 
-    // Text search
+    // FIXED: Enhanced text search - search across more fields
     if (search) {
       query = query.where((q) => {
         q.whereLike('name', `%${search}%`)
           .orWhereLike('description', `%${search}%`)
           .orWhereLike('location', `%${search}%`)
+          .orWhereLike('province', `%${search}%`) // ADDED: Search in province
+          .orWhereLike('commune', `%${search}%`) // ADDED: Search in commune
+          .orWhereLike('category', `%${search}%`) // ADDED: Search in category
       })
     }
 
     // Category filter
     if (category) query = query.where('category', category)
-    
+
     // Location filter
     if (province) query = query.where('province', province)
-    
+
     // Event type filter
     if (eventType) {
       if (eventType === 'normal') {
@@ -170,12 +176,38 @@ export default class EventController {
         query = query.whereNotNull('event_type')
       }
     }
-    
+
     // Game type filter
     if (gameType) query = query.where('game_type', gameType)
-    
+
     // Difficulty filter
     if (difficulty) query = query.where('difficulty', difficulty)
+
+    // FIXED: Price range filter - apply at database level
+    if (priceRange) {
+      if (priceRange === 'free') {
+        query = query.where('base_price', 0)
+      } else if (priceRange === 'paid') {
+        query = query.where('base_price', '>', 0).where('base_price', '<=', 1000)
+      } else if (priceRange === 'premium') {
+        query = query.where('base_price', '>', 1000)
+      }
+    }
+
+    // FIXED: Status filter - apply at database level
+    // Note: These use methods on the Event model, so we'll fetch all and filter
+    // For better performance, we should add these as database columns
+    if (status) {
+      const now = new Date()
+      if (status === 'upcoming') {
+        query = query.where('start_date', '>', now)
+      } else if (status === 'ongoing') {
+        query = query.where('start_date', '<=', now).where('end_date', '>=', now)
+      }
+    }
+
+    // Order by start date
+    query = query.orderBy('start_date', 'asc')
 
     const result = await query.paginate(page, 12)
 
@@ -187,41 +219,10 @@ export default class EventController {
   }
 
   /**
-   * Apply client-side filters (for fallback mode)
-   */
-  private applyClientFilters(events: Event[], priceRange: string, status: string): Event[] {
-    let filtered = events
-
-    // Price range filter
-    if (priceRange) {
-      filtered = filtered.filter((event) => {
-        if (priceRange === 'free') return event.basePrice === 0
-        if (priceRange === 'paid') return event.basePrice > 0 && event.basePrice <= 1000
-        if (priceRange === 'premium') return event.basePrice > 1000
-        return true
-      })
-    }
-
-    // Status filter
-    if (status) {
-      filtered = filtered.filter((event) => {
-        if (status === 'upcoming') return event.isUpcoming()
-        if (status === 'ongoing') return event.isOngoing()
-        return true
-      })
-    }
-
-    return filtered
-  }
-
-  /**
    * Get filter statistics for UI
    */
   private async getFilterStatistics() {
-    const stats = await Event.query()
-      .where('status', 'published')
-      .where('is_public', true)
-      .exec()
+    const stats = await Event.query().where('status', 'published').where('is_public', true).exec()
 
     const gameEvents = stats.filter((e) => e.eventType !== null).length
     const normalEvents = stats.filter((e) => e.eventType === null).length
@@ -295,7 +296,7 @@ export default class EventController {
         basePrice: event.basePrice,
         youthPrice: event.youthPrice,
         seniorPrice: event.seniorPrice,
-        userPrice, // New: calculated price for current user
+        userPrice,
         minAge: event.minAge,
         maxAge: event.maxAge,
         status: event.status,
@@ -307,7 +308,7 @@ export default class EventController {
         isUpcoming: event.isUpcoming(),
         isOngoing: event.isOngoing(),
         isFinished: event.isFinished(),
-        
+
         // Game-specific fields
         eventType: event.eventType,
         gameType: event.gameType,
@@ -333,7 +334,7 @@ export default class EventController {
         photographyAllowed: event.photographyAllowed,
         liveStreaming: event.liveStreaming,
         specialInstructions: event.specialInstructions,
-        
+
         // Computed fields
         totalDurationMinutes: event.totalDurationMinutes,
         gameSummary: event.getGameSummary(),

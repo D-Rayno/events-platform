@@ -1,13 +1,18 @@
-// commands/index_events.ts
+// commands/index_events.ts - FIXED VERSION
 import { BaseCommand } from '@adonisjs/core/ace'
 import Event from '#models/event'
 import typesenseClient, { isTypesenseReady, Collections } from '#services/typesense_service'
 import type { EventDocument } from '#services/typesense_service'
 import typesenseConfig from '#config/typesense'
+import { CommandOptions } from '@adonisjs/core/types/ace'
 
 export default class IndexEvents extends BaseCommand {
   static commandName = 'index:events'
   static description = 'Indexes all events into Typesense'
+
+  static options: CommandOptions = {
+    startApp: true, // FIXED: This ensures the app is properly started
+  }
 
   async run() {
     if (!typesenseConfig.enabled) {
@@ -26,31 +31,33 @@ export default class IndexEvents extends BaseCommand {
     }
 
     this.logger.info('📊 Fetching events from database...')
-    const events = await Event.all()
-
-    if (events.length === 0) {
-      this.logger.warning('⚠️  No events found in database')
-      return
-    }
-
-    this.logger.info(`Found ${events.length} events. Starting indexing...`)
-
-    const documents: EventDocument[] = events.map((event) => ({
-      id: event.id.toString(),
-      name: event.name || '',
-      description: event.description || '',
-      category: event.category || '',
-      province: event.province || '',
-      commune: event.commune || '',
-      start_date: event.startDate.toUnixInteger(),
-      status: event.status || 'draft',
-      is_public: Boolean(event.isPublic),
-      event_type: event.eventType || null,
-      game_type: event.gameType || null,
-      difficulty: event.difficulty || null,
-    }))
-
+    
     try {
+      // FIXED: Proper way to fetch all events
+      const events = await Event.all()
+
+      if (events.length === 0) {
+        this.logger.warning('⚠️  No events found in database')
+        return
+      }
+
+      this.logger.info(`Found ${events.length} events. Starting indexing...`)
+
+      const documents: EventDocument[] = events.map((event) => ({
+        id: event.id.toString(),
+        name: event.name || '',
+        description: event.description || '',
+        category: event.category || '',
+        province: event.province || '',
+        commune: event.commune || '',
+        start_date: event.startDate.toUnixInteger(),
+        status: event.status || 'draft',
+        is_public: Boolean(event.isPublic),
+        event_type: event.eventType || null,
+        game_type: event.gameType || null,
+        difficulty: event.difficulty || null,
+      }))
+
       const results = await typesenseClient
         .collections<EventDocument>(Collections.EVENTS)
         .documents()
@@ -84,10 +91,8 @@ export default class IndexEvents extends BaseCommand {
         this.logger.error('\nDetailed import errors:')
         error.importResults.forEach((result: any, index: number) => {
           if (!result.success) {
-            const event = events[index]
-            this.logger.error(`\nEvent ${index + 1} (ID: ${event?.id}, Name: ${event?.name}):`)
+            this.logger.error(`\nEvent ${index + 1}:`)
             this.logger.error(`  Error: ${result.error}`)
-            this.logger.error(`  Document: ${JSON.stringify(documents[index], null, 2)}`)
           }
         })
       }

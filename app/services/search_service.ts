@@ -1,6 +1,7 @@
-// app/services/search_service.ts - NEW FILE
+// app/services/search_service.ts - FIXED VERSION
 import typesenseClient, { Collections, isTypesenseReady } from '#services/typesense_service'
 import type { SearchParams } from 'typesense/lib/Typesense/Types.js'
+
 /**
  * Generic search result interface
  */
@@ -53,7 +54,7 @@ export default class SearchService {
   }
 
   /**
-   * Search events with common filters
+   * Search events with common filters - FIXED VERSION
    */
   static async searchEvents(params: {
     search?: string
@@ -77,18 +78,29 @@ export default class SearchService {
     if (params.gameType) filters.push(`game_type:=${params.gameType}`)
     if (params.difficulty) filters.push(`difficulty:=${params.difficulty}`)
 
+    // FIXED: Enhanced search configuration
     return this.search(Collections.EVENTS, {
       q: params.search || '*',
-      query_by: 'name,description',
+      // FIXED: Include ALL searchable fields including location fields
+      query_by: 'name,description,province,commune,category',
+      // FIXED: Add typo tolerance for better fuzzy matching
+      num_typos: 2, // Allow up to 2 typos
+      typo_tokens_threshold: 1, // Enable typo tolerance for words with 1+ characters
+      // FIXED: Add prefix searching for partial matches
+      prefix: true, // Enable prefix searching (e.g., "const" matches "Constantine")
+      // FIXED: Prioritize exact matches but allow fuzzy
+      drop_tokens_threshold: 1, // Drop tokens only after trying fuzzy matching
       filter_by: filters.length > 0 ? filters.join(' && ') : undefined,
       sort_by: 'start_date:asc',
       page: params.page || 1,
       per_page: params.perPage || 12,
+      // FIXED: Add exhaustive search for better results
+      exhaustive_search: true,
     })
   }
 
   /**
-   * Search users with common filters
+   * Search users with common filters - ENHANCED
    */
   static async searchUsers(params: {
     search?: string
@@ -106,9 +118,12 @@ export default class SearchService {
     if (params.isVerified !== undefined) filters.push(`is_email_verified:=${params.isVerified}`)
     if (params.isActive !== undefined) filters.push(`is_active:=${params.isActive}`)
 
+    // ENHANCED: Better user search
     return this.search(Collections.USERS, {
       q: params.search || '*',
-      query_by: 'first_name,last_name,email,full_name',
+      query_by: 'first_name,last_name,email,full_name,province,commune',
+      num_typos: 2,
+      prefix: true,
       filter_by: filters.length > 0 ? filters.join(' && ') : undefined,
       sort_by: 'created_at:desc',
       page: params.page || 1,
@@ -117,7 +132,7 @@ export default class SearchService {
   }
 
   /**
-   * Search registrations with common filters
+   * Search registrations with common filters - ENHANCED
    */
   static async searchRegistrations(params: {
     search?: string
@@ -133,9 +148,12 @@ export default class SearchService {
     if (params.eventId) filters.push(`event_id:=${params.eventId}`)
     if (params.userId) filters.push(`user_id:=${params.userId}`)
 
+    // ENHANCED: Better registration search
     return this.search(Collections.REGISTRATIONS, {
       q: params.search || '*',
-      query_by: 'user_name,user_email,event_name,qr_code',
+      query_by: 'user_name,user_email,event_name,event_location,qr_code',
+      num_typos: 2,
+      prefix: true,
       filter_by: filters.length > 0 ? filters.join(' && ') : undefined,
       sort_by: 'created_at:desc',
       page: params.page || 1,
@@ -160,6 +178,8 @@ export default class SearchService {
         q: query,
         query_by: queryBy,
         per_page: limit,
+        num_typos: 2,
+        prefix: true,
       })
 
       return result.hits?.map((hit) => hit.document) || []
