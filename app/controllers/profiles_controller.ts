@@ -1,8 +1,7 @@
-// app/controllers/profiles_controller.ts - FIXED
+// app/controllers/profiles_controller.ts - UPDATED
 import type { HttpContext } from '@adonisjs/core/http'
 import { updateProfileValidator } from '#validators/update_profile'
-import drive from '@adonisjs/drive/services/main'
-import { cuid } from '@adonisjs/core/helpers'
+import ImageService from '#services/image_service'
 
 export default class ProfileController {
   /**
@@ -23,7 +22,6 @@ export default class ProfileController {
         phoneNumber: user.phoneNumber,
         avatarUrl: user.avatarUrl,
         isEmailVerified: user.isEmailVerified,
-        // Convert DateTime to ISO string
         createdAt: user.createdAt.toISO(),
       },
     })
@@ -45,23 +43,19 @@ export default class ProfileController {
       user.commune = data.commune
       user.phoneNumber = data.phoneNumber || null
 
-      // Gestion de l'avatar
+      // Gestion de l'avatar avec compression et conversion WebP
       if (data.avatar) {
         // Supprimer l'ancien avatar si existant
         if (user.avatarUrl) {
           try {
-            await drive.use().delete(user.avatarUrl)
+            await ImageService.deleteImage(user.avatarUrl)
           } catch (error) {
             console.error("Erreur lors de la suppression de l'ancien avatar:", error)
           }
         }
 
-        // Sauvegarder le nouveau avatar
-        const fileName = `${cuid()}.${data.avatar.extname}`
-        const filePath = `avatars/${fileName}`
-
-        await data.avatar.move(filePath)
-        user.avatarUrl = filePath
+        // Process and save new avatar (compressed WebP)
+        user.avatarUrl = await ImageService.processAvatar(data.avatar)
       }
 
       await user.save()
@@ -83,7 +77,7 @@ export default class ProfileController {
       const user = auth.user!
 
       if (user.avatarUrl) {
-        await drive.use().delete(user.avatarUrl)
+        await ImageService.deleteImage(user.avatarUrl)
         user.avatarUrl = null
         await user.save()
 

@@ -1,4 +1,4 @@
-// app/models/event.ts
+// app/models/event.ts - ADD SERIALIZE DECORATOR FOR JSON COLUMNS
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, afterSave, afterDelete } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
@@ -67,7 +67,11 @@ export default class Event extends BaseModel {
   @column()
   declare category: string
 
-  @column()
+  // JSON COLUMN - needs proper serialization
+  @column({
+    prepare: (value: string[]) => JSON.stringify(value),
+    consume: (value: string) => JSON.parse(value),
+  })
   declare tags: string[]
 
   @column.dateTime()
@@ -119,13 +123,23 @@ export default class Event extends BaseModel {
   @column()
   declare autoTeamFormation: boolean
 
-  @column()
+  // JSON COLUMNS - need proper serialization
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+  })
   declare requiredItems: string[] | null
 
-  @column()
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+  })
   declare prohibitedItems: string[] | null
 
-  @column()
+  @column({
+    prepare: (value: string[] | null) => (value ? JSON.stringify(value) : null),
+    consume: (value: string | null) => (value ? JSON.parse(value) : null),
+  })
   declare safetyRequirements: string[] | null
 
   @column()
@@ -348,7 +362,6 @@ export default class Event extends BaseModel {
 
   /**
    * After save hook - index event in Typesense
-   * This will only run if Typesense is enabled and collection exists
    */
   @afterSave()
   static async indexEvent(event: Event) {
