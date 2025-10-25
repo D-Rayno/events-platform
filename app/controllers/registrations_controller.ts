@@ -60,38 +60,27 @@ export default class RegistrationController {
       lastPage = result.lastPage
     }
 
+    // Return as plain array for non-paginated view
     return inertia.render('registrations/index', {
-      registrations: {
-        data: orderedRegistrations.map((reg) => ({
-          id: reg.id,
-          status: reg.status,
-          qrCode: reg.qrCode,
-          attendedAt: reg.attendedAt?.toISO(),
-          createdAt: reg.createdAt.toISO(),
-          event: {
-            id: reg.event.id,
-            name: reg.event.name,
-            description: reg.event.description,
-            location: reg.event.location,
-            province: reg.event.province,
-            startDate: reg.event.startDate.toISO(),
-            endDate: reg.event.endDate.toISO(),
-            imageUrl: reg.event.imageUrl,
-            category: reg.event.category,
-            status: reg.event.status,
-          },
-        })),
-        meta: {
-          current_page: page,
-          last_page: lastPage,
-          total: totalFound,
-          per_page: 20,
+      registrations: orderedRegistrations.map((reg) => ({
+        id: reg.id,
+        status: reg.status,
+        qrCode: reg.qrCode,
+        attendedAt: reg.attendedAt?.toISO(),
+        createdAt: reg.createdAt.toISO(),
+        event: {
+          id: reg.event.id,
+          name: reg.event.name,
+          description: reg.event.description,
+          location: reg.event.location,
+          province: reg.event.province,
+          startDate: reg.event.startDate.toISO(),
+          endDate: reg.event.endDate.toISO(),
+          imageUrl: reg.event.imageUrl,
+          category: reg.event.category,
+          status: reg.event.status,
         },
-      },
-      filters: {
-        search: search || '',
-        status: status || '',
-      },
+      })),
     })
   }
 

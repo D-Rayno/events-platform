@@ -79,9 +79,9 @@ export default function Select({
     setSearchQuery('')
   }
 
-  // Update dropdown position when opened or on scroll/resize
+  // Update dropdown position - use fixed positioning relative to viewport
   const updateDropdownPosition = () => {
-    if (isOpen && triggerRef.current) {
+    if (triggerRef.current) {
       const rect = triggerRef.current.getBoundingClientRect()
       const spaceBelow = window.innerHeight - rect.bottom
       const spaceAbove = rect.top
@@ -91,23 +91,33 @@ export default function Select({
       const shouldOpenAbove = spaceBelow < dropdownHeight && spaceAbove > spaceBelow
 
       setDropdownPosition({
-        top: shouldOpenAbove ? rect.top + window.scrollY - dropdownHeight - 8 : rect.bottom + window.scrollY + 8,
-        left: rect.left + window.scrollX,
+        top: shouldOpenAbove ? rect.top - dropdownHeight - 8 : rect.bottom + 8,
+        left: rect.left,
         width: rect.width,
       })
     }
   }
 
+  // Update position when dropdown opens
   useEffect(() => {
-    updateDropdownPosition()
+    if (isOpen) {
+      updateDropdownPosition()
+    }
   }, [isOpen])
 
+  // Update position on scroll and resize while open
   useEffect(() => {
     if (!isOpen) return
 
-    const handleScroll = () => updateDropdownPosition()
-    const handleResize = () => updateDropdownPosition()
+    const handleScroll = () => {
+      updateDropdownPosition()
+    }
 
+    const handleResize = () => {
+      updateDropdownPosition()
+    }
+
+    // Listen to both window scroll and all parent scrolls
     window.addEventListener('scroll', handleScroll, true)
     window.addEventListener('resize', handleResize)
 
@@ -194,7 +204,7 @@ export default function Select({
         </motion.div>
       </div>
 
-      {/* Portal for dropdown */}
+      {/* Portal for dropdown - using fixed positioning */}
       {isOpen &&
         createPortal(
           <AnimatePresence>
@@ -233,7 +243,7 @@ export default function Select({
                 </div>
               )}
 
-              <div className="max-h-72 overflow-y-auto">
+              <div className="max-h-72 overflow-y-auto overflow-x-clip">
                 {filteredOptions.map((option, index) => (
                   <motion.div
                     key={option.value}

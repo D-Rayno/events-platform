@@ -184,9 +184,9 @@ export default function EventsIndex({ events, filters }: Props) {
               </p>
 
               {/* Search Bar */}
-              <div className="max-w-2xl">
+              <div className="w-full">
                 <div className="flex gap-3">
-                  <div className="flex-1">
+                  <div className="flex-1 text-gray-900">
                     <Input
                       value={searchValue}
                       onChange={(value) => setSearchValue(value as string)}
