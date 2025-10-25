@@ -243,7 +243,7 @@ export default class RegistrationController {
         {
           userId: user.id,
           eventId: event.id,
-          status: event.requiresApproval ? 'pending' : 'confirmed',
+          status: !!event.requiresApproval ? 'pending' : 'confirmed',
           qrCode: '', // Sera généré par QRService
           price: price,
         },
@@ -270,7 +270,7 @@ export default class RegistrationController {
         )
       }
 
-      if (event.requiresApproval) {
+      if (!!event.requiresApproval) {
         session.flash(
           'info',
           `Votre demande d'inscription a été envoyée. Elle sera validée prochainement.`
