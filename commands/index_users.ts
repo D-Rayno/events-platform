@@ -1,4 +1,4 @@
-// commands/index_users.ts - NEW FILE
+// commands/index_users.ts
 import { BaseCommand } from '@adonisjs/core/ace'
 import User from '#models/user'
 import typesenseClient, { isTypesenseReady, Collections } from '#services/typesense_service'
@@ -39,17 +39,17 @@ export default class IndexUsers extends BaseCommand {
 
     const documents: UserDocument[] = users.map((user) => ({
       id: user.id.toString(),
-      first_name: user.firstName,
-      last_name: user.lastName,
-      full_name: user.fullName,
-      email: user.email,
-      age: user.age,
-      province: user.province,
-      commune: user.commune,
+      first_name: user.firstName || '',
+      last_name: user.lastName || '',
+      full_name: user.fullName || `${user.firstName} ${user.lastName}`,
+      email: user.email || '',
+      age: user.age || 0,
+      province: user.province || '',
+      commune: user.commune || null,
       phone_number: user.phoneNumber || null,
-      is_email_verified: user.isEmailVerified,
-      is_active: user.isActive,
-      is_blocked: user.isBlocked,
+      is_email_verified: Boolean(user.isEmailVerified),
+      is_active: Boolean(user.isActive),
+      is_blocked: Boolean(user.isBlocked),
       created_at: user.createdAt.toUnixInteger(),
     }))
 
@@ -65,16 +65,39 @@ export default class IndexUsers extends BaseCommand {
 
       if (failed > 0) {
         this.logger.warning(`⚠️  Indexed ${succeeded} users, ${failed} failed`)
+        
+        // Show detailed error information
         results
           .filter((r) => !r.success)
-          .forEach((r) => {
-            this.logger.error(`Failed to index user: ${r.error}`)
+          .forEach((r, index) => {
+            const user = users[index]
+            this.logger.error(`\nFailed to index user ID ${user?.id}:`)
+            this.logger.error(`  Email: ${user?.email}`)
+            this.logger.error(`  Error: ${r.error}`)
+            
+            // Log the problematic document for debugging
+            if (r.document) {
+              this.logger.error(`  Document: ${JSON.stringify(r.document, null, 2)}`)
+            }
           })
       } else {
         this.logger.success(`✅ Successfully indexed all ${succeeded} users`)
       }
     } catch (error: any) {
       this.logger.error(`❌ Error indexing users: ${error.message}`)
+      
+      // Check if it's an import error with detailed results
+      if (error.importResults) {
+        this.logger.error('\nDetailed import errors:')
+        error.importResults.forEach((result: any, index: number) => {
+          if (!result.success) {
+            const user = users[index]
+            this.logger.error(`\nUser ${index + 1} (ID: ${user?.id}, Email: ${user?.email}):`)
+            this.logger.error(`  Error: ${result.error}`)
+            this.logger.error(`  Document: ${JSON.stringify(documents[index], null, 2)}`)
+          }
+        })
+      }
     }
   }
 }

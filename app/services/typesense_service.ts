@@ -31,7 +31,7 @@ export interface UserDocument {
   email: string
   age: number
   province: string
-  commune: string
+  commune: string | null
   phone_number: string | null
   is_email_verified: boolean
   is_active: boolean

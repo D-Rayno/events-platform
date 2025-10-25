@@ -101,36 +101,35 @@ export default class User extends compose(BaseModel, AuthFinder) {
     return this.isActive && !this.isBlocked && this.isEmailVerified
   }
 
-
   /**
- * After save hook - index user in Typesense
- */
-@afterSave()
-static async indexUser(user: User) {
-  const doc: UserDocument = {
-    id: user.id.toString(),
-    first_name: user.firstName,
-    last_name: user.lastName,
-    full_name: user.fullName,
-    email: user.email,
-    age: user.age,
-    province: user.province,
-    commune: user.commune,
-    phone_number: user.phoneNumber || null,
-    is_email_verified: user.isEmailVerified,
-    is_active: user.isActive,
-    is_blocked: user.isBlocked,
-    created_at: user.createdAt.toUnixInteger(),
+   * After save hook - index user in Typesense
+   */
+  @afterSave()
+  static async indexUser(user: User) {
+    const doc: UserDocument = {
+      id: user.id.toString(),
+      first_name: user.firstName || '',
+      last_name: user.lastName || '',
+      full_name: user.fullName || `${user.firstName} ${user.lastName}`,
+      email: user.email || '',
+      age: user.age || 0,
+      province: user.province || '',
+      commune: user.commune || null,
+      phone_number: user.phoneNumber || null,
+      is_email_verified: Boolean(user.isEmailVerified),
+      is_active: Boolean(user.isActive),
+      is_blocked: Boolean(user.isBlocked),
+      created_at: user.createdAt.toUnixInteger(),
+    }
+
+    await safeIndexUser(doc)
   }
 
-  await safeIndexUser(doc)
-}
-
-/**
- * After delete hook - remove user from Typesense index
- */
-@afterDelete()
-static async removeUserFromIndex(user: User) {
-  await safeDeleteUser(user.id.toString())
-}
+  /**
+   * After delete hook - remove user from Typesense index
+   */
+  @afterDelete()
+  static async removeUserFromIndex(user: User) {
+    await safeDeleteUser(user.id.toString())
+  }
 }

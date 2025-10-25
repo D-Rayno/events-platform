@@ -1,175 +1,133 @@
-// app/controllers/api/admin/registrations_controller.ts
+// app/controllers/registrations_controller.ts - FIXED WITH SEARCHSERVICE
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Registration from '#models/registration'
 import db from '@adonisjs/lucid/services/db'
 import QRService from '#services/qr_code_service'
 import EmailService from '#services/email_service'
+import SearchService from '#services/search_service'
 import { DateTime } from 'luxon'
-import typesenseClient, { isTypesenseReady, Collections } from '#services/typesense_service'
-import type { RegistrationDocument } from '#services/typesense_service'
 
 export default class RegistrationController {
   /**
-   * Liste toutes les inscriptions avec filtres et recherche
+   * Liste toutes les inscriptions de l'utilisateur connecté
    */
-  async index({ request, response }: HttpContext) {
+  async index({ auth, request, inertia }: HttpContext) {
+    const user = auth.user!
     const page = request.input('page', 1)
-    const limit = request.input('limit', 50)
-    const status = request.input('status', '').trim()
-    const eventId = request.input('event_id')
     const search = request.input('search', '').trim()
+    const status = request.input('status', '').trim()
 
-    // Check if Typesense is available
-    const typesenseReady = await isTypesenseReady(Collections.REGISTRATIONS)
+    // Try Typesense search first using SearchService
+    const searchResult = await SearchService.searchRegistrations({
+      search,
+      status,
+      userId: user.id,
+      page,
+      perPage: 20,
+    })
 
-    if (!typesenseReady) {
-      // Fallback to database query
-      return this.fallbackDatabaseQuery(page, limit, status, eventId, search, response)
-    }
+    let orderedRegistrations: Registration[] = []
+    let totalFound = 0
+    let lastPage = 1
 
-    try {
-      // Build Typesense filter
-      const filters: string[] = []
-
-      if (status) {
-        filters.push(`status:=${status}`)
-      }
-      if (eventId) {
-        filters.push(`event_id:=${eventId}`)
-      }
-
-      const searchParams: any = {
-        q: search || '*',
-        query_by: 'user_name,user_email,event_name,qr_code',
-        sort_by: 'created_at:desc',
-        page,
-        per_page: limit,
-      }
-
-      if (filters.length > 0) {
-        searchParams.filter_by = filters.join(' && ')
-      }
-
-      // Execute Typesense search
-      const searchResults = await typesenseClient
-        .collections<RegistrationDocument>(Collections.REGISTRATIONS)
-        .documents()
-        .search(searchParams)
-
-      const hits = searchResults.hits || []
-      const found = searchResults.found || 0
-      const lastPage = Math.ceil(found / limit)
+    if (searchResult) {
+      // Typesense search successful
+      const hits = searchResult.hits || []
+      totalFound = searchResult.found || 0
+      lastPage = Math.ceil(totalFound / 20)
 
       // Extract registration IDs & retrieve from DB with relations
       const registrationIds = hits.map((hit) => Number(hit.document.id))
       const dbRegistrations = registrationIds.length
-        ? await Registration.query().whereIn('id', registrationIds).preload('user').preload('event')
+        ? await Registration.query()
+            .whereIn('id', registrationIds)
+            .where('user_id', user.id)
+            .preload('event')
         : []
 
       // Preserve order as in Typesense
       const registrationMap = new Map(dbRegistrations.map((r) => [r.id, r]))
-      const orderedRegistrations = hits
+      orderedRegistrations = hits
         .map((hit) => registrationMap.get(Number(hit.document.id))!)
         .filter(Boolean)
+    } else {
+      // Fallback to database
+      console.warn('[Registrations] Using database fallback for search')
+      const result = await this.fallbackDatabaseQuery(user.id, page, search, status)
+      orderedRegistrations = result.registrations
+      totalFound = result.total
+      lastPage = result.lastPage
+    }
 
-      return response.ok({
-        success: true,
+    return inertia.render('registrations/index', {
+      registrations: {
         data: orderedRegistrations.map((reg) => ({
           id: reg.id,
           status: reg.status,
           qrCode: reg.qrCode,
           attendedAt: reg.attendedAt?.toISO(),
           createdAt: reg.createdAt.toISO(),
-          user: {
-            id: reg.user.id,
-            firstName: reg.user.firstName,
-            lastName: reg.user.lastName,
-            email: reg.user.email,
-            phoneNumber: reg.user.phoneNumber,
-          },
           event: {
             id: reg.event.id,
             name: reg.event.name,
+            description: reg.event.description,
             location: reg.event.location,
+            province: reg.event.province,
             startDate: reg.event.startDate.toISO(),
             endDate: reg.event.endDate.toISO(),
+            imageUrl: reg.event.imageUrl,
+            category: reg.event.category,
+            status: reg.event.status,
           },
         })),
         meta: {
           current_page: page,
           last_page: lastPage,
-          total: found,
-          per_page: limit,
+          total: totalFound,
+          per_page: 20,
         },
-      })
-    } catch (error) {
-      console.error('[Typesense] Registration search error:', error.message)
-      // Fallback to database on error
-      return this.fallbackDatabaseQuery(page, limit, status, eventId, search, response)
-    }
+      },
+      filters: {
+        search: search || '',
+        status: status || '',
+      },
+    })
   }
 
   /**
-   * Fallback database query
+   * Fallback database query when Typesense is unavailable
    */
   private async fallbackDatabaseQuery(
+    userId: number,
     page: number,
-    limit: number,
-    status: string,
-    eventId: any,
     search: string,
-    response: any
+    status: string
   ) {
-    let query = Registration.query().preload('user').preload('event').orderBy('created_at', 'desc')
+    let query = Registration.query()
+      .where('user_id', userId)
+      .preload('event')
+      .orderBy('created_at', 'desc')
 
-    // Filtrer par statut
+    // Filter by status
     if (status) {
       query = query.where('status', status)
     }
 
-    // Filtrer par événement
-    if (eventId) {
-      query = query.where('event_id', eventId)
-    }
-
-    // Recherche par nom d'utilisateur ou email
+    // Search by event name
     if (search) {
-      query = query.whereHas('user', (userQuery) => {
-        userQuery
-          .whereLike('first_name', `%${search}%`)
-          .orWhereLike('last_name', `%${search}%`)
-          .orWhereLike('email', `%${search}%`)
+      query = query.whereHas('event', (eventQuery) => {
+        eventQuery.whereLike('name', `%${search}%`).orWhereLike('description', `%${search}%`)
       })
     }
 
-    const registrations = await query.paginate(page, limit)
+    const result = await query.paginate(page, 20)
 
-    return response.ok({
-      success: true,
-      data: registrations.all().map((reg) => ({
-        id: reg.id,
-        status: reg.status,
-        qrCode: reg.qrCode,
-        attendedAt: reg.attendedAt?.toISO(),
-        createdAt: reg.createdAt.toISO(),
-        user: {
-          id: reg.user.id,
-          firstName: reg.user.firstName,
-          lastName: reg.user.lastName,
-          email: reg.user.email,
-          phoneNumber: reg.user.phoneNumber,
-        },
-        event: {
-          id: reg.event.id,
-          name: reg.event.name,
-          location: reg.event.location,
-          startDate: reg.event.startDate.toISO(),
-          endDate: reg.event.endDate.toISO(),
-        },
-      })),
-      meta: registrations.getMeta(),
-    })
+    return {
+      registrations: result.all(),
+      total: result.total,
+      lastPage: result.lastPage,
+    }
   }
 
   /**

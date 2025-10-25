@@ -1,10 +1,10 @@
-// commands/setup_typesense.ts - COMPLETE REPLACEMENT
+// commands/setup_typesense.ts
 import { BaseCommand } from '@adonisjs/core/ace'
 import typesenseClient from '#services/typesense_service'
 import typesenseConfig from '#config/typesense'
 import { Collections } from '#services/typesense_service'
 import type { CollectionCreateSchema } from 'typesense/lib/Typesense/Collections.js'
-import { args, flags } from '@adonisjs/core/ace'
+import { flags } from '@adonisjs/core/ace'
 
 /**
  * CLI Command: Setup all Typesense collections
@@ -17,7 +17,7 @@ export default class SetupTypesense extends BaseCommand {
   static commandName = 'setup:typesense'
   static description = 'Sets up Typesense collections for events, users, and registrations'
 
-  @args.string({ description: 'Specific collection to setup (events, users, registrations)' })
+  @flags.string({ description: 'Specific collection to setup (events, users, registrations)' })
   declare collection?: string
 
   @flags.boolean({ description: 'Force recreate collections without prompting' })
@@ -53,6 +53,7 @@ export default class SetupTypesense extends BaseCommand {
     this.logger.info('   - node ace index:events')
     this.logger.info('   - node ace index:users')
     this.logger.info('   - node ace index:registrations')
+    this.logger.info('   - node ace index:all (to index everything)')
   }
 
   private async setupCollection(name: string, schema: CollectionCreateSchema) {
@@ -129,7 +130,7 @@ export default class SetupTypesense extends BaseCommand {
           { name: 'email', type: 'string' },
           { name: 'age', type: 'int32', facet: true },
           { name: 'province', type: 'string', facet: true },
-          { name: 'commune', type: 'string', facet: true },
+          { name: 'commune', type: 'string', facet: true, optional: true },
           { name: 'phone_number', type: 'string', optional: true },
           { name: 'is_email_verified', type: 'bool', facet: true },
           { name: 'is_active', type: 'bool', facet: true },
