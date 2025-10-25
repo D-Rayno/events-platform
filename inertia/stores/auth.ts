@@ -51,13 +51,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   avatarUrl: () => {
     const user = get().user
     if (!user?.avatarUrl) return null
-    return user.avatarUrl.startsWith('http')
-      ? user.avatarUrl
-      : `/uploads/${user.avatarUrl}`
+    return user.avatarUrl
   },
 
-  needsVerification: () =>
-    get().isAuthenticated() && !get().isEmailVerified(),
+  needsVerification: () => get().isAuthenticated() && !get().isEmailVerified(),
 
   /**
    * ─── ACTIONS ───────────────────────────────────────────

@@ -11,7 +11,8 @@
     "test": "node ace test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "generate:theme": "node --loader ./scripts/generate-theme.cjs"
   },
   "imports": {
     "#controllers/*": "./app/controllers/*.js",

@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import { usePage } from '@inertiajs/react'
 
 /**
  * Merge Tailwind CSS classes
@@ -14,13 +15,13 @@ export function cn(...inputs: ClassValue[]) {
 export const formatDate = (date: Date | string, locale: string = 'fr-FR'): string => {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
-    
+
     // Check if date is valid
     if (isNaN(d.getTime())) {
       console.error('Invalid date:', date)
       return 'Date invalide'
     }
-    
+
     return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'long',
@@ -38,13 +39,13 @@ export const formatDate = (date: Date | string, locale: string = 'fr-FR'): strin
 export const formatDateTime = (date: Date | string, locale: string = 'fr-FR'): string => {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
-    
+
     // Check if date is valid
     if (isNaN(d.getTime())) {
       console.error('Invalid date:', date)
       return 'Date invalide'
     }
-    
+
     return new Intl.DateTimeFormat(locale, {
       year: 'numeric',
       month: 'long',
@@ -64,13 +65,13 @@ export const formatDateTime = (date: Date | string, locale: string = 'fr-FR'): s
 export const formatTime = (date: Date | string, locale: string = 'fr-FR'): string => {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
-    
+
     // Check if date is valid
     if (isNaN(d.getTime())) {
       console.error('Invalid date:', date)
       return 'Heure invalide'
     }
-    
+
     return new Intl.DateTimeFormat(locale, {
       hour: '2-digit',
       minute: '2-digit',
@@ -101,7 +102,7 @@ export const isToday = (date: Date | string): boolean => {
   try {
     const d = typeof date === 'string' ? new Date(date) : date
     if (isNaN(d.getTime())) return false
-    
+
     const today = new Date()
     return (
       d.getDate() === today.getDate() &&
@@ -120,7 +121,7 @@ export const getRelativeTime = (date: Date | string, locale: string = 'fr-FR'): 
   try {
     const d = typeof date === 'string' ? new Date(date) : date
     if (isNaN(d.getTime())) return 'Date invalide'
-    
+
     const rtf = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
 
     const now = new Date()
@@ -190,7 +191,7 @@ export const generateId = (prefix: string = 'id'): string => {
 /**
  * Clone deep object
  */
-export const deepClone = <T,>(obj: T): T => {
+export const deepClone = <T>(obj: T): T => {
   return JSON.parse(JSON.stringify(obj))
 }
 
@@ -217,4 +218,14 @@ export const getInitials = (name: string): string => {
     .join('')
     .toUpperCase()
     .slice(0, 2)
+}
+
+/**
+ * Get the storage path for a given filename
+ */
+export const getStoragePath = (filename: string): string => {
+  const {
+    props: { APP_URL },
+  } = usePage()
+  return `${APP_URL}/${filename}`
 }

@@ -23,7 +23,7 @@ import Modal from '~/components/ui/Modal'
 import Alert from '~/components/ui/Alert'
 import { useRouteGuard } from '~/hooks/useRouteGuard'
 import { useTheme } from '~/hooks/useTheme'
-import { formatDate, formatDateTime } from '~/lib/utils'
+import { formatDate, formatDateTime, getStoragePath } from '~/lib/utils'
 
 interface Event {
   id: number
@@ -173,12 +173,9 @@ export default function RegistrationShow({ registration }: Props) {
                       : 'error'
               }
             >
-              <div className="flex items-center gap-3">
-                <StatusIcon className="w-6 h-6" />
-                <div>
-                  <p className="font-semibold">{statusInfo.text}</p>
-                  <p className="text-sm">{statusInfo.description}</p>
-                </div>
+              <div>
+                <p className="font-semibold">{statusInfo.text}</p>
+                <p className="text-sm">{statusInfo.description}</p>
               </div>
             </Alert>
           </motion.div>
@@ -196,7 +193,7 @@ export default function RegistrationShow({ registration }: Props) {
                   <div className="flex gap-6">
                     <div className="w-32 shrink-0">
                       <Image
-                        src={registration.event.imageUrl || getPlaceholder('event')}
+                        src={registration.event.imageUrl ? getStoragePath(registration.event.imageUrl) : getPlaceholder('event')}
                         alt={registration.event.name}
                         aspectRatio="1/1"
                         rounded="lg"
@@ -272,8 +269,7 @@ export default function RegistrationShow({ registration }: Props) {
                       </motion.div>
 
                       <p className="text-sm text-neutral-600 mt-6 max-w-md mx-auto">
-                        Présentez ce QR code à l'entrée de l'événement pour confirmer votre
-                        présence
+                        Présentez ce QR code à l'entrée de l'événement pour confirmer votre présence
                       </p>
 
                       <div className="flex flex-wrap justify-center gap-3 mt-6">
@@ -323,7 +319,9 @@ export default function RegistrationShow({ registration }: Props) {
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckCircleIcon className="w-5 h-5 text-success-600 mt-0.5 shrink-0" />
-                      <span>Assurez-vous que votre QR code est lisible (téléchargé ou imprimé)</span>
+                      <span>
+                        Assurez-vous que votre QR code est lisible (téléchargé ou imprimé)
+                      </span>
                     </li>
                     <li className="flex items-start gap-3">
                       <CheckCircleIcon className="w-5 h-5 text-success-600 mt-0.5 shrink-0" />
@@ -437,15 +435,11 @@ export default function RegistrationShow({ registration }: Props) {
         >
           <div className="space-y-4">
             <Alert type="warning">
-              <div className="flex items-start gap-3">
-                <ExclamationTriangleIcon className="w-5 h-5 mt-0.5" />
-                <div>
-                  <p className="font-semibold mb-1">Attention</p>
-                  <p className="text-sm">
-                    Cette action est irréversible. Vous devrez vous réinscrire si vous changez
-                    d'avis.
-                  </p>
-                </div>
+              <div>
+                <p className="font-semibold mb-1">Attention</p>
+                <p className="text-sm">
+                  Cette action est irréversible. Vous devrez vous réinscrire si vous changez d'avis.
+                </p>
               </div>
             </Alert>
 
@@ -461,9 +455,7 @@ export default function RegistrationShow({ registration }: Props) {
               </div>
               <div className="flex justify-between">
                 <span className="text-neutral-600">Date</span>
-                <span className="font-semibold">
-                  {formatDate(registration.event.startDate)}
-                </span>
+                <span className="font-semibold">{formatDate(registration.event.startDate)}</span>
               </div>
             </div>
           </div>

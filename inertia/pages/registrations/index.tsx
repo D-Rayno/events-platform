@@ -18,7 +18,7 @@ import Badge from '~/components/ui/Badge'
 import Image from '~/components/ui/Image'
 import { useRouteGuard } from '~/hooks/useRouteGuard'
 import { useTheme } from '~/hooks/useTheme'
-import { formatDate, formatDateTime } from '~/lib/utils'
+import { formatDate, formatDateTime, getStoragePath } from '~/lib/utils'
 
 interface Event {
   id: number
@@ -82,7 +82,7 @@ export default function RegistrationsIndex({ registrations }: Props) {
             {/* Event Image */}
             <div className="sm:w-48 shrink-0">
               <Image
-                src={registration.event.imageUrl || getPlaceholder('event')}
+                src={registration.event.imageUrl ? getStoragePath(registration.event.imageUrl) : getPlaceholder('event')}
                 alt={registration.event.name}
                 aspectRatio="16/9"
                 rounded="lg"

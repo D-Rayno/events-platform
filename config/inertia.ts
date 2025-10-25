@@ -1,6 +1,7 @@
 // config/inertia.ts - FIXED
 import { defineConfig } from '@adonisjs/inertia'
 import type { InferSharedProps } from '@adonisjs/inertia/types'
+import env from '#start/env'
 
 const inertiaConfig = defineConfig({
   /**
@@ -17,6 +18,7 @@ const inertiaConfig = defineConfig({
     
     // Errors are automatically shared by Inertia
     errors: (ctx) => ctx.session.flashMessages.get('errors'),
+    APP_URL: env.get("APP_URL"),
   },
 
   /**
@@ -25,7 +27,7 @@ const inertiaConfig = defineConfig({
   ssr: {
     enabled: true,
     entrypoint: 'inertia/app/ssr.tsx'
-  }
+  },
 })
 
 export default inertiaConfig

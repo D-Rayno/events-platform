@@ -19,7 +19,7 @@ import Badge from '~/components/ui/Badge'
 import Image from '~/components/ui/Image'
 import Pagination from '~/components/ui/Pagination'
 import { useTheme } from '~/hooks/useTheme'
-import { formatDate, formatCurrency, truncate } from '~/lib/utils'
+import { formatDate, formatCurrency, truncate, getStoragePath } from '~/lib/utils'
 import { PROVINCES, EVENT_CATEGORIES } from '~/lib/constants'
 import type { PaginatedResponse } from '~/types/common'
 
@@ -318,7 +318,7 @@ export default function EventsIndex({ events, filters }: Props) {
                     <Card hoverable clickable className="h-full flex flex-col overflow-hidden">
                       <div className="relative">
                         <Image
-                          src={event.imageUrl || getPlaceholder('event')}
+                          src={event.imageUrl ? getStoragePath(event.imageUrl) : getPlaceholder('event')}
                           alt={event.name}
                           aspectRatio="16/9"
                           rounded="lg"

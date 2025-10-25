@@ -1,4 +1,4 @@
-// app/controllers/registrations_controller.ts - FIXED WITH SEARCHSERVICE
+// app/controllers/registrations_controller.ts - FIXED DUPLICATE CHECK
 import type { HttpContext } from '@adonisjs/core/http'
 import Event from '#models/event'
 import Registration from '#models/registration'
@@ -166,10 +166,24 @@ export default class RegistrationController {
 
   /**
    * Inscription à un événement
+   * FIXED: Check for existing registration OUTSIDE transaction first
    */
   async store({ auth, params, response, session }: HttpContext) {
     const user = auth.user!
     const eventId = params.eventId
+
+    // IMPORTANT: Check for existing ACTIVE registration BEFORE starting transaction
+    // We exclude 'canceled' status so users can re-register after canceling
+    const existingRegistration = await Registration.query()
+      .where('user_id', user.id)
+      .where('event_id', eventId)
+      .whereIn('status', ['pending', 'confirmed', 'attended'])
+      .first()
+
+    if (existingRegistration) {
+      session.flash('info', 'Vous êtes déjà inscrit à cet événement.')
+      return response.redirect(`/events/${eventId}`)
+    }
 
     const trx = await db.transaction()
 
@@ -221,19 +235,6 @@ export default class RegistrationController {
         return response.redirect(`/events/${eventId}`)
       }
 
-      // Vérifier si l'utilisateur est déjà inscrit
-      const existingRegistration = await Registration.query({ client: trx })
-        .where('user_id', user.id)
-        .where('event_id', eventId)
-        .whereIn('status', ['pending', 'confirmed', 'attended'])
-        .first()
-
-      if (existingRegistration) {
-        await trx.rollback()
-        session.flash('info', 'Vous êtes déjà inscrit à cet événement.')
-        return response.redirect(`/events/${eventId}`)
-      }
-
       // Calculer le prix selon l'âge
       const price = event.getPriceForAge(user.age)
 
@@ -255,12 +256,18 @@ export default class RegistrationController {
 
       await trx.commit()
 
-      // Envoyer l'email de confirmation avec le QR code
+      // Envoyer l'email de confirmation avec le QR code (AFTER commit)
       try {
         await registration.load('event')
         await EmailService.sendEventRegistrationEmail(user, registration.event, registration)
+        console.log('✅ Email sent successfully')
       } catch (error) {
-        console.error("Erreur lors de l'envoi de l'email:", error)
+        console.error("❌ Erreur lors de l'envoi de l'email:", error)
+        // Don't fail the registration if email fails
+        session.flash(
+          'warning',
+          "Inscription réussie mais l'email n'a pas pu être envoyé. Contactez le support."
+        )
       }
 
       if (event.requiresApproval) {
@@ -276,6 +283,13 @@ export default class RegistrationController {
     } catch (error) {
       await trx.rollback()
       console.error("Erreur lors de l'inscription:", error)
+      
+      // Handle duplicate entry error specifically
+      if (error.code === 'ER_DUP_ENTRY') {
+        session.flash('info', 'Vous êtes déjà inscrit à cet événement.')
+        return response.redirect(`/events/${eventId}`)
+      }
+      
       session.flash('error', "Une erreur est survenue lors de l'inscription.")
       return response.redirect(`/events/${eventId}`)
     }
@@ -283,6 +297,7 @@ export default class RegistrationController {
 
   /**
    * Annule une inscription
+   * UPDATED: Actually delete the registration instead of just marking as canceled
    */
   async destroy({ auth, params, response, session }: HttpContext) {
     const user = auth.user!
@@ -319,13 +334,13 @@ export default class RegistrationController {
     const trx = await db.transaction()
 
     try {
-      registration.status = 'canceled'
-      await registration.useTransaction(trx).save()
-
-      // Décrémenter le compteur
+      // Décrémenter le compteur BEFORE deleting
       const event = await Event.findOrFail(registration.eventId, { client: trx })
       event.registeredCount = Math.max(0, event.registeredCount - 1)
       await event.save()
+
+      // Actually DELETE the registration instead of marking as canceled
+      await registration.useTransaction(trx).delete()
 
       await trx.commit()
 

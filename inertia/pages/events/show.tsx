@@ -8,7 +8,6 @@ import {
   ClockIcon,
   TagIcon,
   CheckCircleIcon,
-  XCircleIcon,
   ArrowLeftIcon,
   ShareIcon,
   HeartIcon,
@@ -25,7 +24,7 @@ import Image from '~/components/ui/Image'
 import Modal from '~/components/ui/Modal'
 import Alert from '~/components/ui/Alert'
 import { useTheme } from '~/hooks/useTheme'
-import { formatDate, formatDateTime, formatCurrency } from '~/lib/utils'
+import { formatDate, formatDateTime, formatCurrency, getStoragePath } from '~/lib/utils'
 
 interface Event {
   id: number
@@ -210,7 +209,7 @@ export default function EventShow({ event, registration, isRegistered, userAge }
                 <Card padding="none" className="overflow-hidden">
                   <div className="relative">
                     <Image
-                      src={event.imageUrl || getPlaceholder('event')}
+                      src={event.imageUrl ? getStoragePath(event.imageUrl) :  getPlaceholder('event')}
                       alt={event.name}
                       aspectRatio="16/9"
                     />
@@ -517,10 +516,7 @@ export default function EventShow({ event, registration, isRegistered, userAge }
                   {isRegistered ? (
                     <div className="space-y-3">
                       <Alert type="success">
-                        <div className="flex items-center gap-2">
-                          <CheckCircleIcon className="w-5 h-5" />
-                          <span className="font-semibold">Vous êtes inscrit !</span>
-                        </div>
+                        <span className="font-semibold">Vous êtes inscrit !</span>
                       </Alert>
                       <Button
                         variant="outline"
@@ -532,10 +528,7 @@ export default function EventShow({ event, registration, isRegistered, userAge }
                     </div>
                   ) : event.isFull ? (
                     <Alert type="warning">
-                      <div className="flex items-center gap-2">
-                        <XCircleIcon className="w-5 h-5" />
-                        <span className="font-semibold">Complet</span>
-                      </div>
+                      <span className="font-semibold">Complet</span>
                     </Alert>
                   ) : event.canRegister && isAgeEligible ? (
                     <Button
