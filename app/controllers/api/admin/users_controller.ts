@@ -1,6 +1,8 @@
+// app/controllers/api/admin/users_controller.ts
 import type { HttpContext } from '@adonisjs/core/http'
 import User from '#models/user'
 import db from '@adonisjs/lucid/services/db'
+import SearchService from '#services/search_service'
 
 export default class UserController {
   /**
@@ -9,10 +11,72 @@ export default class UserController {
   async index({ request, response }: HttpContext) {
     const page = request.input('page', 1)
     const limit = request.input('limit', 50)
-    const search = request.input('search')
+    const search = request.input('search', '').trim()
     const isBlocked = request.input('is_blocked')
     const isVerified = request.input('is_verified')
+    const isActive = request.input('is_active')
+    const province = request.input('province', '').trim()
 
+    // Try Typesense search first using SearchService
+    const searchResult = await SearchService.searchUsers({
+      search,
+      province,
+      isBlocked: isBlocked !== undefined ? isBlocked === 'true' : undefined,
+      isVerified: isVerified !== undefined ? isVerified === 'true' : undefined,
+      isActive: isActive !== undefined ? isActive === 'true' : undefined,
+      page,
+      perPage: limit,
+    })
+
+    if (searchResult) {
+      // Typesense search successful
+      const hits = searchResult.hits || []
+      const found = searchResult.found || 0
+      const lastPage = Math.ceil(found / limit)
+
+      // Extract user IDs & retrieve from DB with registration counts
+      const userIds = hits.map((hit) => Number(hit.document.id))
+      const dbUsers = userIds.length
+        ? await User.query()
+            .whereIn('id', userIds)
+            .withCount('registrations', (q) => {
+              q.whereIn('status', ['confirmed', 'attended'])
+            })
+        : []
+
+      // Preserve order as in Typesense
+      const userMap = new Map(dbUsers.map((u) => [u.id, u]))
+      const orderedUsers = hits.map((hit) => userMap.get(Number(hit.document.id))!).filter(Boolean)
+
+      return response.ok({
+        success: true,
+        data: orderedUsers.map((user) => ({
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: user.fullName,
+          email: user.email,
+          age: user.age,
+          province: user.province,
+          commune: user.commune,
+          phoneNumber: user.phoneNumber,
+          isEmailVerified: user.isEmailVerified,
+          isActive: user.isActive,
+          isBlocked: user.isBlocked,
+          registrationsCount: user.$extras.registrations_count || 0,
+          createdAt: user.createdAt.toISO(),
+        })),
+        meta: {
+          current_page: page,
+          last_page: lastPage,
+          total: found,
+          per_page: limit,
+        },
+      })
+    }
+
+    // Fallback to database
+    console.warn('[Admin Users API] Using database fallback')
     let query = User.query().orderBy('created_at', 'desc')
 
     // Recherche
@@ -32,6 +96,16 @@ export default class UserController {
     // Filtrer par email vérifié
     if (isVerified !== undefined) {
       query = query.where('is_email_verified', isVerified === 'true')
+    }
+
+    // Filtrer par actif
+    if (isActive !== undefined) {
+      query = query.where('is_active', isActive === 'true')
+    }
+
+    // Filtrer par province
+    if (province) {
+      query = query.where('province', province)
     }
 
     const users = await query

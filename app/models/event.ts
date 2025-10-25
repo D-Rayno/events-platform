@@ -1,8 +1,9 @@
+// app/models/event.ts
 import { DateTime } from 'luxon'
 import { BaseModel, column, hasMany, afterSave, afterDelete } from '@adonisjs/lucid/orm'
 import type { HasMany } from '@adonisjs/lucid/types/relations'
 import Registration from '#models/registration'
-import typesenseClient from '#services/typesense_service'
+import { safeIndexEvent, safeDeleteEvent } from '#services/typesense_service'
 import type { EventDocument } from '#services/typesense_service'
 
 export default class Event extends BaseModel {
@@ -345,6 +346,10 @@ export default class Event extends BaseModel {
     return badges[this.physicalIntensity]
   }
 
+  /**
+   * After save hook - index event in Typesense
+   * This will only run if Typesense is enabled and collection exists
+   */
   @afterSave()
   static async indexEvent(event: Event) {
     const doc: EventDocument = {
@@ -353,16 +358,23 @@ export default class Event extends BaseModel {
       description: event.description,
       category: event.category,
       province: event.province,
+      commune: event.commune,
       start_date: event.startDate.toUnixInteger(),
+      status: event.status,
+      is_public: event.isPublic,
       event_type: event.eventType || null,
       game_type: event.gameType || null,
       difficulty: event.difficulty || null,
     }
-    await typesenseClient.collections<EventDocument>('events').documents().upsert(doc)
+
+    await safeIndexEvent(doc)
   }
 
+  /**
+   * After delete hook - remove event from Typesense index
+   */
   @afterDelete()
   static async removeEventFromIndex(event: Event) {
-    await typesenseClient.collections<EventDocument>('events').documents(event.id.toString()).delete()
+    await safeDeleteEvent(event.id.toString())
   }
 }

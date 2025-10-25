@@ -8,7 +8,7 @@ import Event from '#models/event'
 import Registration from '#models/registration'
 
 // Services & Validators
-import typesenseClient, { EventDocument } from '#services/typesense_service'
+import SearchService from '#services/search_service'
 import { createEventValidator } from '#validators/create_event'
 
 export default class EventController {
@@ -17,8 +17,7 @@ export default class EventController {
    * INDEX - List published & public events (Typesense search)
    * ------------------------------------------------------------
    */
-  async index({ request, inertia, auth }: HttpContext) {
-    const user = auth.user
+  async index({ request, response }: HttpContext) {
     const page = Number(request.input('page', 1))
     const search = (request.input('search', '') as string).trim()
 
@@ -29,57 +28,46 @@ export default class EventController {
       eventType: request.input('eventType', ''),
       gameType: request.input('gameType', ''),
       difficulty: request.input('difficulty', ''),
+      status: request.input('status', ''),
+      isPublic: request.input('is_public', ''),
     }
 
-    // Build Typesense filter query dynamically
-    let filterBy = 'status:published && is_public:true'
-    for (const [key, value] of Object.entries(filters)) {
-      if (value) filterBy += ` && ${key}:${value}`
-    }
-
-    const searchParams = {
-      q: search || '*',
-      query_by: 'name,description',
-      filter_by: filterBy,
-      sort_by: 'start_date:asc',
+    // Try Typesense search first using SearchService
+    const searchParams: any = {
+      search,
       page,
-      per_page: 12,
+      perPage: 12,
     }
 
-    // Execute Typesense search
-    const searchResults = await typesenseClient
-      .collections<EventDocument>('events')
-      .documents()
-      .search(searchParams)
+    // Add filters
+    if (filters.category) searchParams.category = filters.category
+    if (filters.province) searchParams.province = filters.province
+    if (filters.eventType) searchParams.eventType = filters.eventType
+    if (filters.gameType) searchParams.gameType = filters.gameType
+    if (filters.difficulty) searchParams.difficulty = filters.difficulty
+    if (filters.status) searchParams.status = filters.status
+    if (filters.isPublic) searchParams.isPublic = filters.isPublic === 'true'
 
-    const hits = searchResults.hits || []
-    const found = searchResults.found || 0
-    const lastPage = Math.ceil(found / 12)
+    const searchResult = await SearchService.searchEvents(searchParams)
 
-    // Extract event IDs & retrieve from DB
-    const eventIds = hits.map((hit) => Number(hit.document.id))
-    const dbEvents = eventIds.length
-      ? await Event.query().whereIn('id', eventIds)
-      : []
+    if (searchResult) {
+      // Typesense search successful
+      const hits = searchResult.hits || []
+      const found = searchResult.found || 0
+      const lastPage = Math.ceil(found / 12)
 
-    // Preserve order as in Typesense
-    const eventMap = new Map(dbEvents.map((e) => [e.id, e]))
-    const orderedEvents = hits
-      .map((hit) => eventMap.get(Number(hit.document.id))!)
-      .filter(Boolean)
+      // Extract event IDs & retrieve from DB
+      const eventIds = hits.map((hit) => Number(hit.document.id))
+      const dbEvents = eventIds.length ? await Event.query().whereIn('id', eventIds) : []
 
-    // Retrieve user registrations (for badges like "registered")
-    let userRegistrations: number[] = []
-    if (user) {
-      const regs = await Registration.query()
-        .where('user_id', user.id)
-        .whereIn('status', ['pending', 'confirmed', 'attended'])
-        .select('event_id')
-      userRegistrations = regs.map((r) => r.eventId)
-    }
+      // Preserve order as in Typesense
+      const eventMap = new Map(dbEvents.map((e) => [e.id, e]))
+      const orderedEvents = hits
+        .map((hit) => eventMap.get(Number(hit.document.id))!)
+        .filter(Boolean)
 
-    return inertia.render('events/index', {
-      events: {
+      return response.ok({
+        success: true,
         data: orderedEvents.map((event) => ({
           id: event.id,
           name: event.name,
@@ -89,7 +77,8 @@ export default class EventController {
           endDate: event.endDate?.toISO(),
           category: event.category,
           imageUrl: event.imageUrl,
-          isRegistered: userRegistrations.includes(event.id),
+          status: event.status,
+          isPublic: event.isPublic,
         })),
         meta: {
           current_page: page,
@@ -97,8 +86,44 @@ export default class EventController {
           total: found,
           per_page: 12,
         },
-      },
-      filters,
+      })
+    }
+
+    // Fallback to database
+    console.warn('[Admin Events API] Using database fallback')
+    let query = Event.query().orderBy('start_date', 'asc')
+
+    if (search) {
+      query = query.where((q) => {
+        q.whereLike('name', `%${search}%`).orWhereLike('description', `%${search}%`)
+      })
+    }
+
+    if (filters.category) query = query.where('category', filters.category)
+    if (filters.province) query = query.where('province', filters.province)
+    if (filters.eventType) query = query.where('event_type', filters.eventType)
+    if (filters.gameType) query = query.where('game_type', filters.gameType)
+    if (filters.difficulty) query = query.where('difficulty', filters.difficulty)
+    if (filters.status) query = query.where('status', filters.status)
+    if (filters.isPublic) query = query.where('is_public', filters.isPublic === 'true')
+
+    const result = await query.paginate(page, 12)
+
+    return response.ok({
+      success: true,
+      data: result.all().map((event) => ({
+        id: event.id,
+        name: event.name,
+        description: event.description,
+        province: event.province,
+        startDate: event.startDate?.toISO(),
+        endDate: event.endDate?.toISO(),
+        category: event.category,
+        imageUrl: event.imageUrl,
+        status: event.status,
+        isPublic: event.isPublic,
+      })),
+      meta: result.getMeta(),
     })
   }
 

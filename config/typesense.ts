@@ -1,10 +1,13 @@
 // config/typesense.ts
 import env from '#start/env'
 
-export default {
-  host: env.get('TYPESENSE_HOST', 'localhost'),
-  port: parseInt(env.get('TYPESENSE_PORT', '8108')),
-  protocol: env.get('TYPESENSE_PROTOCOL', 'http'),
-  apiKey: env.get('TYPESENSE_API_KEY', ''),
+const config = {
+  host: env.get('TYPESENSE_HOST'),
+  port: parseInt(env.get('TYPESENSE_PORT')),
+  protocol: env.get('TYPESENSE_PROTOCOL') as 'http' | 'https',
+  apiKey: env.get('TYPESENSE_API_KEY'),
   connectionTimeoutSeconds: 10,
+  enabled: env.get('TYPESENSE_ENABLED'),
 }
+
+export default config

@@ -61,16 +61,14 @@ export default await Env.create(new URL('../', import.meta.url), {
   */
   ADMIN_API_TOKEN: Env.schema.string(),
 
-
-
-
   /*
   |----------------------------------------------------------
   | Typesense Search Engine
   |----------------------------------------------------------
   */
+  TYPESENSE_ENABLED: Env.schema.boolean.optional(),
   TYPESENSE_HOST: Env.schema.string(),
   TYPESENSE_PORT: Env.schema.string(),
-  TYPESENSE_PROTOCOL: Env.schema.string(),
+  TYPESENSE_PROTOCOL: Env.schema.enum(['http', 'https'] as const),
   TYPESENSE_API_KEY: Env.schema.string(),
 })

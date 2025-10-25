@@ -2,18 +2,82 @@ import type { HttpContext } from '@adonisjs/core/http'
 import Registration from '#models/registration'
 import QRService from '#services/qr_code_service'
 import { DateTime } from 'luxon'
+import SearchService from '#services/search_service'
 
 export default class RegistrationController {
   /**
-   * Liste toutes les inscriptions avec filtres
+   * Liste toutes les inscriptions avec filtres et recherche
    */
   async index({ request, response }: HttpContext) {
     const page = request.input('page', 1)
     const limit = request.input('limit', 50)
-    const status = request.input('status')
+    const status = request.input('status', '').trim()
     const eventId = request.input('event_id')
-    const search = request.input('search')
+    const userId = request.input('user_id')
+    const search = request.input('search', '').trim()
 
+    // Try Typesense search first using SearchService
+    const searchResult = await SearchService.searchRegistrations({
+      search,
+      status,
+      eventId: eventId ? Number(eventId) : undefined,
+      userId: userId ? Number(userId) : undefined,
+      page,
+      perPage: limit,
+    })
+
+    if (searchResult) {
+      // Typesense search successful
+      const hits = searchResult.hits || []
+      const found = searchResult.found || 0
+      const lastPage = Math.ceil(found / limit)
+
+      // Extract registration IDs & retrieve from DB with relations
+      const registrationIds = hits.map((hit) => Number(hit.document.id))
+      const dbRegistrations = registrationIds.length
+        ? await Registration.query().whereIn('id', registrationIds).preload('user').preload('event')
+        : []
+
+      // Preserve order as in Typesense
+      const registrationMap = new Map(dbRegistrations.map((r) => [r.id, r]))
+      const orderedRegistrations = hits
+        .map((hit) => registrationMap.get(Number(hit.document.id))!)
+        .filter(Boolean)
+
+      return response.ok({
+        success: true,
+        data: orderedRegistrations.map((reg) => ({
+          id: reg.id,
+          status: reg.status,
+          qrCode: reg.qrCode,
+          attendedAt: reg.attendedAt?.toISO(),
+          createdAt: reg.createdAt.toISO(),
+          user: {
+            id: reg.user.id,
+            firstName: reg.user.firstName,
+            lastName: reg.user.lastName,
+            email: reg.user.email,
+            phoneNumber: reg.user.phoneNumber,
+          },
+          event: {
+            id: reg.event.id,
+            name: reg.event.name,
+            location: reg.event.location,
+            startDate: reg.event.startDate.toISO(),
+            endDate: reg.event.endDate.toISO(),
+          },
+        })),
+        meta: {
+          current_page: page,
+          last_page: lastPage,
+          total: found,
+          per_page: limit,
+        },
+      })
+    }
+
+    // Fallback to database
+    console.warn('[Admin Registrations API] Using database fallback')
     let query = Registration.query().preload('user').preload('event').orderBy('created_at', 'desc')
 
     // Filtrer par statut
@@ -24,6 +88,11 @@ export default class RegistrationController {
     // Filtrer par événement
     if (eventId) {
       query = query.where('event_id', eventId)
+    }
+
+    // Filtrer par utilisateur
+    if (userId) {
+      query = query.where('user_id', userId)
     }
 
     // Recherche par nom d'utilisateur ou email
