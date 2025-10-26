@@ -1,0 +1,102 @@
+# ============================================
+# Docker Compose Configuration
+# For local development and testing
+# ============================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MySQL Database
+  # ============================================
+  db:
+    image: mysql:8.0
+    container_name: g-agency-events-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: events_platform
+      MYSQL_USER: g_agency
+      MYSQL_PASSWORD: secure_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: --default-authentication-plugin=mysql_native_password
+
+  # ============================================
+  # Typesense Search Engine
+  # ============================================
+  typesense:
+    image: typesense/typesense:26.0
+    container_name: g-agency-events-typesense
+    restart: unless-stopped
+    environment:
+      TYPESENSE_API_KEY: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=
+      TYPESENSE_DATA_DIR: /data
+    ports:
+      - "8108:8108"
+    volumes:
+      - typesense_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8108/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # AdonisJS Application
+  # ============================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: g-agency-events-app
+    restart: unless-stopped
+    ports:
+      - "3333:10000"
+    env_file:
+      - .env.docker
+    volumes:
+      # Persist uploads
+      - ./public/uploads:/app/public/uploads
+      # Persist logs
+      - ./logs:/app/logs
+    networks:
+      - app-network
+    depends_on:
+      db:
+        condition: service_healthy
+      typesense:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:10000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  app-network:
+    driver: bridge
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  mysql_data:
+    driver: local
+  typesense_data:
+    driver: local

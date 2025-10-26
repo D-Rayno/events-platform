@@ -1,14 +1,21 @@
+# ============================================
+# Render Blueprint (Docker-based deployment)
+# ============================================
+
 services:
-  # Main Web Service
+  # ============================================
+  # Web Service (Docker)
+  # ============================================
   - type: web
     name: g-agency-events
-    env: node
-    region: frankfurt # or your preferred region
+    runtime: docker
+    region: frankfurt
     plan: free
-    branch: avoid
-    buildCommand: bash render-build.sh
-    startCommand: bash render-start.sh
-    healthCheckPath: /
+    branch: main
+    
+    # Docker configuration
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     
     # Environment variables
     envVars:
@@ -16,16 +23,16 @@ services:
         value: production
       
       - key: PORT
-        value: 10000 # Render's default port
-      
-      - key: APP_KEY
-        generateValue: true # Render will generate this
+        value: 10000
       
       - key: HOST
         value: 0.0.0.0
       
+      - key: APP_KEY
+        generateValue: true
+      
       - key: APP_URL
-        value: https://g-agency-events.onrender.com # Replace with your actual URL
+        value: https://g-agency-events.onrender.com
       
       - key: LOG_LEVEL
         value: info
@@ -34,9 +41,9 @@ services:
       - key: SESSION_DRIVER
         value: cookie
       
-      # Database (MySQL from external provider)
+      # Database (External MySQL - configure in Render dashboard)
       - key: DB_HOST
-        sync: false # Set manually in Render dashboard
+        sync: false
       
       - key: DB_PORT
         value: 3306
@@ -50,7 +57,7 @@ services:
       - key: DB_DATABASE
         sync: false
       
-      # Email (Brevo/SendinBlue)
+      # Email (Brevo)
       - key: SMTP_HOST
         sync: false
       
@@ -75,17 +82,17 @@ services:
       - key: MAIL_REPLY_TO_NAME
         value: G-Agency Support
       
-      # File Storage
+      # Storage
       - key: DRIVE_DISK
         value: fs
       
-      # Admin API Token
+      # Admin Token
       - key: ADMIN_API_TOKEN
         generateValue: true
       
-      # Typesense (optional)
+      # Typesense (optional - set to false if not using)
       - key: TYPESENSE_ENABLED
-        value: true # Set to true if using Typesense
+        value: false
       
       - key: TYPESENSE_HOST
         value: localhost
@@ -99,9 +106,11 @@ services:
       - key: TYPESENSE_API_KEY
         sync: false
 
-# Optional: Add a MySQL database (not free on Render)
-# databases:
-#   - name: g-agency-events-db
-#     databaseName: events_platform
-#     user: g_agency
-#     plan: starter # Paid plan required
+    # Health check
+    healthCheckPath: /api/admin/auth/check
+    
+    # Disk for persistent storage (uploads)
+    disk:
+      name: uploads
+      mountPath: /app/public/uploads
+      sizeGB: 1
