@@ -131,20 +131,9 @@
       "full": "9999px"
     },
     "fontFamily": {
-      "sans": [
-        "Inter",
-        "system-ui",
-        "sans-serif"
-      ],
-      "display": [
-        "Poppins",
-        "Inter",
-        "sans-serif"
-      ],
-      "mono": [
-        "JetBrains Mono",
-        "monospace"
-      ]
+      "sans": ["Inter", "system-ui", "sans-serif"],
+      "display": ["Poppins", "Inter", "sans-serif"],
+      "mono": ["JetBrains Mono", "monospace"]
     },
     "fontSize": {
       "xs": "0.75rem",
@@ -171,12 +160,7 @@
     "enableSearch": true,
     "enableFilters": true,
     "maxUploadSize": 5242880,
-    "allowedFileTypes": [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif"
-    ],
+    "allowedFileTypes": ["image/jpeg", "image/png", "image/webp", "image/gif"],
     "itemsPerPage": 12,
     "enableAnimations": true,
     "enableSocialSharing": true
@@ -196,14 +180,7 @@
     "defaultTitle": "EventHub - Plateforme d'Événements en Algérie",
     "titleTemplate": "%s | EventHub",
     "description": "Découvrez et participez aux meilleurs événements près de chez vous. Conférences, ateliers, concerts et plus encore sur EventHub.",
-    "keywords": [
-      "événements",
-      "algérie",
-      "conférences",
-      "ateliers",
-      "concerts",
-      "annaba"
-    ],
+    "keywords": ["événements", "algérie", "conférences", "ateliers", "concerts", "annaba"],
     "ogImage": "/images/og-image.jpg"
   },
   "animations": {

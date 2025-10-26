@@ -1,0 +1,107 @@
+services:
+  # Main Web Service
+  - type: web
+    name: g-agency-events
+    env: node
+    region: frankfurt # or your preferred region
+    plan: free
+    branch: avoid
+    buildCommand: bash render-build.sh
+    startCommand: bash render-start.sh
+    healthCheckPath: /
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 10000 # Render's default port
+      
+      - key: APP_KEY
+        generateValue: true # Render will generate this
+      
+      - key: HOST
+        value: 0.0.0.0
+      
+      - key: APP_URL
+        value: https://g-agency-events.onrender.com # Replace with your actual URL
+      
+      - key: LOG_LEVEL
+        value: info
+      
+      # Session
+      - key: SESSION_DRIVER
+        value: cookie
+      
+      # Database (MySQL from external provider)
+      - key: DB_HOST
+        sync: false # Set manually in Render dashboard
+      
+      - key: DB_PORT
+        value: 3306
+      
+      - key: DB_USER
+        sync: false
+      
+      - key: DB_PASSWORD
+        sync: false
+      
+      - key: DB_DATABASE
+        sync: false
+      
+      # Email (Brevo/SendinBlue)
+      - key: SMTP_HOST
+        sync: false
+      
+      - key: SMTP_PORT
+        value: 587
+      
+      - key: SMTP_USERNAME
+        sync: false
+      
+      - key: SMTP_PASSWORD
+        sync: false
+      
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      
+      - key: MAIL_FROM_NAME
+        value: G-Agency Events
+      
+      - key: MAIL_REPLY_TO_ADDRESS
+        sync: false
+      
+      - key: MAIL_REPLY_TO_NAME
+        value: G-Agency Support
+      
+      # File Storage
+      - key: DRIVE_DISK
+        value: fs
+      
+      # Admin API Token
+      - key: ADMIN_API_TOKEN
+        generateValue: true
+      
+      # Typesense (optional)
+      - key: TYPESENSE_ENABLED
+        value: true # Set to true if using Typesense
+      
+      - key: TYPESENSE_HOST
+        value: localhost
+      
+      - key: TYPESENSE_PORT
+        value: 8108
+      
+      - key: TYPESENSE_PROTOCOL
+        value: http
+      
+      - key: TYPESENSE_API_KEY
+        sync: false
+
+# Optional: Add a MySQL database (not free on Render)
+# databases:
+#   - name: g-agency-events-db
+#     databaseName: events_platform
+#     user: g_agency
+#     plan: starter # Paid plan required

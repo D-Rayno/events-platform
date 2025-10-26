@@ -142,3 +142,24 @@ postman.json
 
 public/uploads/avatars/avatar-*.webp
 public/uploads/events/event-*.webp
+
+build/
+.env.test
+.adonisrc.json
+tmp/
+logs/*.log
+logs/pm2-*.log
+.vscode/
+.idea/
+*.log
+.DS_Store
+coverage/
+.nyc_output/
+public/uploads/*
+!public/uploads/.gitkeep
+
+
+!ecosystem.config.cjs
+!render-build.sh
+!render-start.sh
+!render.yaml

@@ -1,5 +1,5 @@
 // app/services/email_theme_service.ts
-import themeConfig from '../../inertia/theme.config.json' with { type: 'json' }
+import themeConfig from '../../config/theme.js'
 
 export interface EmailTheme {
   colors: {

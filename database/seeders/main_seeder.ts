@@ -9,7 +9,7 @@ export default class MainSeeder extends BaseSeeder {
      * Do not run when not in the "development" environment.
      * Only run in dev or when explicitly requested
      */
-    if (!app.inDev && !this.environment) {
+    if (!app.inDev) {
       console.warn('⚠️  Skipping seeder in production mode')
       return
     }

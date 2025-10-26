@@ -8,7 +8,7 @@ import string from '@adonisjs/core/helpers/string'
 import { DateTime } from 'luxon'
 import QRService from '#services/qr_code_service'
 import EmailThemeService from '#services/email_theme_service'
-import themeConfig from '../../inertia/theme.config.json' with { type: 'json' }
+import themeConfig from "../../config/theme.js"
 
 export default class EmailService {
   /**

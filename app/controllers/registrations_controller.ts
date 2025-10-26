@@ -57,7 +57,7 @@ export default class RegistrationController {
       const result = await this.fallbackDatabaseQuery(user.id, page, search, status)
       orderedRegistrations = result.registrations
       totalFound = result.total
-      lastPage = result.lastPage
+      // lastPage = result.lastPage
     }
 
     // Return as plain array for non-paginated view
@@ -81,6 +81,8 @@ export default class RegistrationController {
           status: reg.event.status,
         },
       })),
+      lastPage: lastPage,
+      totalFound: totalFound,
     })
   }
 
