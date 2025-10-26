@@ -15,16 +15,18 @@ const loggerConfig = defineConfig({
       level: app.inProduction ? 'info' : 'debug',
       
       /**
-       * IMPORTANT: Use pino-pretty only in development
-       * In production, use standard pino transport for better performance
+       * CRITICAL FIX: Only use transport in development
+       * In production, omit the transport property entirely to use default JSON logging
        */
-      transport: app.inProduction
-        ? undefined  // Use default transport in production (faster, JSON output)
+      ...(app.inProduction 
+        ? {} 
         : {
-            targets: targets()
-              .pushIf(!app.inProduction, targets.pretty())
-              .toArray(),
-          },
+            transport: {
+              targets: targets()
+                .push(targets.pretty())
+                .toArray(),
+            },
+          }),
     },
   },
 })

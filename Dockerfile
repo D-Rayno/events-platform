@@ -92,6 +92,5 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:10000/ || exit 1
 
 # Start application with dumb-init (proper signal handling)
-# Try both possible entry points
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["sh", "-c", "ls -la && ls -la bin && node bin/server.js"]
+CMD ["node", "bin/server.js"]
