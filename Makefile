@@ -16,8 +16,21 @@ help: ## Show this help message
 	@echo "$(GREEN)  G-Agency Events - Docker Commands$(NC)"
 	@echo "$(BLUE)═══════════════════════════════════════════════$(NC)"
 	@echo ""
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(NC) %s\n", $$1, $$2}'
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "$(YELLOW)%-20s$(NC) %s\n", $1, $2}'
 	@echo ""
+
+check-lockfile: ## Check if package-lock.json exists
+	@if [ ! -f package-lock.json ]; then \
+		echo "$(RED)⚠️  package-lock.json not found!$(NC)"; \
+		echo "$(YELLOW)Run: make generate-lockfile$(NC)"; \
+		exit 1; \
+	fi
+	@echo "$(GREEN)✓ package-lock.json exists$(NC)"
+
+generate-lockfile: ## Generate package-lock.json
+	@echo "$(BLUE)Generating package-lock.json...$(NC)"
+	@bash setup-lockfile.sh
+	@echo "$(GREEN)✓ Done$(NC)"
 
 setup: ## Initial setup (create .env.docker)
 	@echo "$(BLUE)Setting up environment...$(NC)"
@@ -28,6 +41,7 @@ setup: ## Initial setup (create .env.docker)
 	else \
 		echo "$(YELLOW)⚠ .env.docker already exists$(NC)"; \
 	fi
+	@make check-lockfile || make generate-lockfile
 
 build: ## Build Docker images
 	@echo "$(BLUE)Building Docker images...$(NC)"

@@ -28,7 +28,12 @@ COPY package*.json ./
 FROM base AS dependencies
 
 # Install all dependencies (including dev dependencies)
-RUN npm ci
+# Use npm install if package-lock.json doesn't exist
+RUN if [ -f package-lock.json ]; then \
+        npm ci; \
+    else \
+        npm install; \
+    fi
 
 # Copy source code
 COPY . .
