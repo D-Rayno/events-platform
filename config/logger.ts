@@ -1,4 +1,3 @@
-import env from '#start/env'
 import app from '@adonisjs/core/services/app'
 import { defineConfig, targets } from '@adonisjs/core/logger'
 
@@ -12,14 +11,20 @@ const loggerConfig = defineConfig({
   loggers: {
     app: {
       enabled: true,
-      name: env.get('APP_NAME'),
-      level: env.get('LOG_LEVEL'),
-      transport: {
-        targets: targets()
-          .pushIf(!app.inProduction, targets.pretty())
-          .pushIf(app.inProduction, targets.file({ destination: 1 }))
-          .toArray(),
-      },
+      name: app.appName,
+      level: app.inProduction ? 'info' : 'debug',
+      
+      /**
+       * IMPORTANT: Use pino-pretty only in development
+       * In production, use standard pino transport for better performance
+       */
+      transport: app.inProduction
+        ? undefined  // Use default transport in production (faster, JSON output)
+        : {
+            targets: targets()
+              .pushIf(!app.inProduction, targets.pretty())
+              .toArray(),
+          },
     },
   },
 })

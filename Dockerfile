@@ -81,9 +81,6 @@ RUN mkdir -p logs tmp public/uploads public/assets && \
 # The 'build' folder contains the compiled application
 COPY --from=build --chown=nodejs:nodejs /app/build /app
 
-# Debug: List files to verify structure (remove after debugging)
-RUN ls -la /app && ls -la /app/bin || echo "No bin directory found"
-
 # Switch to non-root user
 USER nodejs
 
