@@ -1,15 +1,18 @@
+// inertia/pages/auth/login.tsx - ENHANCED VERSION
 import { Head, Link } from '@inertiajs/react'
 import { motion } from 'motion/react'
-import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+import { EnvelopeIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import AuthLayout from '~/components/layouts/AuthLayout'
 import Input from '~/components/ui/Input'
 import Button from '~/components/ui/Button'
 import { useValidatedForm } from '~/hooks/useValidatedForm'
 import { loginSchema } from '~/lib/validation'
 import { useRouteGuard } from '~/hooks/useRouteGuard'
+import { useTheme } from '~/hooks/useTheme'
 
 export default function Login() {
   useRouteGuard({ requiresGuest: true })
+  const { colors } = useTheme()
 
   const { form, getError, handleBlur, submit, shouldShowError } = useValidatedForm({
     schema: loginSchema,
@@ -33,7 +36,19 @@ export default function Login() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10">
+          <motion.div 
+            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10 relative overflow-hidden"
+            whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Decorative gradient */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+              style={{
+                background: `linear-gradient(to right, ${colors.primary[500]}, ${colors.secondary[500]})`,
+              }}
+            />
+
             {/* Header */}
             <motion.div
               className="text-center mb-8"
@@ -41,8 +56,30 @@ export default function Login() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">Bon retour !</h1>
-              <p className="text-neutral-600">Connectez-vous pour continuer</p>
+              <motion.div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.primary[100]}, ${colors.primary[200]})`,
+                }}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: 360,
+                  background: `linear-gradient(135deg, ${colors.primary[200]}, ${colors.primary[300]})`,
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <LockClosedIcon 
+                  className="w-8 h-8"
+                  style={{ color: colors.primary[600] }}
+                />
+              </motion.div>
+              
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                Bon retour !
+              </h1>
+              <p className="text-neutral-600">
+                Connectez-vous pour continuer
+              </p>
             </motion.div>
 
             {/* Form Fields */}
@@ -95,9 +132,11 @@ export default function Login() {
               >
                 <Link
                   href="/auth/forgot-password"
-                  className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                  className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
                 >
-                  Mot de passe oublié ?
+                  <motion.span whileHover={{ x: 3 }} className="inline-block">
+                    Mot de passe oublié ?
+                  </motion.span>
                 </Link>
               </motion.div>
 
@@ -114,6 +153,8 @@ export default function Login() {
                   loading={form.processing}
                   disabled={form.processing}
                   onClick={handleSubmit}
+                  iconRight={ArrowRightIcon}
+                  className="cursor-pointer"
                 >
                   Se connecter
                 </Button>
@@ -130,14 +171,19 @@ export default function Login() {
                   Pas encore de compte ?{' '}
                   <Link
                     href="/auth/register"
-                    className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                    className="font-semibold text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
                   >
-                    Créer un compte
+                    <motion.span 
+                      whileHover={{ x: 3 }} 
+                      className="inline-block"
+                    >
+                      Créer un compte
+                    </motion.span>
                   </Link>
                 </p>
               </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Additional Info */}
           <motion.div
@@ -148,11 +194,11 @@ export default function Login() {
           >
             <p className="text-xs text-neutral-500">
               En vous connectant, vous acceptez nos{' '}
-              <a href="#" className="text-primary-600 hover:underline">
+              <a href="#" className="text-primary-600 hover:underline cursor-pointer">
                 Conditions d'utilisation
               </a>{' '}
               et notre{' '}
-              <a href="#" className="text-primary-600 hover:underline">
+              <a href="#" className="text-primary-600 hover:underline cursor-pointer">
                 Politique de confidentialité
               </a>
             </p>

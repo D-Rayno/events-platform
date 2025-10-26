@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react'
 import themeConfigJson from '../theme.config.json'
 
 /* ---------- Types (copied from original composable) ---------- */
-interface ColorScale {
+export interface ColorScale {
   50: string
   100: string
   200: string

@@ -1,3 +1,4 @@
+// inertia/pages/auth/register.tsx - ENHANCED VERSION
 import { Head, Link } from '@inertiajs/react'
 import { motion } from 'motion/react'
 import {
@@ -7,6 +8,7 @@ import {
   MapPinIcon,
   PhoneIcon,
   CalendarIcon,
+  RocketLaunchIcon,
 } from '@heroicons/react/24/outline'
 import AuthLayout from '~/components/layouts/AuthLayout'
 import Input from '~/components/ui/Input'
@@ -16,9 +18,11 @@ import { useValidatedForm } from '~/hooks/useValidatedForm'
 import { registerSchema } from '~/lib/validation'
 import { useRouteGuard } from '~/hooks/useRouteGuard'
 import { PROVINCES } from '~/lib/constants'
+import { useTheme } from '~/hooks/useTheme'
 
 export default function Register() {
   useRouteGuard({ requiresGuest: true })
+  const { colors } = useTheme()
 
   const { form, getError, handleBlur, submit, shouldShowError } = useValidatedForm({
     schema: registerSchema,
@@ -54,7 +58,19 @@ export default function Register() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10">
+          <motion.div 
+            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10 relative overflow-hidden"
+            whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Decorative gradient */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+              style={{
+                background: `linear-gradient(to right, ${colors.primary[500]}, ${colors.secondary[500]}, ${colors.success[500]})`,
+              }}
+            />
+
             {/* Header */}
             <motion.div
               className="text-center mb-8"
@@ -62,8 +78,30 @@ export default function Register() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">Créer un compte</h1>
-              <p className="text-neutral-600">Rejoignez notre communauté d'événements</p>
+              <motion.div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.primary[100]}, ${colors.secondary[200]})`,
+                }}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: 360,
+                  background: `linear-gradient(135deg, ${colors.primary[200]}, ${colors.secondary[300]})`,
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <RocketLaunchIcon 
+                  className="w-8 h-8"
+                  style={{ color: colors.primary[600] }}
+                />
+              </motion.div>
+
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                Créer un compte
+              </h1>
+              <p className="text-neutral-600">
+                Rejoignez notre communauté d'événements
+              </p>
             </motion.div>
 
             {/* Form */}
@@ -246,6 +284,8 @@ export default function Register() {
                   loading={form.processing}
                   disabled={form.processing}
                   onClick={handleSubmit}
+                  iconLeft={RocketLaunchIcon}
+                  className="cursor-pointer"
                 >
                   Créer mon compte
                 </Button>
@@ -262,14 +302,19 @@ export default function Register() {
                   Vous avez déjà un compte ?{' '}
                   <Link
                     href="/auth/login"
-                    className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                    className="font-semibold text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
                   >
-                    Se connecter
+                    <motion.span 
+                      whileHover={{ x: 3 }} 
+                      className="inline-block"
+                    >
+                      Se connecter
+                    </motion.span>
                   </Link>
                 </p>
               </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Additional Info */}
           <motion.div
@@ -280,11 +325,11 @@ export default function Register() {
           >
             <p className="text-xs text-neutral-500">
               En créant un compte, vous acceptez nos{' '}
-              <a href="#" className="text-primary-600 hover:underline">
+              <a href="#" className="text-primary-600 hover:underline cursor-pointer">
                 Conditions d'utilisation
               </a>{' '}
               et notre{' '}
-              <a href="#" className="text-primary-600 hover:underline">
+              <a href="#" className="text-primary-600 hover:underline cursor-pointer">
                 Politique de confidentialité
               </a>
             </p>

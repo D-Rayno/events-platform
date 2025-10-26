@@ -1,6 +1,7 @@
+// inertia/pages/auth/reset_password.tsx - ENHANCED VERSION
 import { Head, Link } from '@inertiajs/react'
 import { motion } from 'motion/react'
-import { LockClosedIcon, ArrowLeftIcon, CheckCircleIcon } from '@heroicons/react/24/outline'
+import { LockClosedIcon, ArrowLeftIcon, CheckCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
 import AuthLayout from '~/components/layouts/AuthLayout'
 import Input from '~/components/ui/Input'
 import Button from '~/components/ui/Button'
@@ -8,6 +9,7 @@ import Alert from '~/components/ui/Alert'
 import { useValidatedForm } from '~/hooks/useValidatedForm'
 import { resetPasswordSchema } from '~/lib/validation'
 import { useRouteGuard } from '~/hooks/useRouteGuard'
+import { useTheme } from '~/hooks/useTheme'
 
 interface Props {
   token: string
@@ -15,6 +17,7 @@ interface Props {
 
 export default function ResetPassword({ token }: Props) {
   useRouteGuard({ requiresGuest: true })
+  const { colors } = useTheme()
 
   const { form, getError, handleBlur, submit, shouldShowError } = useValidatedForm({
     schema: resetPasswordSchema,
@@ -36,6 +39,8 @@ export default function ResetPassword({ token }: Props) {
     { text: 'Un chiffre', met: /\d/.test(form.data.password) },
   ]
 
+  const allRequirementsMet = passwordRequirements.every(req => req.met)
+
   return (
     <>
       <Head title="Réinitialiser le mot de passe" />
@@ -46,7 +51,19 @@ export default function ResetPassword({ token }: Props) {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
         >
-          <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10">
+          <motion.div 
+            className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-8 md:p-10 relative overflow-hidden"
+            whileHover={{ boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Decorative gradient */}
+            <div 
+              className="absolute top-0 left-0 right-0 h-1 rounded-t-3xl"
+              style={{
+                background: `linear-gradient(to right, ${colors.success[500]}, ${colors.primary[500]})`,
+              }}
+            />
+
             {/* Header */}
             <motion.div
               className="text-center mb-8"
@@ -54,10 +71,26 @@ export default function ResetPassword({ token }: Props) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: 0.2 }}
             >
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <LockClosedIcon className="w-8 h-8 text-primary-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">Nouveau mot de passe</h1>
+              <motion.div
+                className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 cursor-pointer"
+                style={{
+                  background: `linear-gradient(135deg, ${colors.success[100]}, ${colors.success[200]})`,
+                }}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: [0, -15, 15, 0],
+                }}
+                transition={{ duration: 0.6 }}
+              >
+                <ShieldCheckIcon 
+                  className="w-8 h-8"
+                  style={{ color: colors.success[600] }}
+                />
+              </motion.div>
+
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                Nouveau mot de passe
+              </h1>
               <p className="text-neutral-600">
                 Choisissez un mot de passe sécurisé pour votre compte
               </p>
@@ -99,12 +132,18 @@ export default function ResetPassword({ token }: Props) {
                 {/* Password Requirements */}
                 {form.data.password && (
                   <motion.div
-                    className="mt-4 p-4 bg-neutral-50 rounded-xl"
+                    className="mt-4 p-4 rounded-xl"
+                    style={{ 
+                      background: allRequirementsMet 
+                        ? `${colors.success[50]}`
+                        : `${colors.neutral[50]}`,
+                    }}
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     transition={{ duration: 0.3 }}
                   >
-                    <p className="text-sm font-semibold text-neutral-700 mb-3">
+                    <p className="text-sm font-semibold text-neutral-700 mb-3 flex items-center gap-2">
+                      <ShieldCheckIcon className="w-4 h-4" />
                       Critères de sécurité :
                     </p>
                     <div className="space-y-2">
@@ -116,14 +155,19 @@ export default function ResetPassword({ token }: Props) {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: index * 0.05 }}
                         >
-                          <CheckCircleIcon
-                            className={`w-5 h-5 ${
-                              req.met ? 'text-success-600' : 'text-neutral-300'
-                            }`}
-                          />
+                          <motion.div
+                            animate={req.met ? { scale: [1, 1.2, 1] } : {}}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <CheckCircleIcon
+                              className={`w-5 h-5 ${
+                                req.met ? 'text-success-600' : 'text-neutral-300'
+                              }`}
+                            />
+                          </motion.div>
                           <span
                             className={`text-sm ${
-                              req.met ? 'text-success-700' : 'text-neutral-600'
+                              req.met ? 'text-success-700 font-medium' : 'text-neutral-600'
                             }`}
                           >
                             {req.text}
@@ -171,6 +215,8 @@ export default function ResetPassword({ token }: Props) {
                   loading={form.processing}
                   disabled={form.processing}
                   onClick={handleSubmit}
+                  iconRight={CheckCircleIcon}
+                  className="cursor-pointer"
                 >
                   Réinitialiser le mot de passe
                 </Button>
@@ -185,14 +231,16 @@ export default function ResetPassword({ token }: Props) {
               >
                 <Link
                   href="/auth/login"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
                 >
                   <ArrowLeftIcon className="w-4 h-4" />
-                  Retour à la connexion
+                  <motion.span whileHover={{ x: -3 }} className="inline-block">
+                    Retour à la connexion
+                  </motion.span>
                 </Link>
               </motion.div>
             </div>
-          </div>
+          </motion.div>
 
           {/* Security Tips */}
           <motion.div
@@ -205,9 +253,18 @@ export default function ResetPassword({ token }: Props) {
               <strong>Conseils de sécurité :</strong>
             </p>
             <ul className="text-xs text-neutral-600 space-y-1">
-              <li>• N'utilisez pas le même mot de passe sur plusieurs sites</li>
-              <li>• Évitez les informations personnelles facilement devinables</li>
-              <li>• Changez votre mot de passe régulièrement</li>
+              <li className="flex items-center gap-2 justify-center">
+                <span className="w-1 h-1 rounded-full bg-neutral-400" />
+                N'utilisez pas le même mot de passe sur plusieurs sites
+              </li>
+              <li className="flex items-center gap-2 justify-center">
+                <span className="w-1 h-1 rounded-full bg-neutral-400" />
+                Évitez les informations personnelles facilement devinables
+              </li>
+              <li className="flex items-center gap-2 justify-center">
+                <span className="w-1 h-1 rounded-full bg-neutral-400" />
+                Changez votre mot de passe régulièrement
+              </li>
             </ul>
           </motion.div>
         </motion.div>

@@ -8,6 +8,7 @@ import {
 import Card from '~/components/ui/Card'
 import Button from '~/components/ui/Button'
 import Badge from '~/components/ui/Badge'
+import RegistrationHelp from '~/components/registrations/Help'
 import { formatDateTime } from '~/lib/utils'
 
 interface RegistrationStatusSidebarProps {
@@ -89,7 +90,6 @@ export default function RegistrationStatusSidebar({
             fullWidth
             iconLeft={XCircleIcon}
             onClick={onCancelClick}
-            className="text-error-600 border-error-600 hover:bg-error-50"
           >
             Annuler l'inscription
           </Button>
@@ -100,15 +100,7 @@ export default function RegistrationStatusSidebar({
       )}
 
       {/* Help Card */}
-      <Card>
-        <h3 className="text-lg font-bold text-neutral-900 mb-3">Besoin d'aide ?</h3>
-        <p className="text-sm text-neutral-600 mb-4">
-          Si vous rencontrez un problème avec votre inscription, contactez-nous.
-        </p>
-        <Button variant="outline" fullWidth href="mailto:support@eventhub.dz">
-          Contacter le support
-        </Button>
-      </Card>
+      <RegistrationHelp />
     </motion.div>
   )
 }

@@ -1,14 +1,18 @@
-// inertia/components/shared/Header.tsx
+// inertia/components/shared/Header.tsx - ENHANCED VERSION
 import { useState, useRef, useEffect } from 'react'
 import { Link, router, usePage } from '@inertiajs/react'
-import { 
-  Bars3Icon, 
-  XMarkIcon, 
-  ChevronDownIcon, 
+import {
+  Bars3Icon,
+  XMarkIcon,
+  ChevronDownIcon,
   UserCircleIcon,
-  ArrowRightOnRectangleIcon 
+  ArrowRightOnRectangleIcon,
+  QueueListIcon,
+  UserPlusIcon,
+  ArrowRightIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion, AnimatePresence, useScroll, useTransform } from 'motion/react'
 import Button from '~/components/ui/Button'
 import Avatar from '~/components/ui/Avatar'
 import { useAuthStore } from '~/stores/auth'
@@ -16,11 +20,23 @@ import { useTheme } from '~/hooks/useTheme'
 
 export default function Header() {
   const { props } = usePage()
-  const { config } = useTheme()
-  
+  const { config, colors, getAnimation } = useTheme()
+
+  // Scroll-based effects
+  const { scrollY } = useScroll()
+  const headerBackground = useTransform(
+    scrollY,
+    [0, 50],
+    ['rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 0.95)']
+  )
+  const headerShadow = useTransform(
+    scrollY,
+    [0, 50],
+    ['0 1px 2px 0 rgba(0, 0, 0, 0.05)', '0 10px 15px -3px rgba(0, 0, 0, 0.1)']
+  )
+
   // Get auth state from store
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated())
-  console.log('isAuthenticated in Header:', isAuthenticated)
   const user = useAuthStore((s) => s.user)
   const fullName = useAuthStore((s) => s.fullName())
   const avatarUrl = useAuthStore((s) => s.avatarUrl())
@@ -33,24 +49,34 @@ export default function Header() {
     return (props.component as any)?.startsWith(name) || false
   }
 
-  // Navigation links (authenticated users see different links)
-  const navLinks = isAuthenticated 
-    ? [
-        { label: 'Événements', href: '/events', name: 'events' },
-        { label: 'Mes Inscriptions', href: '/registrations', name: 'registrations' },
-        { label: 'Profil', href: '/profile', name: 'profile' },
-      ]
-    : [
-        { label: 'Accueil', href: '/', name: 'home' },
-        { label: 'Événements', href: '/events', name: 'events' },
-      ]
+  // Navigation links
+  const navLinks: { label: string; href: string; name: string; icon?: typeof SparklesIcon }[] =
+    isAuthenticated
+      ? [
+          { label: 'Événements', href: '/events', name: 'events', icon: SparklesIcon },
+          {
+            label: 'Mes Inscriptions',
+            href: '/registrations',
+            name: 'registrations',
+            icon: QueueListIcon,
+          },
+          { label: 'Profil', href: '/profile', name: 'profile', icon: UserCircleIcon },
+        ]
+      : [
+          { label: 'Accueil', href: '/', name: 'home' },
+          { label: 'Événements', href: '/events', name: 'events' },
+        ]
 
   const handleLogout = () => {
-    router.post('/auth/logout', {}, {
-      onSuccess: () => {
-        setUserMenuOpen(false)
-      },
-    })
+    router.post(
+      '/auth/logout',
+      {},
+      {
+        onSuccess: () => {
+          setUserMenuOpen(false)
+        },
+      }
+    )
   }
 
   // Close user menu on click outside
@@ -67,23 +93,71 @@ export default function Header() {
     }
   }, [userMenuOpen])
 
+  // Close mobile menu on escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMobileMenuOpen(false)
+        setUserMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('keydown', handleEscape)
+    return () => document.removeEventListener('keydown', handleEscape)
+  }, [])
+
   return (
     <motion.header
-      className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-neutral-200/80 shadow-sm"
+      className="sticky top-0 z-50 backdrop-blur-lg border-b"
+      style={{
+        backgroundColor: headerBackground,
+        boxShadow: headerShadow,
+        borderBottomColor: `${colors.neutral[200]}CC`,
+      }}
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
+      transition={{ duration: getAnimation('normal') / 1000, delay: 0.1 }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href={isAuthenticated ? '/events' : '/'} className="flex items-center gap-3 group">
-            <div className="w-10 h-10 bg-linear-to-br from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
-              <span className="text-2xl">{config.branding.logo.icon}</span>
-            </div>
-            <span className="text-xl font-bold bg-linear-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent hidden sm:inline group-hover:from-primary-700 group-hover:to-secondary-700 transition-all">
+          <Link
+            href={isAuthenticated ? '/events' : '/'}
+            className="flex items-center gap-3 group cursor-pointer"
+          >
+            <motion.div
+              className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-all duration-300"
+              style={{
+                background: `linear-gradient(135deg, ${colors.primary[500]}, ${colors.secondary[500]})`,
+              }}
+              whileHover={{
+                scale: 1.1,
+                rotate: [0, -10, 10, 0],
+                boxShadow: `0 15px 35px -5px ${colors.primary[500]}80`,
+              }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+              <motion.span
+                className="text-2xl"
+                animate={{ rotate: [0, 5, -5, 0] }}
+                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+              >
+                {config.branding.logo.icon}
+              </motion.span>
+            </motion.div>
+            <motion.span
+              className="text-xl font-bold hidden sm:inline bg-clip-text text-transparent cursor-pointer"
+              style={{
+                backgroundImage: `linear-gradient(90deg, ${colors.primary[600]}, ${colors.secondary[600]})`,
+              }}
+              whileHover={{
+                backgroundImage: `linear-gradient(90deg, ${colors.primary[700]}, ${colors.secondary[700]})`,
+                scale: 1.02,
+              }}
+            >
               {config.branding.logo.text}
-            </span>
+            </motion.span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -93,138 +167,282 @@ export default function Header() {
                 key={link.href}
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 + index * 0.05 }}
+                transition={{
+                  delay: 0.15 + index * 0.05,
+                  duration: getAnimation('normal') / 1000,
+                }}
               >
-                <Link
-                  href={link.href}
-                  className={`relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 group ${
-                    isActive(link.name)
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-700 hover:bg-neutral-50'
-                  }`}
-                >
-                  <span className="relative z-10">{link.label}</span>
-                  {isActive(link.name) && (
-                    <div className="absolute inset-0 bg-linear-to-r from-primary-500/10 to-secondary-500/10 rounded-xl" />
-                  )}
-                </Link>
+                <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.2 }}>
+                  <Link
+                    href={link.href}
+                    className="relative px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 group cursor-pointer inline-flex items-center gap-2"
+                    style={{
+                      backgroundColor: isActive(link.name) ? colors.primary[50] : 'transparent',
+                      color: isActive(link.name) ? colors.primary[700] : colors.neutral[700],
+                    }}
+                  >
+                    {link.icon && (
+                      <link.icon className="w-4 h-4 transition-transform duration-300 group-hover:scale-110" />
+                    )}
+                    <span className="relative z-10">{link.label}</span>
+                    {isActive(link.name) && (
+                      <motion.div
+                        className="absolute inset-0 rounded-xl"
+                        style={{
+                          background: `linear-gradient(90deg, ${colors.primary[500]}1A, ${colors.secondary[500]}1A)`,
+                        }}
+                        layoutId="activeTab"
+                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    {/* Hover glow effect */}
+                    <motion.div
+                      className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                      style={{
+                        background: `radial-gradient(circle at center, ${colors.primary[500]}15, transparent 70%)`,
+                      }}
+                    />
+                  </Link>
+                </motion.div>
               </motion.div>
             ))}
           </nav>
 
           {/* Right Section */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {/* Authenticated User */}
             {isAuthenticated && user ? (
-              <div className="hidden md:flex items-center gap-4" ref={userMenuRef}>
-                <div className="relative">
-                  <button
-                    onClick={() => setUserMenuOpen(!userMenuOpen)}
-                    className="flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-neutral-50 transition-all group cursor-pointer"
-                    aria-label="Menu utilisateur"
-                    aria-expanded={userMenuOpen}
-                  >
-                    <Avatar name={fullName} src={avatarUrl || undefined} size="sm" />
-                    <div className="hidden lg:block text-left">
-                      <div className="text-sm font-medium text-neutral-900 group-hover:text-primary-600 transition-colors">
-                        {user.firstName}
-                      </div>
-                      <div className="text-xs text-neutral-500">Mon compte</div>
+              <div className="hidden md:flex items-center gap-3" ref={userMenuRef}>
+                <motion.button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-xl transition-all group cursor-pointer"
+                  style={{
+                    backgroundColor: userMenuOpen ? colors.neutral[50] : 'transparent',
+                  }}
+                  whileHover={{
+                    backgroundColor: colors.neutral[50],
+                    scale: 1.02,
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  aria-label="Menu utilisateur"
+                  aria-expanded={userMenuOpen}
+                >
+                  <Avatar name={fullName} src={avatarUrl || undefined} size="sm" />
+                  <div className="hidden lg:block text-left">
+                    <div
+                      className="text-sm font-medium transition-colors"
+                      style={{
+                        color: userMenuOpen ? colors.primary[600] : colors.neutral[900],
+                      }}
+                    >
+                      {user.firstName}
                     </div>
+                    <div className="text-xs" style={{ color: colors.neutral[500] }}>
+                      Mon compte
+                    </div>
+                  </div>
+                  <motion.div
+                    animate={{ rotate: userMenuOpen ? 180 : 0 }}
+                    transition={{ duration: getAnimation('fast') / 1000 }}
+                  >
                     <ChevronDownIcon
-                      className={`w-4 h-4 text-neutral-600 transition-all duration-300 ${
-                        userMenuOpen ? 'rotate-180 text-primary-600' : ''
-                      }`}
+                      className="w-4 h-4"
+                      style={{
+                        color: userMenuOpen ? colors.primary[600] : colors.neutral[600],
+                      }}
                     />
-                  </button>
+                  </motion.div>
+                </motion.button>
 
-                  {/* Dropdown Menu */}
-                  <AnimatePresence>
-                    {userMenuOpen && (
+                {/* Dropdown Menu */}
+                <AnimatePresence>
+                  {userMenuOpen && (
+                    <>
+                      {/* Backdrop */}
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/20 backdrop-blur-sm"
+                        style={{ top: '64px' }}
+                        onClick={() => setUserMenuOpen(false)}
+                      />
+
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: -10 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-neutral-200 overflow-hidden"
+                        transition={{ duration: getAnimation('fast') / 1000 }}
+                        className="absolute right-0 top-16 w-64 bg-white rounded-2xl shadow-2xl border overflow-hidden"
+                        style={{ borderColor: colors.neutral[200] }}
                       >
-                        <div className="px-4 py-4 border-b border-neutral-100 bg-linear-to-r from-primary-50 to-secondary-50">
+                        {/* User Info Header */}
+                        <div
+                          className="px-4 py-4 border-b"
+                          style={{
+                            borderColor: colors.neutral[100],
+                            background: `linear-gradient(135deg, ${colors.primary[50]}, ${colors.secondary[50]})`,
+                          }}
+                        >
                           <div className="flex items-center gap-3">
-                            <Avatar name={fullName} src={avatarUrl || undefined} size="md" />
+                            <Avatar name={fullName} src={avatarUrl || undefined} size="md" ring />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-neutral-900 truncate">
+                              <p
+                                className="text-sm font-semibold truncate"
+                                style={{ color: colors.neutral[900] }}
+                              >
                                 {fullName}
                               </p>
-                              <p className="text-xs text-neutral-600 truncate">{user.email}</p>
+                              <p
+                                className="text-xs truncate"
+                                style={{ color: colors.neutral[600] }}
+                              >
+                                {user.email}
+                              </p>
                             </div>
                           </div>
                         </div>
 
+                        {/* Menu Items */}
                         <div className="py-2">
-                          <Link
-                            href="/profile"
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            <UserCircleIcon className="w-5 h-5" />
-                            <span>Mon profil</span>
-                          </Link>
+                          <motion.div whileHover={{ x: 5 }}>
+                            <Link
+                              href="/profile"
+                              className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm transition-colors cursor-pointer"
+                              style={{ color: colors.neutral[700] }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.primary[50]
+                                e.currentTarget.style.color = colors.primary[700]
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                                e.currentTarget.style.color = colors.neutral[700]
+                              }}
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <UserCircleIcon className="w-5 h-5" />
+                              <span>Mon profil</span>
+                            </Link>
+                          </motion.div>
 
-                          <Link
-                            href="/registrations"
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-neutral-700 hover:bg-primary-50 hover:text-primary-700 transition-colors"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                            <span>Mes inscriptions</span>
-                          </Link>
+                          <motion.div whileHover={{ x: 5 }}>
+                            <Link
+                              href="/registrations"
+                              className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm transition-colors cursor-pointer"
+                              style={{ color: colors.neutral[700] }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.primary[50]
+                                e.currentTarget.style.color = colors.primary[700]
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                                e.currentTarget.style.color = colors.neutral[700]
+                              }}
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <QueueListIcon className="w-5 h-5" />
+                              <span>Mes inscriptions</span>
+                            </Link>
+                          </motion.div>
                         </div>
 
-                        <div className="border-t border-neutral-100">
-                          <button
-                            onClick={handleLogout}
-                            className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm text-error-600 hover:bg-error-50 transition-colors cursor-pointer"
-                          >
-                            <ArrowRightOnRectangleIcon className="w-5 h-5" />
-                            <span>Déconnexion</span>
-                          </button>
+                        {/* Logout */}
+                        <div className="border-t" style={{ borderColor: colors.neutral[100] }}>
+                          <motion.div whileHover={{ x: 5 }}>
+                            <button
+                              onClick={handleLogout}
+                              className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm transition-colors cursor-pointer"
+                              style={{ color: colors.error[600] }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = colors.error[50]
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent'
+                              }}
+                            >
+                              <ArrowRightOnRectangleIcon className="w-5 h-5" />
+                              <span>Déconnexion</span>
+                            </button>
+                          </motion.div>
                         </div>
                       </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             ) : (
-              // Guest User Buttons
-              <>
+              // Guest User Buttons - Using Button component with href
+              <motion.div
+                className="flex items-center gap-2"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.3 }}
+              >
                 <Button
+                  href="/auth/login"
                   variant="ghost"
                   size="sm"
-                  href="/auth/login"
-                  className="hidden sm:inline-flex"
+                  className="hidden sm:inline-flex cursor-pointer"
+                  flipOnHover
+                  flipDirection="bottom"
+                  flipBackText="Bienvenue ! 👋"
                 >
                   Connexion
                 </Button>
-                <Button variant="primary" size="sm" href="/auth/register">
+                <Button
+                  href="/auth/register"
+                  variant="gradient"
+                  size="sm"
+                  iconLeft={UserPlusIcon}
+                  flipOnHover
+                  flipDirection="top"
+                  flipBackText="Rejoignez-nous"
+                  shadow="lg"
+                  className="cursor-pointer"
+                >
                   S'inscrire
                 </Button>
-              </>
+              </motion.div>
             )}
 
             {/* Mobile Menu Button */}
-            <button
+            <motion.button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 hover:bg-neutral-100 rounded-xl transition-colors"
+              className="md:hidden p-2 rounded-xl transition-colors cursor-pointer"
+              style={{
+                backgroundColor: mobileMenuOpen ? colors.neutral[100] : 'transparent',
+              }}
+              whileHover={{
+                backgroundColor: colors.neutral[100],
+                scale: 1.05,
+              }}
+              whileTap={{ scale: 0.95 }}
               aria-label="Menu de navigation"
             >
-              {mobileMenuOpen ? (
-                <XMarkIcon className="w-6 h-6 text-neutral-700" />
-              ) : (
-                <Bars3Icon className="w-6 h-6 text-neutral-700" />
-              )}
-            </button>
+              <AnimatePresence mode="wait">
+                {mobileMenuOpen ? (
+                  <motion.div
+                    key="close"
+                    initial={{ rotate: -90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: 90, opacity: 0 }}
+                    transition={{ duration: getAnimation('fast') / 1000 }}
+                  >
+                    <XMarkIcon className="w-6 h-6" style={{ color: colors.neutral[700] }} />
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="open"
+                    initial={{ rotate: 90, opacity: 0 }}
+                    animate={{ rotate: 0, opacity: 1 }}
+                    exit={{ rotate: -90, opacity: 0 }}
+                    transition={{ duration: getAnimation('fast') / 1000 }}
+                  >
+                    <Bars3Icon className="w-6 h-6" style={{ color: colors.neutral[700] }} />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </div>
 
@@ -235,55 +453,94 @@ export default function Header() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="md:hidden border-t border-neutral-200 py-4 space-y-2 bg-white/95 backdrop-blur-lg overflow-hidden"
+              transition={{ duration: getAnimation('normal') / 1000 }}
+              className="md:hidden border-t py-4 space-y-2 bg-white/95 backdrop-blur-lg overflow-hidden"
+              style={{ borderColor: colors.neutral[200] }}
             >
-              {navLinks.map((link) => (
-                <Link
+              {navLinks.map((link, index) => (
+                <motion.div
                   key={link.href}
-                  href={link.href}
-                  className={`block px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
-                    isActive(link.name)
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-700 hover:bg-neutral-50'
-                  }`}
-                  onClick={() => setMobileMenuOpen(false)}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ x: 5 }}
                 >
-                  {link.label}
-                </Link>
+                  <Link
+                    href={link.href}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 cursor-pointer"
+                    style={{
+                      backgroundColor: isActive(link.name) ? colors.primary[50] : 'transparent',
+                      color: isActive(link.name) ? colors.primary[700] : colors.neutral[700],
+                    }}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.icon && <link.icon className="w-5 h-5" />}
+                    <span>{link.label}</span>
+                  </Link>
+                </motion.div>
               ))}
 
               {!isAuthenticated && (
-                <div className="pt-2 border-t border-neutral-200 space-y-2 mt-4">
-                  <Link
+                <motion.div
+                  className="pt-2 border-t space-y-2 mt-4"
+                  style={{ borderColor: colors.neutral[200] }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Button
                     href="/auth/login"
-                    className="block px-4 py-3 text-center rounded-xl text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-all"
+                    variant="ghost"
+                    size="md"
+                    fullWidth
                     onClick={() => setMobileMenuOpen(false)}
+                    flipOnHover
+                    flipDirection="right"
+                    flipBackText="Connectez-vous ✨"
+                    className="cursor-pointer"
                   >
                     Connexion
-                  </Link>
-                  <Link
+                  </Button>
+                  <Button
                     href="/auth/register"
-                    className="block px-4 py-3 text-center rounded-xl text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-all"
+                    variant="gradient"
+                    size="md"
+                    fullWidth
+                    iconRight={ArrowRightIcon}
                     onClick={() => setMobileMenuOpen(false)}
+                    flipOnHover
+                    flipDirection="left"
+                    flipBackText="Commencez ici 🎉"
+                    shadow="lg"
+                    className="cursor-pointer"
                   >
                     S'inscrire
-                  </Link>
-                </div>
+                  </Button>
+                </motion.div>
               )}
 
               {isAuthenticated && (
-                <div className="pt-2 border-t border-neutral-200 mt-4">
-                  <button
+                <motion.div
+                  className="pt-2 border-t mt-4"
+                  style={{ borderColor: colors.neutral[200] }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Button
+                    variant="danger"
+                    size="md"
+                    fullWidth
+                    iconLeft={ArrowRightOnRectangleIcon}
                     onClick={() => {
                       setMobileMenuOpen(false)
                       handleLogout()
                     }}
-                    className="block w-full px-4 py-3 text-center rounded-xl text-sm font-medium text-error-600 hover:bg-error-50 transition-all"
+                    className="cursor-pointer"
                   >
                     Déconnexion
-                  </button>
-                </div>
+                  </Button>
+                </motion.div>
               )}
             </motion.div>
           )}
