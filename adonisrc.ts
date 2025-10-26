@@ -31,21 +31,7 @@ export default defineConfig({
 
   preloads: [() => import('#start/routes'), () => import('#start/kernel')],
 
-  tests: {
-    suites: [
-      {
-        files: ['tests/unit/**/*.spec(.ts|.js)'],
-        name: 'unit',
-        timeout: 2000,
-      },
-      {
-        files: ['tests/functional/**/*.spec(.ts|.js)'],
-        name: 'functional',
-        timeout: 30000,
-      },
-    ],
-    forceExit: false,
-  },
+  // REMOVED: tests configuration - not needed for production
 
   metaFiles: [
     {

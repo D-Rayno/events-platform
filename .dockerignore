@@ -34,10 +34,11 @@ Thumbs.db
 .gitignore
 .gitattributes
 
-# Testing
+# Testing - EXCLUDE ALL TEST FILES
 coverage/
 .nyc_output/
 tests/
+bin/test.ts
 *.spec.ts
 *.test.ts
 
