@@ -1,25 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title inertia>
-      AdonisJS x Inertia x React
-    </title>
+        <title>
+            {{ title || 'G-Agency Events' }}
+        </title>
 
-    <link rel="preconnect" href="https://fonts.bunny.net" />
-    <link
-      href="https://fonts.bunny.net/css?family=instrument-sans:400,400i,500,500i,600,600i,700,700i"
-      rel="stylesheet"
-    />
+        <link rel="preconnect" href="https://fonts.bunny.net" />
+        <link
+            href="https://fonts.bunny.net/css?family=instrument-sans:400,400i,500,500i,600,600i,700,700i"
+            rel="stylesheet"
+        />
 
-    @viteReactRefresh()
-    @vite(['inertia/css/app.css','inertia/app/app.tsx', `inertia/pages/${page.component}.tsx`])
-    @inertiaHead()
-  </head>
+        {{-- Inertia Head --}}
+        @inertiaHead()
 
-  <body className="min-h-screen w-screen font-sans">
-    @inertia()
-  </body>
+        {{-- Vite Assets - Production/Development aware --}}
+        @if(app.inProduction)
+            {{-- Production: Load from manifest --}}
+            @vite(['inertia/app/app.tsx'])
+        @else
+            {{-- Development: Load from Vite dev server --}}
+            @viteReactRefresh()
+            @vite(['inertia/app/app.tsx'])
+        @end
+    </head>
+
+    <body className="min-h-screen w-screen font-sans">
+        @inertia()
+    </body>
 </html>

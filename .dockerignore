@@ -6,7 +6,8 @@
 node_modules/
 npm-debug.log
 yarn-error.log
-package-lock.json
+# DON'T exclude package-lock.json - we need it for npm ci
+# package-lock.json  <-- REMOVED THIS LINE
 
 # Build output
 build/
@@ -104,3 +105,4 @@ ecosystem.config.cjs
 scripts/convert-images.cjs
 debug-search.sh
 reset-db.sh
+fix-vite-build.s

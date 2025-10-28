@@ -1,6 +1,6 @@
 # ============================================
 # Multi-stage Dockerfile for Production
-# Optimized for Render.com free tier
+# Works with or without package-lock.json
 # ============================================
 
 # ============================================
@@ -25,10 +25,12 @@ WORKDIR /app
 FROM base AS dependencies
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
+COPY package-lock.json* ./
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm ci
+# Use install instead of ci to avoid lock file requirement
+RUN npm install --legacy-peer-deps
 
 # ============================================
 # Stage 3: Build
@@ -41,16 +43,15 @@ COPY . .
 # Generate theme configuration FIRST
 RUN node scripts/generate-theme.cjs
 
-# Build Vite assets + AdonisJS backend together
-# The 'node ace build' command will also trigger Vite build via hooks
+# Build AdonisJS (includes Vite via build hook)
 RUN node ace build --ignore-ts-errors
 
 # Verify manifest was created
-RUN ls -la public/assets/.vite/ || echo "Warning: Vite manifest not found"
+RUN ls -la public/assets/.vite/manifest.json || echo "⚠️  Warning: Vite manifest not found"
 
 # Install production dependencies in build folder
 WORKDIR /app/build
-RUN npm ci --omit=dev
+RUN npm install --omit=dev --legacy-peer-deps
 
 # ============================================
 # Stage 4: Production
