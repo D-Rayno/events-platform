@@ -3,7 +3,6 @@
 # For local development and testing
 # ============================================
 
-
 services:
   # ============================================
   # MySQL Database
@@ -28,13 +27,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
     command: --default-authentication-plugin=mysql_native_password
 
   # ============================================
   # Typesense Search Engine
   # ============================================
   typesense:
-    image: typesense/typesense:29.0
+    image: typesense/typesense:27.1
     container_name: g-agency-events-typesense
     restart: unless-stopped
     environment:
@@ -46,11 +46,8 @@ services:
       - typesense_data:/data
     networks:
       - app-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8108/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    # No healthcheck - Typesense starts fast enough
+    # App will handle connection retries
 
   # ============================================
   # AdonisJS Application
@@ -76,13 +73,13 @@ services:
       db:
         condition: service_healthy
       typesense:
-        condition: service_healthy
+        condition: service_started  # Just wait for start, not health
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:10000/"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:10000/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 60s
 
 # ============================================
 # Networks

@@ -1,21 +1,22 @@
 # ============================================
-# Render Blueprint (Docker-based deployment)
+# Render Blueprint for AdonisJS + Inertia
+# Deploy with: render.yaml in root directory
 # ============================================
 
 services:
   # ============================================
-  # Web Service (Docker)
+  # Web Service (Node.js)
   # ============================================
   - type: web
     name: g-agency-events
-    runtime: docker
-    region: frankfurt
+    runtime: node
+    region: frankfurt  # or: oregon, frankfurt, singapore
     plan: free
     branch: main
     
-    # Docker configuration
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    # Build & Start commands
+    buildCommand: npm run render:build
+    startCommand: npm run render:start
     
     # Environment variables
     envVars:
@@ -30,6 +31,7 @@ services:
       
       - key: APP_KEY
         generateValue: true
+        sync: false
       
       - key: APP_URL
         value: https://g-agency-events.onrender.com
@@ -41,7 +43,7 @@ services:
       - key: SESSION_DRIVER
         value: cookie
       
-      # Database (External MySQL - configure in Render dashboard)
+      # Database - Configure manually in Render dashboard
       - key: DB_HOST
         sync: false
       
@@ -57,7 +59,7 @@ services:
       - key: DB_DATABASE
         sync: false
       
-      # Email (Brevo)
+      # Email
       - key: SMTP_HOST
         sync: false
       
@@ -80,7 +82,7 @@ services:
         sync: false
       
       - key: MAIL_REPLY_TO_NAME
-        value: G-Agency Support
+        value: Support Team
       
       # Storage
       - key: DRIVE_DISK
@@ -89,8 +91,12 @@ services:
       # Admin Token
       - key: ADMIN_API_TOKEN
         generateValue: true
+        sync: false
       
-      # Typesense (optional - set to false if not using)
+      - key: ADMIN_TOKEN_EXPIRES_IN
+        value: 720
+      
+      # Typesense (Disable for free tier)
       - key: TYPESENSE_ENABLED
         value: false
       
@@ -105,12 +111,21 @@ services:
       
       - key: TYPESENSE_API_KEY
         sync: false
-
-    # Health check
-    healthCheckPath: /api/admin/auth/check
     
-    # Disk for persistent storage (uploads)
-    disk:
-      name: uploads
-      mountPath: /app/public/uploads
-      sizeGB: 1
+    # Health check
+    healthCheckPath: /
+    
+    # Persistent disk for uploads (optional - paid feature)
+    # disk:
+    #   name: uploads
+    #   mountPath: /app/public/uploads
+    #   sizeGB: 1
+
+# ============================================
+# Optional: Database (if not using external)
+# ============================================
+# databases:
+#   - name: events-db
+#     plan: free
+#     databaseName: events_platform
+#     user: g_agency
