@@ -1,6 +1,6 @@
 # ============================================
 # Multi-stage Dockerfile for Production
-# Works with or without package-lock.json
+# FIXED: Proper dependency handling for AdonisJS + Vite
 # ============================================
 
 # ============================================
@@ -25,12 +25,10 @@ WORKDIR /app
 FROM base AS dependencies
 
 # Copy package files
-COPY package.json ./
-COPY package-lock.json* ./
+COPY package.json package-lock.json ./
 
-# Install ALL dependencies (including devDependencies for build)
-# Use install instead of ci to avoid lock file requirement
-RUN npm install --legacy-peer-deps
+# Install ALL dependencies (including dev) for build
+RUN npm ci --legacy-peer-deps
 
 # ============================================
 # Stage 3: Build
@@ -40,21 +38,28 @@ FROM dependencies AS build
 # Copy source code
 COPY . .
 
-# Generate theme configuration FIRST
+# Generate theme configuration FIRST (before AdonisJS build)
 RUN node scripts/generate-theme.cjs
 
-# Build AdonisJS (includes Vite via build hook)
+# Build AdonisJS (this triggers Vite build via build hook)
 RUN node ace build --ignore-ts-errors
 
-# Verify manifest was created
-RUN ls -la public/assets/.vite/manifest.json || echo "⚠️  Warning: Vite manifest not found"
-
-# Install production dependencies in build folder
-WORKDIR /app/build
-RUN npm install --omit=dev --legacy-peer-deps
+# Verify build artifacts
+RUN ls -la build/public/assets/.vite/manifest.json || echo "⚠️ Vite manifest not found"
 
 # ============================================
-# Stage 4: Production
+# Stage 4: Production Dependencies
+# ============================================
+FROM base AS prod-deps
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install only production dependencies
+RUN npm ci --omit=dev --legacy-peer-deps
+
+# ============================================
+# Stage 5: Production Runtime
 # ============================================
 FROM node:20-alpine AS production
 
@@ -75,18 +80,18 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Create necessary directories
+# Create necessary directories with correct permissions
 RUN mkdir -p logs tmp public/uploads public/assets && \
     chown -R nodejs:nodejs /app
 
+# Copy production dependencies from prod-deps stage
+COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+
 # Copy built application from build stage
-COPY --from=build --chown=nodejs:nodejs /app/build /app
+COPY --from=build --chown=nodejs:nodejs /app/build ./
 
-# Copy health check script
-COPY --chown=nodejs:nodejs scripts/health-check.sh /app/scripts/
-
-# Make scripts executable
-RUN chmod +x /app/scripts/health-check.sh
+# Copy public assets (images, uploads, etc.)
+COPY --from=build --chown=nodejs:nodejs /app/public ./public
 
 # Switch to non-root user
 USER nodejs
