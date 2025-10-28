@@ -9,16 +9,17 @@ const inertiaConfig = defineConfig({
    */
   rootView: 'inertia_layout',
 
+
   /**
    * Data that should be shared with all rendered pages
    */
   sharedData: {
     // Share flash messages
     flash: (ctx) => ctx.session.flashMessages.all(),
-    
+
     // Errors are automatically shared by Inertia
     errors: (ctx) => ctx.session.flashMessages.get('errors'),
-    APP_URL: env.get("APP_URL"),
+    APP_URL: env.get('APP_URL'),
   },
 
   /**
@@ -26,7 +27,7 @@ const inertiaConfig = defineConfig({
    */
   ssr: {
     enabled: true,
-    entrypoint: 'inertia/app/ssr.tsx'
+    entrypoint: 'inertia/app/ssr.tsx',
   },
 })
 
