@@ -55,11 +55,11 @@ echo -e "${GREEN}✓ Volume removed${NC}\n"
 echo -e "${YELLOW}Updating .env.docker with correct API key...${NC}"
 if [ -f .env.docker ]; then
     # Use simple API key
-    sed -i 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=docker-typesense-dev-key-12345/' .env.docker 2>/dev/null || \
-    sed -i '' 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=docker-typesense-dev-key-12345/' .env.docker 2>/dev/null
+    sed -i 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=/' .env.docker 2>/dev/null || \
+    sed -i '' 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=/' .env.docker 2>/dev/null
     
     echo -e "${GREEN}✓ API key updated${NC}"
-    echo -e "${BLUE}New key: docker-typesense-dev-key-12345${NC}"
+    echo -e "${BLUE}New key: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=${NC}"
 else
     echo -e "${RED}✗ .env.docker not found${NC}"
     exit 1
@@ -68,11 +68,11 @@ echo ""
 
 # Step 6: Verify docker-compose.yml has correct config
 echo -e "${YELLOW}Checking docker-compose.yml...${NC}"
-if grep -q "docker-typesense-dev-key-12345" docker-compose.yml; then
+if grep -q "XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=" docker-compose.yml; then
     echo -e "${GREEN}✓ docker-compose.yml is correct${NC}"
 else
     echo -e "${RED}✗ docker-compose.yml needs updating${NC}"
-    echo -e "${YELLOW}Update the TYPESENSE_API_KEY to: docker-typesense-dev-key-12345${NC}"
+    echo -e "${YELLOW}Update the TYPESENSE_API_KEY to: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=${NC}"
 fi
 echo ""
 
@@ -99,7 +99,7 @@ if [ $READY -eq 1 ]; then
     
     # Test API key
     echo -e "${YELLOW}Testing API key...${NC}"
-    RESPONSE=$(curl -s -H "X-TYPESENSE-API-KEY: docker-typesense-dev-key-12345" \
+    RESPONSE=$(curl -s -H "X-TYPESENSE-API-KEY: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=" \
         http://localhost:8108/collections)
     
     if [ $? -eq 0 ]; then
@@ -135,8 +135,8 @@ echo -e "${BLUE}║   Typesense Fixed!                     ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════╝${NC}\n"
 
 echo -e "${GREEN}✓ Typesense is now running correctly${NC}"
-echo -e "${BLUE}API Key: docker-typesense-dev-key-12345${NC}"
+echo -e "${BLUE}API Key: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=${NC}"
 echo -e "${BLUE}Health: http://localhost:8108/health${NC}\n"
 
 echo -e "${YELLOW}Test with curl:${NC}"
-echo -e "${BLUE}curl -H 'X-TYPESENSE-API-KEY: docker-typesense-dev-key-12345' http://localhost:8108/collections${NC}\n"
+echo -e "${BLUE}curl -H 'X-TYPESENSE-API-KEY: XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=' http://localhost:8108/collections${NC}\n"

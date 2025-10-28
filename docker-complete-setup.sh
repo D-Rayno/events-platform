@@ -37,8 +37,8 @@ echo -e "${GREEN}✓ Cleanup complete${NC}\n"
 echo -e "${YELLOW}Step 2: Updating .env.docker...${NC}"
 if [ -f .env.docker ]; then
     # Update Typesense API key to match docker-compose.yml
-    sed -i 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=docker-typesense-dev-key-12345/' .env.docker 2>/dev/null || \
-    sed -i '' 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=docker-typesense-dev-key-12345/' .env.docker 2>/dev/null
+    sed -i 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=/' .env.docker 2>/dev/null || \
+    sed -i '' 's/^TYPESENSE_API_KEY=.*/TYPESENSE_API_KEY=XW2pN1Ybe7wjRgZ8bB8cno+oAEN1ddAIEcviVrRZ4gU=/' .env.docker 2>/dev/null
     
     echo -e "${GREEN}✓ .env.docker updated${NC}"
 else
