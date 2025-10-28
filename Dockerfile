@@ -27,7 +27,7 @@ FROM base AS dependencies
 # Copy package files
 COPY package*.json ./
 
-# Install all dependencies (including devDependencies for build)
+# Install ALL dependencies (including devDependencies for build)
 RUN npm ci
 
 # ============================================
@@ -38,11 +38,15 @@ FROM dependencies AS build
 # Copy source code
 COPY . .
 
-# Generate theme configuration
+# Generate theme configuration FIRST
 RUN node scripts/generate-theme.cjs
 
-# Build the application
+# Build Vite assets + AdonisJS backend together
+# The 'node ace build' command will also trigger Vite build via hooks
 RUN node ace build --ignore-ts-errors
+
+# Verify manifest was created
+RUN ls -la public/assets/.vite/ || echo "Warning: Vite manifest not found"
 
 # Install production dependencies in build folder
 WORKDIR /app/build

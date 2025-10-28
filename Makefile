@@ -175,23 +175,59 @@ clean: ## Remove containers, volumes, and images
 
 rebuild: stop build dev ## Rebuild and restart services
 
+
+fresh: kill-typesense ## Complete fresh setup
+	@echo "$(RED)⚠ This will remove ALL data!$(NC)"
+	@echo "$(YELLOW)Cleaning up...$(NC)"
+	@make clean
+	@echo "$(YELLOW)Setting up from scratch...$(NC)"
+	@make setup
+
 # ============================================
 # Quick Setup
 # ============================================
 
-setup: check-ports kill-typesense build dev ## Initial setup (first time)
+ssetup: check-ports kill-typesense ## Initial setup (first time)
 	@echo "$(BLUE)Setting up project...$(NC)"
-	@if [ ! -f .env.docker ]; then cp .env.example .env.docker; echo "$(GREEN)✓ Created .env.docker$(NC)"; fi
+	
+	# Check .env.docker exists
+	@if [ ! -f .env.docker ]; then \
+		cp .env.example .env.docker; \
+		echo "$(GREEN)✓ Created .env.docker$(NC)"; \
+		echo "$(YELLOW)⚠️  Please edit .env.docker with your settings$(NC)"; \
+		exit 1; \
+	fi
+	
+	# Build and start
+	@make build
+	@make dev
+	
+	# Wait for services
 	@echo "$(YELLOW)Waiting for services to be healthy...$(NC)"
 	@sleep 15
+	
+	# Verify services are running
+	@docker compose ps
+	
+	# Run migrations
 	@make migrate
+	
+	# Seed database
 	@make seed
+	
+	# Setup Typesense
 	@echo "$(YELLOW)Setting up Typesense...$(NC)"
 	@sleep 5
 	@make typesense-setup || echo "$(YELLOW)⚠ Typesense setup skipped (will retry)$(NC)"
 	@sleep 5
 	@make typesense-setup || echo "$(RED)✗ Typesense setup failed$(NC)"
 	@make typesense-index || echo "$(YELLOW)⚠ Typesense indexing skipped$(NC)"
+	
+	# Verify build
+	@echo "$(YELLOW)Verifying Vite build...$(NC)"
+	@docker compose exec app ls -la public/assets/.vite/manifest.json || \
+		echo "$(RED)❌ Vite manifest not found! Run: make rebuild$(NC)"
+	
 	@echo ""
 	@echo "$(GREEN)╔════════════════════════════════════════╗$(NC)"
 	@echo "$(GREEN)║   Setup Complete!                      ║$(NC)"
@@ -206,7 +242,7 @@ setup: check-ports kill-typesense build dev ## Initial setup (first time)
 	@echo "  $(GREEN)Admin:$(NC) admin@events.dz / Admin@123"
 	@echo ""
 
-fresh: kill-typesense clean setup ## Fresh installation
+
 
 # ============================================
 # Testing & Quality
