@@ -60,6 +60,11 @@ export default defineConfig({
       pattern: 'inertia/**/*.{js,json,tsx,ts,jsx,css}',
       reloadServer: false,
     },
+    {
+      pattern: 'inertia/**/*.{cjs,sh}',
+      reloadServer: false,
+    },
+
   ],
 
   assetsBundler: false,

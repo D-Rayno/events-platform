@@ -1,5 +1,5 @@
 #!/bin/bash
-# scripts/render-start.sh - Render.com start script (FIXED)
+# scripts/render-start.sh - Render.com start script
 # Runs when the service starts
 
 set -e

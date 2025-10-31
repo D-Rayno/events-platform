@@ -1,21 +1,22 @@
 # ============================================
-# Multi-stage Dockerfile for Production
-# FIXED: Proper dependency handling for AdonisJS + Vite
+# Production-Ready Dockerfile for AdonisJS + Inertia + React
 # ============================================
 
 # ============================================
-# Stage 1: Base
+# Stage 1: Base Image
 # ============================================
-FROM node:20-alpine AS base
+FROM node:22.16.0-alpine3.22 AS base
 
 # Install system dependencies
 RUN apk add --no-cache \
-    libc6-compat \
-    dumb-init \
     python3 \
     make \
     g++ \
-    curl
+    libc6-compat \
+    dumb-init \
+    curl \
+    bash \
+    git
 
 WORKDIR /app
 
@@ -27,52 +28,89 @@ FROM base AS dependencies
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Install ALL dependencies (including dev) for build
-RUN npm ci --legacy-peer-deps
+# Install ALL dependencies (needed for build)
+RUN npm ci --legacy-peer-deps --no-audit --no-fund && \
+    npm cache clean --force
 
 # ============================================
 # Stage 3: Build
 # ============================================
 FROM dependencies AS build
 
+# Copy configuration files
+COPY adonisrc.ts tsconfig.json vite.config.ts ./
+COPY eslint.config.js theme.config.json ./
+
 # Copy source code
-COPY . .
+COPY app/ ./app/
+COPY config/ ./config/
+COPY database/ ./database/
+COPY start/ ./start/
+COPY commands/ ./commands/
+COPY resources/ ./resources/
+COPY inertia/ ./inertia/
+COPY public/ ./public/
+COPY bin/ ./bin/
+COPY tests/ ./tests/
 
-# Generate theme configuration FIRST (before AdonisJS build)
-RUN node scripts/generate-theme.cjs
+# Copy scripts directory
+COPY scripts/ ./scripts/
 
-# Build AdonisJS (this triggers Vite build via build hook)
-RUN node ace build --ignore-ts-errors
+# Make scripts executable
+RUN chmod +x scripts/*.sh 2>/dev/null || true
+RUN chmod +x scripts/*.cjs 2>/dev/null || true
 
-# Verify build artifacts
-RUN ls -la build/public/assets/.vite/manifest.json || echo "⚠️ Vite manifest not found"
+# Set build environment
+ENV NODE_ENV=production
+
+# Generate theme
+RUN echo "🎨 Generating theme..." && \
+    node scripts/generate-theme.cjs
+
+# Build application
+RUN echo "🔨 Building application..." && \
+    node ace build --ignore-ts-errors
+
+# Verify critical build artifacts
+RUN echo "🔍 Verifying build..." && \
+    test -f "build/bin/server.js" || (echo "❌ Server build failed" && exit 1) && \
+    test -f "build/package.json" || (echo "❌ Package.json missing" && exit 1) && \
+    test -d "build/public/assets" || (echo "❌ Assets missing" && exit 1) && \
+    echo "✅ Build verification passed"
+
+# Copy scripts to build directory (IMPORTANT!)
+RUN cp -r scripts build/ && \
+    chmod +x build/scripts/*.sh 2>/dev/null || true
+
+# Copy public uploads to build directory
+RUN mkdir -p build/public/uploads && \
+    cp -r public/uploads/* build/public/uploads/ 2>/dev/null || true
 
 # ============================================
 # Stage 4: Production Dependencies
 # ============================================
-FROM base AS prod-deps
+FROM base AS production-deps
 
-# Copy package files
-COPY package.json package-lock.json ./
+WORKDIR /app
 
-# Install only production dependencies
-RUN npm ci --omit=dev --legacy-peer-deps
+# Copy package.json from build
+COPY --from=build /app/build/package.json ./
+
+# Install production dependencies only
+RUN npm ci --omit=dev --legacy-peer-deps --no-audit --no-fund && \
+    npm cache clean --force
 
 # ============================================
 # Stage 5: Production Runtime
 # ============================================
-FROM node:20-alpine AS production
+FROM node:22.16.0-alpine3.22 AS production
 
-# Install runtime dependencies
+# Install minimal runtime dependencies
 RUN apk add --no-cache \
     libc6-compat \
     dumb-init \
-    curl
-
-# Set production environment
-ENV NODE_ENV=production
-ENV PORT=10000
-ENV HOST=0.0.0.0
+    curl \
+    bash
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \
@@ -80,18 +118,23 @@ RUN addgroup -g 1001 -S nodejs && \
 
 WORKDIR /app
 
-# Create necessary directories with correct permissions
-RUN mkdir -p logs tmp public/uploads public/assets && \
+# Create necessary directories
+RUN mkdir -p \
+    logs \
+    tmp \
+    public/uploads/avatars \
+    public/uploads/events \
+    public/assets && \
     chown -R nodejs:nodejs /app
 
-# Copy production dependencies from prod-deps stage
-COPY --from=prod-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
+# Copy production dependencies
+COPY --from=production-deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 
-# Copy built application from build stage
+# Copy built application
 COPY --from=build --chown=nodejs:nodejs /app/build ./
 
-# Copy public assets (images, uploads, etc.)
-COPY --from=build --chown=nodejs:nodejs /app/public ./public
+# Ensure scripts are executable
+RUN chmod +x scripts/*.sh 2>/dev/null || true
 
 # Switch to non-root user
 USER nodejs
@@ -100,9 +143,9 @@ USER nodejs
 EXPOSE 10000
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD node -e "require('http').get('http://localhost:10000/', (r) => process.exit(r.statusCode === 200 || r.statusCode === 302 ? 0 : 1))"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:10000/health || exit 1
 
-# Start application with proper signal handling
+# Use entrypoint for initialization
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "bin/server.js"]
