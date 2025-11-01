@@ -121,6 +121,10 @@ db-reset: ## Reset database
 db-shell: ## Access database shell
 	@docker compose -f $(COMPOSE_FILE) exec db mysql -uroot -p$${DB_PASSWORD:-root} $${DB_DATABASE:-events_platform}
 
+db-setup:
+	@echo "$(YELLOW)Setting up database...$(NC)"
+	bash ./reset-db.sh
+
 # ============================================
 # Typesense Operations
 # ============================================

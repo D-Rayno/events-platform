@@ -160,8 +160,6 @@ public/uploads/*
 
 
 !ecosystem.config.cjs
-!render-build.sh
-!render-start.sh
 !render.yaml
 
 typesense_data

@@ -1,0 +1,14 @@
+# Custom Typesense image with health check support
+FROM typesense/typesense:29.0
+
+# The Typesense image is based on Ubuntu, so we use apt-get
+# We need to run as root to install packages
+
+# Install curl for health checks
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl ca-certificates && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Keep the original entrypoint
+ENTRYPOINT ["/opt/typesense-server"]
