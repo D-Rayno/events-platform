@@ -5,7 +5,7 @@ import { DateTime } from 'luxon'
 
 export default class EventSeeder extends BaseSeeder {
   // This seeder should only run through MainSeeder
-  static environment = ['development']
+  static environment = ['production']
 
   async run() {
     // Check if events already exist

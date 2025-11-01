@@ -57,13 +57,11 @@ COPY package-lock.json ./
 
 # Copy scripts directory
 COPY scripts/ ./scripts/
-COPY reset-db.sh ./
 
 
 # Make scripts executable
 RUN chmod +x scripts/*.sh 2>/dev/null || true
 RUN chmod +x scripts/*.cjs 2>/dev/null || true
-RUN chmod +x reset-db.sh 2>/dev/null || true
 
 # Set build environment
 ENV NODE_ENV=production
@@ -141,9 +139,6 @@ COPY --from=build --chown=nodejs:nodejs /app/build ./
 
 # Ensure scripts are executable
 RUN chmod +x scripts/*.sh 2>/dev/null || true
-RUN chmod +x reset-db.sh 2>/dev/null || true
-
-RUN bash ./reset-db.sh
 
 # Switch to non-root user
 USER nodejs

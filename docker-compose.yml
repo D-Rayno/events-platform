@@ -7,12 +7,12 @@ services:
   # MySQL Database
   # ============================================
   db:
-    image: mysql:8.0
+    image: mysql
     container_name: g-agency-db
     restart: always
     env_file: .env.docker
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
@@ -20,8 +20,6 @@ services:
       - "${DB_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./my.cnf:/etc/mysql/conf.d/custom.cnf:ro
-      - ./mysql-init.sql:/docker-entrypoint-initdb.d/mysql-init.sql:ro
     networks:
       - app-network
     healthcheck:
@@ -86,7 +84,7 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
       DB_DATABASE: ${DB_DATABASE}
       
       # Typesense

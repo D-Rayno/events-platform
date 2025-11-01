@@ -8,7 +8,7 @@ import string from '@adonisjs/core/helpers/string'
 
 export default class RegistrationSeeder extends BaseSeeder {
   // This seeder should only run through MainSeeder
-  static environment = ['development']
+  static environment = ['production']
 
   async run() {
     // Check if registrations already exist

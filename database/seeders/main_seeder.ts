@@ -1,18 +1,9 @@
 // database/seeders/main_seeder.ts - FIXED
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
-import app from '@adonisjs/core/services/app'
 
 export default class MainSeeder extends BaseSeeder {
   private async seed(Seeder: { default: typeof BaseSeeder }) {
 
-    /**
-     * Do not run when not in the "development" environment.
-     * Only run in dev or when explicitly requested
-     */
-    if (!app.inDev) {
-      console.warn('⚠️  Skipping seeder in production mode')
-      return
-    }
 
     await new Seeder.default(this.client).run()
   }
